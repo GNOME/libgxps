@@ -1,0 +1,49 @@
+General
+-------
+
+- Gtk-doc
+- GObject Introspection
+- Version API (Check macros)
+- Tools: xps2ps, xps2pdf, xps2html, ...
+- Regression tests
+- API tests
+- Demo program
+
+GXPSFile
+--------
+
+- Thumbnail API
+- Core-properties API
+
+GXPSDocument
+------------
+
+- Links API
+- Info API
+
+GXPSPage
+--------
+
+- Lang API
+- Name API
+- Images API
+- Text API
+- Selections API
+- Render for printing API
+
+Rendering
+---------
+
+- Resource dictionaries
+- Transparency
+   + Opacity
+   + Opacity Masks
+- Visual Brush
+- Quadratic Bézier curve
+- Smooth Cubic Bézier curve
+- Elliptical Arc
+- Radial gradients when center != origin
+- Tile modes (FlipX, FlipY, FlipXY)
+- Triangle line cap
+- Font props (weight, slant)
+- Font cluster

@@ -1,0 +1,383 @@
+/* GXPSFile
+ *
+ * Copyright (C) 2010  Carlos Garcia Campos <carlosgc@gnome.org>
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+ */
+
+#include <config.h>
+
+#include <string.h>
+
+#include "gxps-file.h"
+#include "gxps-archive.h"
+#include "gxps-private.h"
+#include "gxps-error.h"
+
+enum {
+	PROP_0,
+	PROP_FILE
+};
+
+struct _GXPSFilePrivate {
+	GFile       *file;
+	GXPSArchive *zip;
+	GList       *docs;
+
+	gboolean     initialized;
+	GError      *init_error;
+
+	gchar       *fixed_repr;
+	gchar       *thumbnail;
+	gchar       *core_props;
+};
+
+static void initable_iface_init (GInitableIface *initable_iface);
+
+G_DEFINE_TYPE_WITH_CODE (GXPSFile, gxps_file, G_TYPE_OBJECT,
+			 G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init))
+
+GQuark
+gxps_file_error_quark (void)
+{
+	return g_quark_from_static_string ("gxps-file-error-quark");
+}
+
+#define REL_METATADA_CORE_PROPS  "http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties"
+#define REL_METATADA_THUMBNAIL   "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail"
+#define REL_FIXED_REPRESENTATION "http://schemas.microsoft.com/xps/2005/06/fixedrepresentation"
+
+/* Relationship parser */
+static void
+rels_start_element (GMarkupParseContext  *context,
+		    const gchar          *element_name,
+		    const gchar         **names,
+		    const gchar         **values,
+		    gpointer              user_data,
+		    GError              **error)
+{
+	GXPSFile *xps = GXPS_FILE (user_data);
+
+	if (strcmp (element_name, "Relationship") == 0) {
+		const gchar *type = NULL;
+		const gchar *target = NULL;
+		gint         i;
+
+		for (i = 0; names[i]; i++) {
+			if (strcmp (names[i], "Type") == 0) {
+				type = values[i];
+			} else if (strcmp (names[i], "Target") == 0) {
+				target = values[i];
+			} else if (strcmp (names[i], "Id") == 0) {
+				/* Ignore ids for now */
+			}
+		}
+
+		if (!type || !target) {
+			gxps_parse_error (context,
+					  "_rels/.rels",
+					  G_MARKUP_ERROR_MISSING_ATTRIBUTE,
+					  element_name,
+					  !type ? "Type" : "Target",
+					  NULL, error);
+			return;
+		}
+
+		if (strcmp (type, REL_FIXED_REPRESENTATION) == 0) {
+			xps->priv->fixed_repr = g_strdup (target);
+		} else if (strcmp (type, REL_METATADA_THUMBNAIL) == 0) {
+			xps->priv->thumbnail = g_strdup (target);
+		} else if (strcmp (type, REL_METATADA_CORE_PROPS) == 0) {
+			xps->priv->core_props = g_strdup (target);
+		} else {
+			g_warning ("Unsupported attribute of %s, %s=%s\n",
+				   element_name, type, target);
+		}
+	} else if (strcmp (element_name, "Relationships") == 0) {
+		/* Nothing to do */
+	} else {
+		gxps_parse_error (context,
+				  "_rels/.rels",
+				  G_MARKUP_ERROR_UNKNOWN_ELEMENT,
+				  element_name, NULL, NULL, error);
+	}
+}
+
+static const GMarkupParser rels_parser = {
+	rels_start_element,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+};
+
+static gboolean
+gxps_file_parse_rels (GXPSFile *xps,
+		      GError  **error)
+{
+	GInputStream        *stream;
+	GMarkupParseContext *ctx;
+
+	stream = gxps_archive_open (xps->priv->zip, "_rels/.rels");
+	if (!stream) {
+		g_set_error_literal (error,
+				     GXPS_ERROR,
+				     GXPS_ERROR_SOURCE_NOT_FOUND,
+				     "Source _rels/.rels not found in archive");
+		return FALSE;
+	}
+
+	ctx = g_markup_parse_context_new (&rels_parser, 0, xps, NULL);
+	gxps_parse_stream (ctx, stream, error);
+	g_object_unref (stream);
+	g_markup_parse_context_free (ctx);
+
+	return (*error != NULL) ? FALSE : TRUE;
+}
+
+/* FixedRepresentation parser */
+static void
+fixed_repr_start_element (GMarkupParseContext  *context,
+			  const gchar          *element_name,
+			  const gchar         **names,
+			  const gchar         **values,
+			  gpointer              user_data,
+			  GError              **error)
+{
+	GXPSFile *xps = GXPS_FILE (user_data);
+
+	if (strcmp (element_name, "DocumentReference") == 0) {
+		gint i;
+
+		for (i = 0; names[i]; i++) {
+			if (strcmp (names[i], "Source") == 0) {
+				xps->priv->docs = g_list_prepend (xps->priv->docs,
+								  gxps_resolve_relative_path (xps->priv->fixed_repr, values[i]));
+			}
+		}
+		xps->priv->docs = g_list_reverse (xps->priv->docs);
+	} else if (strcmp (element_name, "FixedDocumentSequence") == 0) {
+		/* Nothing to do */
+	} else {
+		gxps_parse_error (context,
+				  xps->priv->fixed_repr,
+				  G_MARKUP_ERROR_UNKNOWN_ELEMENT,
+				  element_name, NULL, NULL, error);
+	}
+}
+
+static const GMarkupParser fixed_repr_parser = {
+	fixed_repr_start_element,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+};
+
+static gboolean
+gxps_file_parse_fixed_repr (GXPSFile *xps,
+			    GError  **error)
+{
+	GInputStream        *stream;
+	GMarkupParseContext *ctx;
+
+	stream = gxps_archive_open (xps->priv->zip,
+				    xps->priv->fixed_repr);
+	if (!stream) {
+		/* TODO: fill error */
+		return FALSE;
+	}
+
+	ctx = g_markup_parse_context_new (&fixed_repr_parser, 0, xps, NULL);
+	gxps_parse_stream (ctx, stream, error);
+	g_object_unref (stream);
+	g_markup_parse_context_free (ctx);
+
+	return (*error != NULL) ? FALSE : TRUE;
+}
+
+static void
+gxps_file_finalize (GObject *object)
+{
+	GXPSFile *xps = GXPS_FILE (object);
+
+	if (xps->priv->zip) {
+		g_object_unref (xps->priv->zip);
+		xps->priv->zip = NULL;
+	}
+
+	if (xps->priv->file) {
+		g_object_unref (xps->priv->file);
+		xps->priv->file = NULL;
+	}
+
+	if (xps->priv->docs) {
+		g_list_foreach (xps->priv->docs, (GFunc)g_free, NULL);
+		g_list_free (xps->priv->docs);
+		xps->priv->docs = NULL;
+	}
+
+	if (xps->priv->fixed_repr) {
+		g_free (xps->priv->fixed_repr);
+		xps->priv->fixed_repr = NULL;
+	}
+
+	if (xps->priv->thumbnail) {
+		g_free (xps->priv->thumbnail);
+		xps->priv->thumbnail = NULL;
+	}
+
+	if (xps->priv->core_props) {
+		g_free (xps->priv->core_props);
+		xps->priv->core_props = NULL;
+	}
+
+	G_OBJECT_CLASS (gxps_file_parent_class)->finalize (object);
+}
+
+static void
+gxps_file_init (GXPSFile *xps)
+{
+	xps->priv = G_TYPE_INSTANCE_GET_PRIVATE (xps,
+						 GXPS_TYPE_FILE,
+						 GXPSFilePrivate);
+}
+
+static void
+gxps_file_set_property (GObject      *object,
+			guint         prop_id,
+			const GValue *value,
+			GParamSpec   *pspec)
+{
+	GXPSFile *xps = GXPS_FILE (object);
+
+	switch (prop_id) {
+	case PROP_FILE:
+		xps->priv->file = g_value_dup_object (value);
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	}
+}
+
+static void
+gxps_file_class_init (GXPSFileClass *klass)
+{
+	GObjectClass *object_class = G_OBJECT_CLASS (klass);
+
+	object_class->set_property = gxps_file_set_property;
+	object_class->finalize = gxps_file_finalize;
+
+	g_object_class_install_property (object_class,
+					 PROP_FILE,
+					 g_param_spec_object ("file",
+							      "File",
+							      "The file file",
+							      G_TYPE_FILE,
+							      G_PARAM_WRITABLE |
+							      G_PARAM_CONSTRUCT_ONLY));
+
+	g_type_class_add_private (klass, sizeof (GXPSFilePrivate));
+}
+
+static gboolean
+gxps_file_initable_init (GInitable     *initable,
+			 GCancellable  *cancellable,
+			 GError       **error)
+{
+	GXPSFile *xps = GXPS_FILE (initable);
+
+	if (xps->priv->initialized) {
+		if (xps->priv->init_error) {
+			g_propagate_error (error, g_error_copy (xps->priv->init_error));
+			return FALSE;
+		}
+
+		return TRUE;
+	}
+
+	xps->priv->initialized = TRUE;
+
+	xps->priv->zip = gxps_archive_new (xps->priv->file);
+
+	if (!gxps_file_parse_rels (xps, &xps->priv->init_error)) {
+		g_propagate_error (error, g_error_copy (xps->priv->init_error));
+		return FALSE;
+	}
+
+	if (!xps->priv->fixed_repr) {
+		g_set_error_literal (&xps->priv->init_error,
+				     GXPS_FILE_ERROR,
+				     GXPS_FILE_ERROR_INVALID,
+				     "Invalid XPS File: fixedrepresentation not found");
+		g_propagate_error (error, g_error_copy (xps->priv->init_error));
+		return FALSE;
+	}
+
+	gxps_file_parse_fixed_repr (xps, error);
+
+	if (!xps->priv->docs) {
+		g_set_error_literal (&xps->priv->init_error,
+				     GXPS_FILE_ERROR,
+				     GXPS_FILE_ERROR_INVALID,
+				     "Invalid XPS File: no documents found");
+		g_propagate_error (error, g_error_copy (xps->priv->init_error));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static void
+initable_iface_init (GInitableIface *initable_iface)
+{
+	initable_iface->init = gxps_file_initable_init;
+}
+
+GXPSFile *
+gxps_file_new (GFile   *filename,
+	       GError **error)
+{
+	g_return_val_if_fail (G_IS_FILE (filename), NULL);
+
+	return g_initable_new (GXPS_TYPE_FILE,
+			       NULL, error,
+			       "file", filename,
+			       NULL);
+}
+
+guint
+gxps_file_get_n_documents (GXPSFile *xps)
+{
+	g_return_val_if_fail (GXPS_IS_FILE (xps), 0);
+
+	return g_list_length (xps->priv->docs);
+}
+
+GXPSDocument *
+gxps_file_get_document (GXPSFile *xps,
+			guint     n_doc,
+			GError  **error)
+{
+	const gchar  *source;
+
+	g_return_val_if_fail (GXPS_IS_FILE (xps), NULL);
+
+	source = g_list_nth_data (xps->priv->docs, n_doc);
+	g_assert (source != NULL);
+
+	return _gxps_document_new (xps->priv->zip, source, error);
+}
