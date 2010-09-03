@@ -24,6 +24,7 @@
 
 #include "gxps-document.h"
 #include "gxps-archive.h"
+#include "gxps-links.h"
 #include "gxps-private.h"
 #include "gxps-error.h"
 
@@ -400,3 +401,21 @@ gxps_document_get_page_size (GXPSDocument *doc,
 
 	return TRUE;
 }
+
+gint
+gxps_document_get_page_for_anchor (GXPSDocument *doc,
+				   const gchar  *anchor)
+{
+	guint i;
+
+	g_return_val_if_fail (GXPS_IS_DOCUMENT (doc), -1);
+	g_return_val_if_fail (anchor != NULL, -1);
+
+	for (i = 0; i < doc->priv->n_pages; i++) {
+		if (g_list_find_custom (doc->priv->pages[i]->links, anchor, (GCompareFunc)strcmp))
+			return i;
+	}
+
+	return -1;
+}
+

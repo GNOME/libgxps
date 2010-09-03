@@ -52,16 +52,19 @@ struct _GXPSDocumentClass {
 	GObjectClass parent_class;
 };
 
-GType     gxps_document_get_type      (void) G_GNUC_CONST;
+GType                  gxps_document_get_type            (void) G_GNUC_CONST;
 
-guint     gxps_document_get_n_pages   (GXPSDocument *doc);
-GXPSPage *gxps_document_get_page      (GXPSDocument *doc,
-				       guint         n_page,
-				       GError      **error);
-gboolean  gxps_document_get_page_size (GXPSDocument *doc,
-				       guint         n_page,
-				       guint        *width,
-				       guint        *height);
+guint                  gxps_document_get_n_pages         (GXPSDocument *doc);
+GXPSPage              *gxps_document_get_page            (GXPSDocument *doc,
+							  guint         n_page,
+							  GError      **error);
+gboolean               gxps_document_get_page_size       (GXPSDocument *doc,
+							  guint         n_page,
+							  guint        *width,
+							  guint        *height);
+gint                   gxps_document_get_page_for_anchor (GXPSDocument *doc,
+							  const gchar  *anchor);
+
 G_END_DECLS
 
 #endif /* __GXPS_DOCUMENT_H__ */
