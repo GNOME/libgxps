@@ -381,3 +381,22 @@ gxps_file_get_document (GXPSFile *xps,
 
 	return _gxps_document_new (xps->priv->zip, source, error);
 }
+
+gint
+gxps_file_get_document_for_link_target (GXPSFile       *xps,
+					GXPSLinkTarget *target)
+{
+	GList       *l;
+	guint        n_doc = 0;
+	const gchar *uri;
+
+	uri = gxps_link_target_get_uri (target);
+	for (l = xps->priv->docs; l; l = g_list_next (l)) {
+		if (g_ascii_strcasecmp (uri, (gchar *)l->data) == 0)
+			return n_doc;
+		n_doc++;
+	}
+
+	return -1;
+}
+

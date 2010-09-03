@@ -28,6 +28,7 @@
 #include <gio/gio.h>
 
 #include "gxps-document.h"
+#include "gxps-links.h"
 
 G_BEGIN_DECLS
 
@@ -58,15 +59,17 @@ struct _GXPSFileClass {
 	GObjectClass parent_class;
 };
 
-GType         gxps_file_get_type        (void) G_GNUC_CONST;
-GQuark        gxps_file_error_quark     (void) G_GNUC_CONST;
-GXPSFile     *gxps_file_new             (GFile    *filename,
-					 GError  **error);
+GType         gxps_file_get_type                     (void) G_GNUC_CONST;
+GQuark        gxps_file_error_quark                  (void) G_GNUC_CONST;
+GXPSFile     *gxps_file_new                          (GFile          *filename,
+						      GError        **error);
 
-guint         gxps_file_get_n_documents (GXPSFile *xps);
-GXPSDocument *gxps_file_get_document    (GXPSFile *xps,
-					 guint     n_doc,
-					 GError  **error);
+guint         gxps_file_get_n_documents              (GXPSFile       *xps);
+GXPSDocument *gxps_file_get_document                 (GXPSFile       *xps,
+						      guint           n_doc,
+						      GError        **error);
+gint          gxps_file_get_document_for_link_target (GXPSFile       *xps,
+						      GXPSLinkTarget *target);
 
 G_END_DECLS
 
