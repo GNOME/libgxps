@@ -208,6 +208,16 @@ gxps_archive_new (GFile *filename)
 	return archive;
 }
 
+gboolean
+gxps_archive_has_entry (GXPSArchive *archive,
+			const gchar *path)
+{
+	if (path && path[0] == '/')
+		path++;
+
+	return g_list_find_custom (archive->entries, path, (GCompareFunc)g_ascii_strcasecmp) != NULL;
+}
+
 /* GXPSArchiveInputStream */
 typedef struct _GXPSArchiveInputStream {
 	GInputStream          parent;

@@ -40,6 +40,8 @@ typedef struct _GXPSArchiveEntry GXPSArchiveEntry;
 GType             gxps_archive_get_type       (void) G_GNUC_CONST;
 GXPSArchive      *gxps_archive_new            (GFile            *filename);
 
+gboolean          gxps_archive_has_entry      (GXPSArchive      *archive,
+					       const gchar      *path);
 GInputStream     *gxps_archive_open           (GXPSArchive      *archive,
 					       const gchar      *path);
 gboolean          gxps_archive_read_entry     (GXPSArchive      *archive,
