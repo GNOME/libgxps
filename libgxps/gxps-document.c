@@ -44,6 +44,8 @@ typedef struct _Page {
 struct _GXPSDocumentPrivate {
 	GXPSArchive *zip;
 	gchar       *source;
+	gboolean     has_rels;
+	gchar       *structure;
 
 	gboolean     initialized;
 	GError      *init_error;
@@ -56,6 +58,8 @@ static void initable_iface_init (GInitableIface *initable_iface);
 
 G_DEFINE_TYPE_WITH_CODE (GXPSDocument, gxps_document, G_TYPE_OBJECT,
 			 G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init))
+
+#define REL_DOCUMENT_STRUCTURE "http://schemas.microsoft.com/xps/2005/06/documentstructure"
 
 static Page *
 page_new (void)
@@ -227,6 +231,82 @@ gxps_document_parse_fixed_doc (GXPSDocument *doc,
 }
 
 static void
+doc_rels_start_element (GMarkupParseContext  *context,
+			const gchar          *element_name,
+			const gchar         **names,
+			const gchar         **values,
+			gpointer              user_data,
+			GError              **error)
+{
+	GXPSDocument *doc = GXPS_DOCUMENT (user_data);
+
+	if (strcmp (element_name, "Relationship") == 0) {
+		const gchar *type = NULL;
+		const gchar *target = NULL;
+		gint         i;
+
+		for (i = 0; names[i]; i++) {
+			if (strcmp (names[i], "Type") == 0) {
+				type = values[i];
+			} else if (strcmp (names[i], "Target") == 0) {
+				target = values[i];
+			} else if (strcmp (names[i], "Id") == 0) {
+				/* Ignore ids for now */
+			}
+		}
+
+		if (g_strcmp0 (type, REL_DOCUMENT_STRUCTURE) == 0) {
+			doc->priv->structure = target ? gxps_resolve_relative_path (doc->priv->source, target) : NULL;
+		}
+	}
+}
+
+static const GMarkupParser doc_rels_parser = {
+	doc_rels_start_element,
+	NULL,
+	NULL,
+	NULL,
+	NULL
+};
+
+static gboolean
+gxps_document_parse_rels (GXPSDocument *doc,
+			  GError      **error)
+{
+	GInputStream        *stream;
+	GMarkupParseContext *ctx;
+	gchar               *filename;
+	gchar               *rels, *doc_rels;
+	gboolean             retval;
+
+	if (!doc->priv->has_rels)
+		return FALSE;
+
+	filename = g_path_get_basename (doc->priv->source);
+	rels = g_strconcat ("_rels/", filename, ".rels", NULL);
+	doc_rels = gxps_resolve_relative_path (doc->priv->source, rels);
+	g_free (filename);
+	g_free (rels);
+
+	stream = gxps_archive_open (doc->priv->zip, doc_rels);
+	if (!stream) {
+		doc->priv->has_rels = FALSE;
+		g_free (doc_rels);
+
+		return FALSE;
+	}
+
+	ctx = g_markup_parse_context_new (&doc_rels_parser, 0, doc, NULL);
+	retval = gxps_parse_stream (ctx, stream, error);
+	g_object_unref (stream);
+	g_free (doc_rels);
+
+	g_markup_parse_context_free (ctx);
+
+	return retval;
+}
+
+static void
 gxps_document_finalize (GObject *object)
 {
 	GXPSDocument *doc = GXPS_DOCUMENT (object);
@@ -239,6 +319,11 @@ gxps_document_finalize (GObject *object)
 	if (doc->priv->source) {
 		g_free (doc->priv->source);
 		doc->priv->source = NULL;
+	}
+
+	if (doc->priv->structure) {
+		g_free (doc->priv->structure);
+		doc->priv->structure = NULL;
 	}
 
 	if (doc->priv->pages) {
@@ -259,6 +344,7 @@ gxps_document_init (GXPSDocument *doc)
 	doc->priv = G_TYPE_INSTANCE_GET_PRIVATE (doc,
 						 GXPS_TYPE_DOCUMENT,
 						 GXPSDocumentPrivate);
+	doc->priv->has_rels = TRUE;
 }
 
 static void
@@ -417,5 +503,25 @@ gxps_document_get_page_for_anchor (GXPSDocument *doc,
 	}
 
 	return -1;
+}
+
+GXPSDocumentStructure *
+gxps_document_get_structure (GXPSDocument *doc)
+{
+	g_return_val_if_fail (GXPS_IS_DOCUMENT (doc), NULL);
+
+	if (!doc->priv->structure) {
+		if (!gxps_document_parse_rels (doc, NULL))
+			return NULL;
+	}
+
+	if (!doc->priv->structure)
+		return NULL;
+
+	if (!gxps_archive_has_entry (doc->priv->zip, doc->priv->structure))
+		return NULL;
+
+	return _gxps_document_structure_new (doc->priv->zip,
+					     doc->priv->structure);
 }
 

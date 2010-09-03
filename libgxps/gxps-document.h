@@ -28,6 +28,7 @@
 #include <gio/gio.h>
 
 #include "gxps-page.h"
+#include "gxps-document-structure.h"
 
 G_BEGIN_DECLS
 
@@ -64,6 +65,7 @@ gboolean               gxps_document_get_page_size       (GXPSDocument *doc,
 							  guint        *height);
 gint                   gxps_document_get_page_for_anchor (GXPSDocument *doc,
 							  const gchar  *anchor);
+GXPSDocumentStructure *gxps_document_get_structure       (GXPSDocument *doc);
 
 G_END_DECLS
 

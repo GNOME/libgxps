@@ -22,6 +22,7 @@
 #define __GXPS_H_INSIDE__
 
 #include <libgxps/gxps-document.h>
+#include <libgxps/gxps-document-structure.h>
 #include <libgxps/gxps-error.h>
 #include <libgxps/gxps-file.h>
 #include <libgxps/gxps-links.h>
