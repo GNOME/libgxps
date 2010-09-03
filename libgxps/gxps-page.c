@@ -25,6 +25,7 @@
 #include "gxps-page.h"
 #include "gxps-archive.h"
 #include "gxps-fonts.h"
+#include "gxps-links.h"
 #include "gxps-images.h"
 #include "gxps-private.h"
 #include "gxps-error.h"
@@ -2720,6 +2721,254 @@ gxps_page_parse_for_rendering (GXPSPage *page,
 	return (*error != NULL) ? FALSE : TRUE;
 }
 
+/* Links */
+typedef struct {
+	GXPSPage *page;
+	cairo_t  *cr;
+
+	GList    *st;
+	GList    *links;
+	gboolean  do_transform;
+} GXPSLinksContext;
+
+typedef struct {
+	gchar *data;
+	gchar *uri;
+} GXPSPathLink;
+
+static void
+links_start_element (GMarkupParseContext  *context,
+		     const gchar          *element_name,
+		     const gchar         **names,
+		     const gchar         **values,
+		     gpointer              user_data,
+		     GError              **error)
+{
+	GXPSLinksContext *ctx = (GXPSLinksContext *)user_data;
+
+	if (strcmp (element_name, "Canvas") == 0) {
+		gint i;
+
+		LOG (g_print ("save\n"));
+		cairo_save (ctx->cr);
+
+		for (i = 0; names[i] != NULL; i++) {
+			if (strcmp (names[i], "RenderTransform") == 0) {
+				cairo_matrix_t matrix;
+
+				if (!gxps_matrix_parse (values[i], &matrix)) {
+					gxps_parse_error (context,
+							  ctx->page->priv->source,
+							  G_MARKUP_ERROR_INVALID_CONTENT,
+							  "Canvas", "RenderTransform", values[i], error);
+					return;
+				}
+				LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+					      matrix.xx, matrix.yx,
+					      matrix.xy, matrix.yy,
+					      matrix.x0, matrix.y0));
+				cairo_transform (ctx->cr, &matrix);
+
+				return;
+			} else if (strcmp (names[i], "Clip") == 0) {
+				/* FIXME: do we really need clips? */
+				if (!path_data_parse (values[i], ctx->cr, error))
+					return;
+				LOG (g_print ("clip\n"));
+				cairo_clip (ctx->cr);
+			}
+		}
+	} else if (strcmp (element_name, "Path") == 0) {
+		gint i;
+		GXPSPathLink *path_link;
+		const gchar *data = NULL;
+		const gchar *link_uri = NULL;
+
+		LOG (g_print ("save\n"));
+		cairo_save (ctx->cr);
+
+		for (i = 0; names[i] != NULL; i++) {
+			if (strcmp (names[i], "Data") == 0) {
+				data = values[i];
+			} else if (strcmp (names[i], "RenderTransform") == 0) {
+				cairo_matrix_t matrix;
+
+				if (!gxps_matrix_parse (values[i], &matrix)) {
+					gxps_parse_error (context,
+							  ctx->page->priv->source,
+							  G_MARKUP_ERROR_INVALID_CONTENT,
+							  "Path", "RenderTransform", values[i], error);
+					return;
+				}
+				LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+					      matrix.xx, matrix.yx,
+					      matrix.xy, matrix.yy,
+					      matrix.x0, matrix.y0));
+				cairo_transform (ctx->cr, &matrix);
+			} else if (strcmp (names[i], "FixedPage.NavigateUri") == 0) {
+				link_uri = values[i];
+			}
+		}
+
+		path_link = g_slice_new0 (GXPSPathLink);
+		if (link_uri) {
+			path_link->data = data ? g_strdup (data) : NULL;
+			path_link->uri = gxps_resolve_relative_path (ctx->page->priv->source, link_uri);
+		}
+
+		ctx->st = g_list_prepend (ctx->st, path_link);
+	} else if (strcmp (element_name, "Glyphs") == 0) {
+		gint i;
+
+		LOG (g_print ("save\n"));
+		cairo_save (ctx->cr);
+
+		for (i = 0; names[i] != NULL; i++) {
+			if (strcmp (names[i], "RenderTransform") == 0) {
+				cairo_matrix_t matrix;
+
+				if (!gxps_matrix_parse (values[i], &matrix)) {
+					gxps_parse_error (context,
+							  ctx->page->priv->source,
+							  G_MARKUP_ERROR_INVALID_CONTENT,
+							  "Glyphs", "RenderTransform", values[i], error);
+					return;
+				}
+				LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+					      matrix.xx, matrix.yx,
+					      matrix.xy, matrix.yy,
+					      matrix.x0, matrix.y0));
+				cairo_transform (ctx->cr, &matrix);
+			} else if (strcmp (names[i], "FixedPage.NavigateUri") == 0) {
+				/* TODO */
+			}
+		}
+	} else if (strcmp (element_name, "Canvas.RenderTransform") == 0 ||
+		   strcmp (element_name, "Path.RenderTransform") == 0 ||
+		   strcmp (element_name, "Glyphs.RenderTransform") == 0 ) {
+		ctx->do_transform = TRUE;
+	} else if (strcmp (element_name, "MatrixTransform") == 0) {
+		gint i;
+
+		if (!ctx->do_transform) {
+			return;
+		}
+
+		for (i = 0; names[i] != NULL; i++) {
+			if (strcmp (names[i], "Matrix") == 0) {
+				cairo_matrix_t matrix;
+
+				if (!gxps_matrix_parse (values[i], &matrix)) {
+					gxps_parse_error (context,
+							  ctx->page->priv->source,
+							  G_MARKUP_ERROR_INVALID_CONTENT,
+							  "MatrixTransform", "Matrix",
+							  values[i], error);
+					return;
+				}
+				LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+					      matrix.xx, matrix.yx,
+					      matrix.xy, matrix.yy,
+					      matrix.x0, matrix.y0));
+				cairo_transform (ctx->cr, &matrix);
+				return;
+			}
+		}
+	}
+}
+
+static void
+links_end_element (GMarkupParseContext  *context,
+		   const gchar          *element_name,
+		   gpointer              user_data,
+		   GError              **error)
+{
+	GXPSLinksContext *ctx = (GXPSLinksContext *)user_data;
+
+	if (strcmp (element_name, "Canvas") == 0) {
+		LOG (g_print ("restore\n"));
+		cairo_restore (ctx->cr);
+	} else if (strcmp (element_name, "Path") == 0) {
+		GXPSPathLink *path_link;
+
+		path_link = (GXPSPathLink *)ctx->st->data;
+		ctx->st = g_list_delete_link (ctx->st, ctx->st);
+		if (path_link->uri) {
+			GXPSLink         *link;
+			gdouble           x1, y1, x2, y2;
+			cairo_rectangle_t area;
+
+			if (path_link->data)
+				path_data_parse (path_link->data, ctx->cr, error);
+
+			cairo_path_extents (ctx->cr, &x1, &y1, &x2, &y2);
+			cairo_user_to_device (ctx->cr, &x1, &y1);
+			cairo_user_to_device (ctx->cr, &x2, &y2);
+
+			area.x = x1;
+			area.y = y1;
+			area.width = x2 - x1;
+			area.height = y2 - y1;
+			link = _gxps_link_new (ctx->page->priv->zip, &area, path_link->uri);
+			ctx->links = g_list_prepend (ctx->links, link);
+			g_free (path_link->uri);
+		}
+		g_free (path_link->data);
+		g_slice_free (GXPSPathLink, path_link);
+		cairo_new_path (ctx->cr);
+		LOG (g_print ("restore\n"));
+		cairo_restore (ctx->cr);
+	} else if (strcmp (element_name, "Glyphs") == 0) {
+		LOG (g_print ("restore\n"));
+		cairo_restore (ctx->cr);
+	} else if (strcmp (element_name, "Canvas.RenderTransform") == 0 ||
+		   strcmp (element_name, "Path.RenderTransform") == 0 ||
+		   strcmp (element_name, "Glyphs.RenderTransform") == 0 ) {
+		ctx->do_transform = FALSE;
+	}
+}
+
+static const GMarkupParser links_parser = {
+	links_start_element,
+	links_end_element,
+	NULL,
+	NULL,
+	NULL
+};
+
+static GList *
+gxps_page_parse_links (GXPSPage *page,
+		       cairo_t  *cr,
+		       GError  **error)
+{
+	GInputStream        *stream;
+	GXPSLinksContext     ctx;
+	GMarkupParseContext *context;
+
+	stream = gxps_archive_open (page->priv->zip,
+				    page->priv->source);
+	if (!stream) {
+		g_set_error (error,
+			     GXPS_ERROR,
+			     GXPS_ERROR_SOURCE_NOT_FOUND,
+			     "Page source %s not found in archive",
+			     page->priv->source);
+		return FALSE;
+	}
+
+	ctx.cr = cr;
+	ctx.page = page;
+	ctx.st = NULL;
+	ctx.links = NULL;
+
+	context = g_markup_parse_context_new (&links_parser, 0, &ctx, NULL);
+	gxps_parse_stream (context, stream, error);
+	g_object_unref (stream);
+	g_markup_parse_context_free (context);
+
+	return ctx.links;
+}
+
 typedef struct {
 	GXPSPage   *page;
 	cairo_t    *cr;
@@ -3162,6 +3411,29 @@ gxps_page_render (GXPSPage *page,
 	g_return_val_if_fail (cr != NULL, FALSE);
 
 	return gxps_page_parse_for_rendering (page, cr, error);
+}
+
+GList *
+gxps_page_get_links (GXPSPage *page,
+		     GError  **error)
+{
+	cairo_surface_t  *surface;
+	cairo_t          *cr;
+	GList            *links;
+	cairo_rectangle_t extents;
+
+	extents.x = extents.y = 0;
+	extents.width = page->priv->width;
+	extents.height = page->priv->height;
+
+	surface = cairo_recording_surface_create (CAIRO_CONTENT_COLOR, &extents);
+	cr = cairo_create (surface);
+	cairo_surface_destroy (surface);
+
+	links = gxps_page_parse_links (page, cr, error);
+	cairo_destroy (cr);
+
+	return links;
 }
 
 gboolean

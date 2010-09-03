@@ -68,6 +68,8 @@ void     gxps_page_get_size               (GXPSPage          *page,
 gboolean gxps_page_render                 (GXPSPage          *page,
 					   cairo_t           *cr,
 					   GError           **error);
+GList   *gxps_page_get_links              (GXPSPage          *page,
+					   GError           **error);
 gboolean gxps_page_get_anchor_destination (GXPSPage          *page,
 					   const gchar       *anchor,
 					   cairo_rectangle_t *area,
