@@ -19,19 +19,27 @@
 #ifndef __GXPS_PRIVATE_H__
 #define __GXPS_PRIVATE_H__
 
+#include <cairo.h>
+
 #include "gxps-archive.h"
 #include "gxps-document.h"
 #include "gxps-page.h"
 #include "gxps-parse-utils.h"
+#include "gxps-links.h"
 
 G_BEGIN_DECLS
 
-GXPSDocument *_gxps_document_new (GXPSArchive *zip,
-				  const gchar *source,
-				  GError     **error);
-GXPSPage     *_gxps_page_new     (GXPSArchive *zip,
-				  const gchar *source,
-				  GError     **error);
+GXPSDocument          *_gxps_document_new           (GXPSArchive       *zip,
+						     const gchar       *source,
+						     GError           **error);
+GXPSPage              *_gxps_page_new               (GXPSArchive       *zip,
+						     const gchar       *source,
+						     GError           **error);
+GXPSLink              *_gxps_link_new               (GXPSArchive       *zip,
+						     cairo_rectangle_t *area,
+						     const gchar       *dest);
+GXPSLinkTarget        *_gxps_link_target_new        (GXPSArchive       *zip,
+						     const gchar       *uri);
 
 G_END_DECLS
 

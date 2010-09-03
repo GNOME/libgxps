@@ -8,25 +8,27 @@ NOINST_H_FILES = \
 	gxps-private.h
 
 INST_H_FILES = \
-	gxps.h		\
-	gxps-document.h	\
-	gxps-error.h	\
-	gxps-file.h	\
+	gxps.h				\
+	gxps-document.h			\
+	gxps-error.h			\
+	gxps-file.h			\
+	gxps-links.h			\
 	gxps-page.h
 
 libgxpsincludedir = $(includedir)/libgxps
 libgxpsinclude_HEADERS = $(INST_H_FILES)
 
 libgxps_la_SOURCES = \
-	gxps-archive.c		\
-	gxps-document.c		\
-	gxps-error.c		\
-	gxps-file.c		\
-	gxps-fonts.c		\
-	gxps-images.c		\
-	gxps-page.c		\
-	gxps-parse-utils.c	\
-	$(NOINST_H_FILES)	\
+	gxps-archive.c			\
+	gxps-document.c			\
+	gxps-error.c			\
+	gxps-file.c			\
+	gxps-fonts.c			\
+	gxps-links.c			\
+	gxps-images.c			\
+	gxps-page.c			\
+	gxps-parse-utils.c		\
+	$(NOINST_H_FILES)		\
 	$(INST_H_FILES)
 
 libgxps_la_CPPFLAGS = \

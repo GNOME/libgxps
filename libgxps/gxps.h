@@ -24,6 +24,7 @@
 #include <libgxps/gxps-document.h>
 #include <libgxps/gxps-error.h>
 #include <libgxps/gxps-file.h>
+#include <libgxps/gxps-links.h>
 #include <libgxps/gxps-page.h>
 
 #undef __GXPS_H_INSIDE__
