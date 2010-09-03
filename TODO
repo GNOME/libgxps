@@ -18,14 +18,12 @@ GXPSFile
 GXPSDocument
 ------------
 
-- Links API
 - Info API
 
 GXPSPage
 --------
 
 - Lang API
-- Name API
 - Images API
 - Text API
 - Selections API
