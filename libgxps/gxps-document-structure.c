@@ -230,7 +230,7 @@ outline_start_element (GMarkupParseContext  *context,
 					break;
 				}
 			}
-			g_assert (level > 1 && node->parent != NULL);
+			g_assert (level == 1 || (level > 1 && node->parent != NULL));
 		} else if (ctx->level == level) {
 			/* Same level, parent must be the same as the previous node */
 			node->parent = (ctx->prevs) ? ((OutlineNode *)ctx->prevs->data)->parent : NULL;
