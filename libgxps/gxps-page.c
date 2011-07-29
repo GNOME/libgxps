@@ -2487,20 +2487,25 @@ render_end_element (GMarkupParseContext  *context,
 		if (!path->data) {
 			LOG (g_print ("restore\n"));
 			cairo_restore (ctx->cr);
+			gxps_path_free (path);
 			return;
 		}
 
 		cairo_set_fill_rule (ctx->cr, path->fill_rule);
 
 		if (path->clip_data) {
-			if (!path_data_parse (path->clip_data, ctx->cr, error))
+			if (!path_data_parse (path->clip_data, ctx->cr, error)) {
+				gxps_path_free (path);
 				return;
+			}
 			LOG (g_print ("clip\n"));
 			cairo_clip (ctx->cr);
 		}
 
-		if (!path_data_parse (path->data, ctx->cr, error))
+		if (!path_data_parse (path->data, ctx->cr, error)) {
+			gxps_path_free (path);
 			return;
+		}
 
 		if (path->fill_pattern) {
 			LOG (g_print ("fill\n"));
