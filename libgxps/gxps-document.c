@@ -335,6 +335,8 @@ gxps_document_finalize (GObject *object)
 		doc->priv->pages = NULL;
 	}
 
+	g_clear_error (&doc->priv->init_error);
+
 	G_OBJECT_CLASS (gxps_document_parent_class)->finalize (object);
 }
 
