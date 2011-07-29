@@ -244,6 +244,8 @@ gxps_file_finalize (GObject *object)
 		xps->priv->core_props = NULL;
 	}
 
+	g_clear_error (&xps->priv->init_error);
+
 	G_OBJECT_CLASS (gxps_file_parent_class)->finalize (object);
 }
 
