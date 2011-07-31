@@ -196,7 +196,10 @@ gxps_file_parse_fixed_repr (GXPSFile *xps,
 	stream = gxps_archive_open (xps->priv->zip,
 				    xps->priv->fixed_repr);
 	if (!stream) {
-		/* TODO: fill error */
+		g_set_error_literal (error,
+				     GXPS_FILE_ERROR,
+				     GXPS_FILE_ERROR_INVALID,
+				     "Invalid XPS File: cannot open fixedrepresentation");
 		return FALSE;
 	}
 
@@ -329,7 +332,10 @@ gxps_file_initable_init (GInitable     *initable,
 		return FALSE;
 	}
 
-	gxps_file_parse_fixed_repr (xps, error);
+	if (!gxps_file_parse_fixed_repr (xps, &xps->priv->init_error)) {
+		g_propagate_error (error, g_error_copy (xps->priv->init_error));
+		return FALSE;
+	}
 
 	if (!xps->priv->docs) {
 		g_set_error_literal (&xps->priv->init_error,
