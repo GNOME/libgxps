@@ -970,23 +970,29 @@ gxps_points_parse (const gchar *points,
 		   guint       *n_points)
 {
 	gchar  **items;
-	guint    i, j;
+	guint    i, j = 0;
 	gboolean retval = TRUE;
 
+	*n_points = 0;
 	items = g_strsplit (points, " ", -1);
-	if (!items) {
-		*n_points = 0;
+	if (!items)
 		return FALSE;
+
+	for (i = 0; items[i] != NULL; i++) {
+		if (*items[i] != '\0') /* don't count empty string */
+			(*n_points)++;
 	}
 
-	*n_points = g_strv_length (items);
 	if (*n_points == 0)
 		return FALSE;
 
 	*coords = g_malloc (*n_points * 2 * sizeof (gdouble));
 
-	for (i = 0, j = 0; i < *n_points; i++, j += 2) {
+	for (i = 0; items[i] != NULL; i++) {
 		gdouble x, y;
+
+		if (*items[i] == '\0')
+			continue;
 
 		if (!gxps_point_parse (items[i], &x, &y)) {
 			g_free (*coords);
@@ -994,8 +1000,8 @@ gxps_points_parse (const gchar *points,
 			break;
 		}
 
-		coords[0][j] = x;
-		coords[0][j + 1] = y;
+		coords[0][j++] = x;
+		coords[0][j++] = y;
 	}
 
 	g_strfreev (items);
