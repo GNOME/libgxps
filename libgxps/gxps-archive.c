@@ -25,18 +25,28 @@
 
 #include "gxps-archive.h"
 
+enum {
+	PROP_0,
+	PROP_FILE
+};
+
 struct _GXPSArchive {
 	GObject parent;
 
-	GFile  *filename;
-	GList  *entries;
+	gboolean  initialized;
+	GError   *init_error;
+	GFile    *filename;
+	GList    *entries;
 };
 
 struct _GXPSArchiveClass {
 	GObjectClass parent_class;
 };
 
-G_DEFINE_TYPE (GXPSArchive, gxps_archive, G_TYPE_OBJECT)
+static void initable_iface_init (GInitableIface *initable_iface);
+
+G_DEFINE_TYPE_WITH_CODE (GXPSArchive, gxps_archive, G_TYPE_OBJECT,
+			 G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init))
 
 #define BUFFER_SIZE 4096
 
@@ -112,7 +122,8 @@ _archive_close (struct archive *archive,
 {
 	ZipArchive *zip = (ZipArchive *)data;
 
-	g_object_unref (zip->stream);
+	if (zip->stream)
+		g_object_unref (zip->stream);
 	zip->stream = NULL;
 
 	return ARCHIVE_OK;
@@ -159,6 +170,8 @@ gxps_archive_finalize (GObject *object)
 		archive->filename = NULL;
 	}
 
+	g_clear_error (&archive->init_error);
+
 	G_OBJECT_CLASS (gxps_archive_parent_class)->finalize (object);
 }
 
@@ -169,25 +182,72 @@ gxps_archive_init (GXPSArchive *archive)
 }
 
 static void
+gxps_archive_set_property (GObject      *object,
+			   guint         prop_id,
+			   const GValue *value,
+			   GParamSpec   *pspec)
+{
+	GXPSArchive *archive = GXPS_ARCHIVE (object);
+
+	switch (prop_id) {
+	case PROP_FILE:
+		archive->filename = g_value_dup_object (value);
+		break;
+	default:
+		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+		break;
+	}
+}
+
+static void
 gxps_archive_class_init (GXPSArchiveClass *klass)
 {
 	GObjectClass *object_class = G_OBJECT_CLASS (klass);
 
+	object_class->set_property = gxps_archive_set_property;
 	object_class->finalize = gxps_archive_finalize;
+
+	g_object_class_install_property (object_class,
+					 PROP_FILE,
+					 g_param_spec_object ("file",
+							      "File",
+							      "The archive file",
+							      G_TYPE_FILE,
+							      G_PARAM_WRITABLE |
+							      G_PARAM_CONSTRUCT_ONLY));
 }
 
-GXPSArchive *
-gxps_archive_new (GFile *filename)
+static gboolean
+gxps_archive_initable_init (GInitable     *initable,
+			    GCancellable  *cancellable,
+			    GError       **error)
 {
 	GXPSArchive          *archive;
 	ZipArchive           *zip;
 	struct archive_entry *entry;
 	gint                  result;
 
-	archive = GXPS_ARCHIVE (g_object_new (GXPS_TYPE_ARCHIVE, NULL));
-	archive->filename = g_object_ref (filename);
+	archive = GXPS_ARCHIVE (initable);
 
-	zip = gxps_zip_archive_create (filename);
+	if (archive->initialized) {
+		if (archive->init_error) {
+			g_propagate_error (error, g_error_copy (archive->init_error));
+			return FALSE;
+		}
+
+		return TRUE;
+	}
+
+	archive->initialized = TRUE;
+
+	zip = gxps_zip_archive_create (archive->filename);
+	if (zip->error) {
+		g_propagate_error (&archive->init_error, zip->error);
+		g_propagate_error (error, g_error_copy (archive->init_error));
+		gxps_zip_archive_destroy (zip);
+		return FALSE;
+	}
+
 	do {
 		result = archive_read_next_header (zip->archive, &entry);
 		if (result >= ARCHIVE_WARN && result <= ARCHIVE_OK) {
@@ -205,7 +265,23 @@ gxps_archive_new (GFile *filename)
 
 	gxps_zip_archive_destroy (zip);
 
-	return archive;
+	return TRUE;
+}
+
+static void
+initable_iface_init (GInitableIface *initable_iface)
+{
+	initable_iface->init = gxps_archive_initable_init;
+}
+
+GXPSArchive *
+gxps_archive_new (GFile   *filename,
+		  GError **error)
+{
+	return g_initable_new (GXPS_TYPE_ARCHIVE,
+			       NULL, error,
+			       "file", filename,
+			       NULL);
 }
 
 gboolean

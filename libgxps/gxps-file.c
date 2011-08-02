@@ -316,7 +316,11 @@ gxps_file_initable_init (GInitable     *initable,
 
 	xps->priv->initialized = TRUE;
 
-	xps->priv->zip = gxps_archive_new (xps->priv->file);
+	xps->priv->zip = gxps_archive_new (xps->priv->file, &xps->priv->init_error);
+	if (!xps->priv->zip) {
+		g_propagate_error (error, g_error_copy (xps->priv->init_error));
+		return FALSE;
+	}
 
 	if (!gxps_file_parse_rels (xps, &xps->priv->init_error)) {
 		g_propagate_error (error, g_error_copy (xps->priv->init_error));

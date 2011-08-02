@@ -38,7 +38,8 @@ typedef struct _GXPSArchiveClass GXPSArchiveClass;
 typedef struct _GXPSArchiveEntry GXPSArchiveEntry;
 
 GType             gxps_archive_get_type       (void) G_GNUC_CONST;
-GXPSArchive      *gxps_archive_new            (GFile            *filename);
+GXPSArchive      *gxps_archive_new            (GFile            *filename,
+					       GError          **error);
 
 gboolean          gxps_archive_has_entry      (GXPSArchive      *archive,
 					       const gchar      *path);
