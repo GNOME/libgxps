@@ -185,7 +185,7 @@ gxps_parse_stream (GMarkupParseContext  *context,
 		}
 
 		g_markup_parse_context_get_position (context, &line, &column);
-		has_bom = line == 1 && column == 1 && utf8_has_bom (buffer);
+		has_bom = line == 1 && column == 1 && bytes_read >= 3 && utf8_has_bom (buffer);
 		if (!g_markup_parse_context_parse (context,
 						   has_bom ? (const gchar *)buffer + 3 : (const gchar *)buffer,
 						   has_bom ? bytes_read - 3 : bytes_read,
