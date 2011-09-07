@@ -312,6 +312,7 @@ typedef struct {
 	cairo_line_cap_t   line_cap;
 	cairo_line_join_t  line_join;
 	gdouble            miter_limit;
+	gdouble            opacity;
 
 	gboolean           is_stroked : 1;
 	gboolean           is_filled  : 1;
@@ -332,6 +333,7 @@ gxps_path_new (GXPSRenderContext *ctx)
 	path->line_cap = CAIRO_LINE_CAP_BUTT;
 	path->line_join = CAIRO_LINE_JOIN_MITER;
 	path->miter_limit = 10.0;
+	path->opacity = 1.0;
 	path->is_filled = TRUE;
 	path->is_stroked = TRUE;
 
@@ -2602,9 +2604,14 @@ render_start_element (GMarkupParseContext  *context,
 			} else if (strcmp (names[i], "StrokeMiterLimit") == 0) {
 				path->miter_limit = g_strtod (values[i], NULL);
 				GXPS_DEBUG (g_message ("set_miter_limit (%f)", path->miter_limit));
+			} else if (strcmp (names[i], "Opacity") == 0) {
+				path->opacity = g_ascii_strtod (values[i], NULL);
+				GXPS_DEBUG (g_message ("set_opacity (%f)", path->opacity));
 			}
 		}
 
+		if (path->opacity != 1.0)
+			cairo_push_group (ctx->cr);
 		g_markup_parse_context_push (context, &path_parser, path);
 	} else if (strcmp (element_name, "Glyphs") == 0) {
 		GXPSGlyphs  *glyphs;
@@ -2765,6 +2772,11 @@ render_end_element (GMarkupParseContext  *context,
 
 		if (!path->data) {
 			GXPS_DEBUG (g_message ("restore"));
+			/* Something may have been drawn in a PathGeometry */
+			if (path->opacity != 1.0) {
+				cairo_pop_group_to_source (ctx->cr);
+				cairo_paint_with_alpha (ctx->cr, path->opacity);
+			}
 			cairo_restore (ctx->cr);
 			gxps_path_free (path);
 			return;
@@ -2774,6 +2786,8 @@ render_end_element (GMarkupParseContext  *context,
 
 		if (path->clip_data) {
 			if (!path_data_parse (path->clip_data, ctx->cr, error)) {
+				if (path->opacity != 1.0)
+					cairo_pattern_destroy (cairo_pop_group (ctx->cr));
 				gxps_path_free (path);
 				return;
 			}
@@ -2782,6 +2796,8 @@ render_end_element (GMarkupParseContext  *context,
 		}
 
 		if (!path_data_parse (path->data, ctx->cr, error)) {
+			if (path->opacity != 1.0)
+				cairo_pattern_destroy (cairo_pop_group (ctx->cr));
 			gxps_path_free (path);
 			return;
 		}
@@ -2809,6 +2825,10 @@ render_end_element (GMarkupParseContext  *context,
 			cairo_stroke (ctx->cr);
 		}
 
+		if (path->opacity != 1.0) {
+			cairo_pop_group_to_source (ctx->cr);
+			cairo_paint_with_alpha (ctx->cr, path->opacity);
+		}
 		gxps_path_free (path);
 
 		GXPS_DEBUG (g_message ("restore"));
