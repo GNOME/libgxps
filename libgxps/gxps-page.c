@@ -2017,6 +2017,7 @@ typedef struct {
         gint               bidi_level;
         guint              is_sideways : 1;
         guint              italic : 1;
+	gdouble            opacity;
 } GXPSGlyphs;
 
 static GXPSGlyphs *
@@ -2036,6 +2037,7 @@ gxps_glyphs_new (GXPSRenderContext *ctx,
 	glyphs->em_size = font_size;
 	glyphs->origin_x = origin_x;
 	glyphs->origin_y = origin_y;
+	glyphs->opacity = 1.0;
 
 	return glyphs;
 }
@@ -2693,6 +2695,7 @@ render_start_element (GMarkupParseContext  *context,
                 gint         bidi_level = 0;
                 gboolean     is_sideways = FALSE;
                 gboolean     italic = FALSE;
+		gdouble      opacity = 1.0;
 		gint         i;
 
 		GXPS_DEBUG (g_message ("save"));
@@ -2738,6 +2741,8 @@ render_start_element (GMarkupParseContext  *context,
                                 bidi_level = g_ascii_strtoll (values[i], NULL, 10);
                         } else if (strcmp (names[i], "IsSideways") == 0) {
                                 is_sideways = gxps_boolean_parse (values[i]);
+			} else if (strcmp (names[i], "Opacity") == 0) {
+				opacity = g_ascii_strtod (values[i], NULL);
                         } else if (strcmp (names[i], "StyleSimulations") == 0) {
                                 if (strcmp (values[i], "ItalicSimulation") == 0) {
                                         italic = TRUE;
@@ -2776,11 +2781,14 @@ render_start_element (GMarkupParseContext  *context,
                 glyphs->bidi_level = bidi_level;
                 glyphs->is_sideways = is_sideways;
                 glyphs->italic = italic;
+		glyphs->opacity = opacity;
 		if (fill_color) {
 			GXPS_DEBUG (g_message ("set_fill_pattern (solid)"));
 			glyphs->fill_pattern = gxps_create_solid_color_pattern (fill_color);
 		}
 
+		if (glyphs->opacity != 1.0)
+			cairo_push_group (glyphs->ctx->cr);
 		g_markup_parse_context_push (context, &glyphs_parser, glyphs);
 	} else if (strcmp (element_name, "Canvas") == 0) {
 		GXPSCanvas *canvas;
@@ -2933,6 +2941,8 @@ render_end_element (GMarkupParseContext  *context,
 
 		font_face = gxps_fonts_get_font (ctx->page->priv->zip, glyphs->font_uri, error);
 		if (!font_face) {
+			if (glyphs->opacity != 1.0)
+				cairo_pattern_destroy (cairo_pop_group (ctx->cr));
 			gxps_glyphs_free (glyphs);
 
 			GXPS_DEBUG (g_message ("restore"));
@@ -2942,6 +2952,8 @@ render_end_element (GMarkupParseContext  *context,
 
 		if (glyphs->clip_data) {
 			if (!path_data_parse (glyphs->clip_data, ctx->cr, error)) {
+				if (glyphs->opacity != 1.0)
+					cairo_pattern_destroy (cairo_pop_group (ctx->cr));
 				gxps_glyphs_free (glyphs);
 				GXPS_DEBUG (g_message ("restore"));
 				cairo_restore (ctx->cr);
@@ -2985,6 +2997,8 @@ render_end_element (GMarkupParseContext  *context,
                                                        use_show_text_glyphs ? &num_clusters : NULL,
 						       error);
 		if (!success) {
+			if (glyphs->opacity != 1.0)
+				cairo_pattern_destroy (cairo_pop_group (ctx->cr));
 			gxps_glyphs_free (glyphs);
 			cairo_scaled_font_destroy (scaled_font);
 			GXPS_DEBUG (g_message ("restore"));
@@ -3008,6 +3022,10 @@ render_end_element (GMarkupParseContext  *context,
                         cairo_show_glyphs (ctx->cr, glyph_list, num_glyphs);
                 }
 
+		if (glyphs->opacity != 1.0) {
+			cairo_pop_group_to_source (ctx->cr);
+			cairo_paint_with_alpha (ctx->cr, glyphs->opacity);
+		}
 		g_free (glyph_list);
 		gxps_glyphs_free (glyphs);
 		cairo_scaled_font_destroy (scaled_font);
