@@ -1642,6 +1642,74 @@ static GMarkupParser brush_parser = {
 	NULL
 };
 
+typedef struct {
+	GXPSRenderContext *ctx;
+
+	gdouble            opacity;
+} GXPSCanvas;
+
+static GXPSCanvas *
+gxps_canvas_new (GXPSRenderContext *ctx)
+{
+	GXPSCanvas *canvas;
+
+	canvas = g_slice_new0 (GXPSCanvas);
+	canvas->ctx = ctx;
+
+	/* Default values */
+	canvas->opacity = 1.0;
+
+	return canvas;
+}
+
+static void
+gxps_canvas_free (GXPSCanvas *canvas)
+{
+	if (G_UNLIKELY (!canvas))
+		return;
+
+	g_slice_free (GXPSCanvas, canvas);
+}
+
+static void
+canvas_start_element (GMarkupParseContext  *context,
+		      const gchar          *element_name,
+		      const gchar         **names,
+		      const gchar         **values,
+		      gpointer              user_data,
+		      GError              **error)
+{
+	GXPSCanvas *canvas = (GXPSCanvas *)user_data;
+
+	return render_start_element (context,
+				     element_name,
+				     names,
+				     values,
+				     canvas->ctx,
+				     error);
+}
+
+static void
+canvas_end_element (GMarkupParseContext  *context,
+		    const gchar          *element_name,
+		    gpointer              user_data,
+		    GError              **error)
+{
+	GXPSCanvas *canvas = (GXPSCanvas *)user_data;
+
+	return render_end_element (context,
+				   element_name,
+				   canvas->ctx,
+				   error);
+}
+
+static GMarkupParser canvas_parser = {
+	canvas_start_element,
+	canvas_end_element,
+	NULL,
+	NULL
+};
+
 static void
 path_geometry_start_element (GMarkupParseContext  *context,
 			     const gchar          *element_name,
@@ -2715,10 +2783,13 @@ render_start_element (GMarkupParseContext  *context,
 
 		g_markup_parse_context_push (context, &glyphs_parser, glyphs);
 	} else if (strcmp (element_name, "Canvas") == 0) {
+		GXPSCanvas *canvas;
 		gint i;
 
 		GXPS_DEBUG (g_message ("save"));
 		cairo_save (ctx->cr);
+
+		canvas = gxps_canvas_new (ctx);
 
 		for (i = 0; names[i] != NULL; i++) {
 			if (strcmp (names[i], "RenderTransform") == 0) {
@@ -2729,6 +2800,7 @@ render_start_element (GMarkupParseContext  *context,
 							  ctx->page->priv->source,
 							  G_MARKUP_ERROR_INVALID_CONTENT,
 							  "Canvas", "RenderTransform", values[i], error);
+					gxps_canvas_free (canvas);
 					return;
 				}
 				GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
@@ -2737,14 +2809,24 @@ render_start_element (GMarkupParseContext  *context,
 					      matrix.x0, matrix.y0));
 				cairo_transform (ctx->cr, &matrix);
 			} else if (strcmp (names[i], "Opacity") == 0) {
-				/* TODO */
+				canvas->opacity = g_ascii_strtod (values[i], NULL);
+				GXPS_DEBUG (g_message ("set_opacity (%f)", path->opacity));
 			} else if (strcmp (names[i], "Clip") == 0) {
-				if (!path_data_parse (values[i], ctx->cr, error))
+				if (!path_data_parse (values[i], ctx->cr, error)) {
+					gxps_parse_error (context,
+							  ctx->page->priv->source,
+							  G_MARKUP_ERROR_INVALID_CONTENT,
+							  "Canvas", "Clip", values[i], error);
+					gxps_canvas_free (canvas);
 					return;
+				}
 				GXPS_DEBUG (g_message ("clip"));
 				cairo_clip (ctx->cr);
 			}
 		}
+		if (canvas->opacity != 1.0)
+			cairo_push_group (canvas->ctx->cr);
+		g_markup_parse_context_push (context, &canvas_parser, canvas);
 	} else if (strcmp (element_name, "Canvas.RenderTransform") == 0) {
 		GXPSMatrix *matrix;
 
@@ -2933,8 +3015,17 @@ render_end_element (GMarkupParseContext  *context,
 		GXPS_DEBUG (g_message ("restore"));
 		cairo_restore (ctx->cr);
 	} else if (strcmp (element_name, "Canvas") == 0) {
+		GXPSCanvas *canvas;
+
+		canvas = g_markup_parse_context_pop (context);
+
+		if (canvas->opacity != 1.0) {
+			cairo_pop_group_to_source (ctx->cr);
+			cairo_paint_with_alpha (ctx->cr, canvas->opacity);
+		}
 		cairo_restore (ctx->cr);
 		GXPS_DEBUG (g_message ("restore"));
+		gxps_canvas_free (canvas);
 	} else if (strcmp (element_name, "Canvas.RenderTransform") == 0) {
 		GXPSMatrix *matrix;
 
