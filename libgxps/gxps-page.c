@@ -1042,6 +1042,7 @@ gxps_tile_mode_parse (const gchar *tile)
 typedef struct {
 	GXPSRenderContext *ctx;
 	cairo_pattern_t   *pattern;
+	gdouble            opacity;
 } GXPSBrush;
 
 static GXPSBrush *
@@ -1051,6 +1052,7 @@ gxps_brush_new (GXPSRenderContext *ctx)
 
 	brush = g_slice_new0 (GXPSBrush);
 	brush->ctx = ctx;
+	brush->opacity = 1.0;
 
 	return brush;
 }
@@ -1240,6 +1242,7 @@ brush_gradient_start_element (GMarkupParseContext  *context,
 			return;
 		}
 
+		a *= brush->opacity;
 		if (a != 1.0) {
 			cairo_pattern_add_color_stop_rgba (brush->pattern,
 							   offset,
@@ -1388,6 +1391,8 @@ brush_start_element (GMarkupParseContext  *context,
 				}
 			} else if (strcmp (names[i], "SpreadMethod") == 0) {
 				extend = gxps_spread_method_parse (values[i]);
+			} else if (strcmp (names[i], "Opacity") == 0) {
+				brush->opacity = g_ascii_strtod (values[i], NULL);
 			} else if (strcmp (names[i], "Transform") == 0) {
 				if (!gxps_matrix_parse (values[i], &matrix)) {
 					gxps_parse_error (context,
@@ -1441,6 +1446,8 @@ brush_start_element (GMarkupParseContext  *context,
 				r1 = g_strtod (values[i], NULL);
 			} else if (strcmp (names[i], "SpreadMethod") == 0) {
 				extend = gxps_spread_method_parse (values[i]);
+			} else if (strcmp (names[i], "Opacity") == 0) {
+				brush->opacity = g_ascii_strtod (values[i], NULL);
 			} else if (strcmp (names[i], "Transform") == 0) {
 				if (!gxps_matrix_parse (values[i], &matrix)) {
 					gxps_parse_error (context,
