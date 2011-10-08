@@ -459,6 +459,9 @@ gxps_file_get_document_for_link_target (GXPSFile       *xps,
 	guint        n_doc = 0;
 	const gchar *uri;
 
+        g_return_val_if_fail (GXPS_IS_FILE (xps), -1);
+        g_return_val_if_fail (target != NULL, -1);
+
 	uri = gxps_link_target_get_uri (target);
 	for (l = xps->priv->docs; l; l = g_list_next (l)) {
 		if (g_ascii_strcasecmp (uri, (gchar *)l->data) == 0)

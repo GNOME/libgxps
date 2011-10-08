@@ -73,6 +73,8 @@ gxps_link_copy (GXPSLink *link)
 {
 	GXPSLink *link_copy;
 
+        g_return_val_if_fail (link != NULL, NULL);
+
 	link_copy = g_slice_new (GXPSLink);
 	*link_copy = *link;
 
@@ -109,6 +111,8 @@ gxps_link_free (GXPSLink *link)
 GXPSLinkTarget *
 gxps_link_get_target (GXPSLink *link)
 {
+        g_return_val_if_fail (link != NULL, NULL);
+
 	return link->target;
 }
 
@@ -124,6 +128,9 @@ void
 gxps_link_get_area (GXPSLink          *link,
 		    cairo_rectangle_t *area)
 {
+        g_return_if_fail (link != NULL);
+        g_return_if_fail (area != NULL);
+
 	*area = link->area;
 }
 
@@ -140,6 +147,8 @@ GXPSLinkTarget *
 gxps_link_target_copy (GXPSLinkTarget *target)
 {
 	GXPSLinkTarget *target_copy;
+
+        g_return_val_if_fail (target != NULL, NULL);
 
 	target_copy = g_slice_new (GXPSLinkTarget);
 
@@ -179,6 +188,8 @@ gxps_link_target_free (GXPSLinkTarget *target)
 gboolean
 gxps_link_target_is_internal (GXPSLinkTarget *target)
 {
+        g_return_val_if_fail (target != NULL, FALSE);
+
 	return target->is_internal;
 }
 
@@ -196,6 +207,8 @@ gxps_link_target_is_internal (GXPSLinkTarget *target)
 const gchar *
 gxps_link_target_get_anchor (GXPSLinkTarget *target)
 {
+        g_return_val_if_fail (target != NULL, NULL);
+
 	return target->anchor;
 }
 
@@ -210,6 +223,8 @@ gxps_link_target_get_anchor (GXPSLinkTarget *target)
 const gchar *
 gxps_link_target_get_uri (GXPSLinkTarget *target)
 {
+        g_return_val_if_fail (target != NULL, NULL);
+
 	return target->uri;
 }
 

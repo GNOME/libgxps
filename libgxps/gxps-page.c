@@ -3479,6 +3479,8 @@ gxps_page_get_links (GXPSPage *page,
 	GList            *links;
 	cairo_rectangle_t extents;
 
+        g_return_val_if_fail (GXPS_IS_PAGE (page), NULL);
+
 	extents.x = extents.y = 0;
 	extents.width = page->priv->width;
 	extents.height = page->priv->height;
@@ -3514,6 +3516,10 @@ gxps_page_get_anchor_destination (GXPSPage          *page,
 				  GError           **error)
 {
 	cairo_rectangle_t *anchor_area;
+
+        g_return_val_if_fail (GXPS_IS_PAGE (page), FALSE);
+        g_return_val_if_fail (anchor != NULL, FALSE);
+        g_return_val_if_fail (area != NULL, FALSE);
 
 	if (!page->priv->has_anchors)
 		return FALSE;
