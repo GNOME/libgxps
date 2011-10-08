@@ -55,3 +55,30 @@ libgxps_la_LIBADD = \
 	$(GXPS_LIBS)	\
 	$(LIBJPEG)	\
 	$(LIBTIFF)
+
+CLEANFILES =
+
+-include $(INTROSPECTION_MAKEFILE)
+INTROSPECTION_GIRS =
+INTROSPECTION_SCANNER_ARGS = --add-include-path=$(srcdir) --warn-all --identifier-prefix=GXPS --symbol-prefix=gxps
+INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
+
+if HAVE_INTROSPECTION
+introspection_sources = $(filter-out $(NOINST_H_FILES) gxps-archive.c gxps-fonts.c gxps-images.c gxps-parse-utils.c, $(libgxps_la_SOURCES))
+
+GXPS-0.1.gir: libgxps.la
+GXPS_0_1_gir_INCLUDES = GObject-2.0 Gio-2.0 cairo-1.0
+GXPS_0_1_gir_CFLAGS = $(libgxps_la_CPPFLAGS) $(Gxps_CFLAGS)
+GXPS_0_1_gir_LIBS = libgxps.la
+GXPS_0_1_gir_FILES = $(addprefix $(srcdir)/, $(introspection_sources))
+
+INTROSPECTION_GIRS += GXPS-0.1.gir
+
+girdir = $(datadir)/gir-1.0
+gir_DATA = $(INTROSPECTION_GIRS)
+
+typelibdir = $(libdir)/girepository-1.0
+typelib_DATA = $(INTROSPECTION_GIRS:.gir=.typelib)
+
+CLEANFILES += $(gir_DATA) $(typelib_DATA)
+endif

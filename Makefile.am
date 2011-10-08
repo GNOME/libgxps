@@ -15,6 +15,7 @@ EXTRA_DIST = \
 DISTCLEANFILES = \
 	$(pkgconfig_DATA)
 
-DISTCHECK_CONFIGURE_FLAGS = 	\
-	--enable-gtk-doc	\
-	--disable-maintainer-mode
+DISTCHECK_CONFIGURE_FLAGS = 		\
+	--enable-gtk-doc		\
+	--disable-maintainer-mode	\
+	--enable-introspection

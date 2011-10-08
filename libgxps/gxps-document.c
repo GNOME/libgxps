@@ -479,7 +479,7 @@ gxps_document_get_n_pages (GXPSDocument *doc)
  * Creates a new #GXPSPage representing the page at
  * index @n_doc in @doc document.
  *
- * Returns: a new #GXPSPage or %NULL on error.
+ * Returns: (transfer full): a new #GXPSPage or %NULL on error.
  *     Free the returned object with g_object_unref().
  */
 GXPSPage *
@@ -567,7 +567,7 @@ gxps_document_get_page_for_anchor (GXPSDocument *doc,
  * Creates a new #GXPSDocumentStructure representing the document
  * structure of @doc.
  *
- * Returns: a new #GXPSDocumentStructure or %NULL if document doesn't have a structure.
+ * Returns: (transfer full): a new #GXPSDocumentStructure or %NULL if document doesn't have a structure.
  *     Free the returned object with g_object_unref().
  */
 GXPSDocumentStructure *

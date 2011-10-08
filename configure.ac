@@ -150,6 +150,9 @@ AM_CONDITIONAL(ENABLE_TEST, test x$enable_test = xyes)
 dnl gtk-doc
 GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
 
+dnl GObject instrospection
+GOBJECT_INTROSPECTION_CHECK([0.10.1])
+
 # **********
 # Versioning
 # **********

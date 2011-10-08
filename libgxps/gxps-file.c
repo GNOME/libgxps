@@ -417,7 +417,7 @@ gxps_file_get_n_documents (GXPSFile *xps)
  * Creates a new #GXPSDocument representing the document at
  * index @n_doc in @xps file.
  *
- * Returns: a new #GXPSDocument or %NULL on error.
+ * Returns: (transfer full): a new #GXPSDocument or %NULL on error.
  *     Free the returned object with g_object_unref().
  */
 GXPSDocument *

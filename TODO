@@ -1,7 +1,6 @@
 General
 -------
 
-- GObject Introspection
 - Version API (Check macros)
 - Tools: xps2ps, xps2pdf, xps2html, ...
 - Regression tests
