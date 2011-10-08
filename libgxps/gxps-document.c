@@ -28,6 +28,17 @@
 #include "gxps-private.h"
 #include "gxps-error.h"
 
+/**
+ * SECTION:gxps-document
+ * @Short_description: XPS Documents
+ * @Title: GXPSDocument
+ * @See_also: #GXPSFile, #GXPSPage, #GXPSDocumentStructure
+ *
+ * #GXPSDocument represents a document in a #GXPSFile. #GXPSDocument
+ * objects can not be created directly, they are retrieved from a
+ * #GXPSFile with gxps_file_get_document().
+ */
+
 enum {
 	PROP_0,
 	PROP_ARCHIVE,
@@ -443,6 +454,14 @@ _gxps_document_new (GXPSArchive *zip,
 			       NULL);
 }
 
+/**
+ * gxps_document_get_n_pages:
+ * @doc: a #GXPSDocument
+ *
+ * Gets the number of pages in @doc.
+ *
+ * Returns: the number of pages.
+ */
 guint
 gxps_document_get_n_pages (GXPSDocument *doc)
 {
@@ -451,6 +470,18 @@ gxps_document_get_n_pages (GXPSDocument *doc)
 	return doc->priv->n_pages;
 }
 
+/**
+ * gxps_document_get_page:
+ * @doc: a #GXPSDocument
+ * @n_page: the index of the page to get
+ * @error: #GError for error reporting, or %NULL to ignore
+ *
+ * Creates a new #GXPSPage representing the page at
+ * index @n_doc in @doc document.
+ *
+ * Returns: a new #GXPSPage or %NULL on error.
+ *     Free the returned object with g_object_unref().
+ */
 GXPSPage *
 gxps_document_get_page (GXPSDocument *doc,
 			guint         n_page,
@@ -467,6 +498,18 @@ gxps_document_get_page (GXPSDocument *doc,
 	return _gxps_page_new (doc->priv->zip, source, error);
 }
 
+/**
+ * gxps_document_get_page_size:
+ * @doc: a #GXPSDocument
+ * @n_page: the index of a page in @doc
+ * @width: (out) (allow-none): return location for the width of @n_page
+ * @height: (out) (allow-none): return location for the height of @n_page
+ *
+ * Gets the size of the page at index @n_page in @doc document.
+ * This function is useful to get the size of the pages in a document
+ * without creating #GXPSPage objects. To get the size of a #GXPSPage
+ * you can use gxps_page_get_size() instead.
+ */
 gboolean
 gxps_document_get_page_size (GXPSDocument *doc,
 			     guint         n_page,
@@ -490,6 +533,16 @@ gxps_document_get_page_size (GXPSDocument *doc,
 	return TRUE;
 }
 
+/**
+ * gxps_document_get_page_for_anchor:
+ * @doc: a #GXPSDocument
+ * @anchor: the name of an anchor
+ *
+ * Gets the index of the page in @doc where the given
+ * anchor is.
+ *
+ * Returns: the page index of the given anchor.
+ */
 gint
 gxps_document_get_page_for_anchor (GXPSDocument *doc,
 				   const gchar  *anchor)
@@ -507,6 +560,16 @@ gxps_document_get_page_for_anchor (GXPSDocument *doc,
 	return -1;
 }
 
+/**
+ * gxps_document_get_structure:
+ * @doc: a a #GXPSDocument
+ *
+ * Creates a new #GXPSDocumentStructure representing the document
+ * structure of @doc.
+ *
+ * Returns: a new #GXPSDocumentStructure or %NULL if document doesn't have a structure.
+ *     Free the returned object with g_object_unref().
+ */
 GXPSDocumentStructure *
 gxps_document_get_structure (GXPSDocument *doc)
 {

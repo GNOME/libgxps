@@ -30,6 +30,18 @@
 #include "gxps-private.h"
 #include "gxps-error.h"
 
+/**
+ * SECTION:gxps-page
+ * @Short_description: Page of XPS document
+ * @Title: GXPSPage
+ * @See_also: #GXPSDocument, #GXPSLink, #GXPSLinkTarget
+ *
+ * #GXPSPage represents a page in a XPS document. #GXPSPage<!-- -->s
+ * can be rendered into a cairo context with gxps_page_render().
+ * #GXPSPage objects can not be created directly, they are retrieved
+ * from a #GXPSDocument with gxps_document_get_page().
+ */
+
 // #define ENABLE_LOG
 
 #ifdef ENABLE_LOG
@@ -3400,6 +3412,14 @@ _gxps_page_new (GXPSArchive *zip,
 			       NULL);
 }
 
+/**
+ * gxps_page_get_size:
+ * @page: a #GXPSPage
+ * @width: (out) (allow-none): return location for the page width
+ * @height: (out) (allow-none): return location for the page height
+ *
+ * Gets the size of the page.
+ */
 void
 gxps_page_get_size (GXPSPage *page,
 		    guint    *width,
@@ -3413,6 +3433,19 @@ gxps_page_get_size (GXPSPage *page,
 		*height = page->priv->height;
 }
 
+/**
+ * gxps_page_render:
+ * @page: a #GXPSPage
+ * @cr: a cairo context to render to
+ * @error: #GError for error reporting, or %NULL to ignore
+ *
+ * Render the page to the given cairo context. In case of
+ * error, %FALSE is returned and @error is filled with
+ * information about error.
+ *
+ * Returns: %TRUE if page was successfully rendered,
+ *     %FALSE otherwise.
+ */
 gboolean
 gxps_page_render (GXPSPage *page,
 		  cairo_t  *cr,
@@ -3424,6 +3457,19 @@ gxps_page_render (GXPSPage *page,
 	return gxps_page_parse_for_rendering (page, cr, error);
 }
 
+/**
+ * gxps_page_get_links:
+ * @page: a #GXPSPage
+ * @error: #GError for error reporting, or %NULL to ignore
+ *
+ * Gets a list of #GXPSLink items that map from a location
+ * in @page to a #GXPSLinkTarget. Items in the list should
+ * be freed with gxps_link_free() and the list itself with
+ * g_list_free() when done.
+ *
+ * Returns: (element-type GXPS.Link) (transfer full):  a #GList
+ *     of #GXPSLink items.
+ */
 GList *
 gxps_page_get_links (GXPSPage *page,
 		     GError  **error)
@@ -3447,6 +3493,20 @@ gxps_page_get_links (GXPSPage *page,
 	return links;
 }
 
+/**
+ * gxps_page_get_anchor_destination:
+ * @page: a #GXPSPage
+ * @anchor: the name of an anchor in @page
+ * @area: (out): return location for page area of @anchor
+ * @error: #GError for error reporting, or %NULL to ignore
+ *
+ * Gets the rectangle of @page corresponding to the destination
+ * of the given anchor. If @anchor is not found in @page, %FALSE
+ * will be returned and @error will contain %GXPS_PAGE_ERROR_INVALID_ANCHOR
+ *
+ * Returns: %TRUE if the destination for the anchor was found in page
+ *     and @area contains the rectangle, %FALSE otherwise.
+ */
 gboolean
 gxps_page_get_anchor_destination (GXPSPage          *page,
 				  const gchar       *anchor,

@@ -147,6 +147,9 @@ fi
 
 AM_CONDITIONAL(ENABLE_TEST, test x$enable_test = xyes)
 
+dnl gtk-doc
+GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
+
 # **********
 # Versioning
 # **********
@@ -166,6 +169,9 @@ Makefile
 libgxps.pc
 libgxps/Makefile
 test/Makefile
+docs/Makefile
+docs/reference/Makefile
+docs/reference/version.xml
 ])
 
 AC_OUTPUT

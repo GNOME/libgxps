@@ -1,0 +1,30 @@
+<?xml version="1.0"?>
+<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN" 
+               "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd" [
+<!ENTITY version SYSTEM "version.xml">
+]>
+<book id="index" xmlns:xi="http://www.w3.org/2003/XInclude">
+  <bookinfo>
+    <title>GXPS Reference Manual</title>
+    <releaseinfo>
+      for libgxps &version;
+    </releaseinfo>
+  </bookinfo>
+
+  <chapter>
+    <title>GXPS</title>
+    <xi:include href="xml/gxps-file.xml"/>
+    <xi:include href="xml/gxps-document.xml"/>
+    <xi:include href="xml/gxps-page.xml"/>
+    <xi:include href="xml/gxps-links.xml"/>
+    <xi:include href="xml/gxps-document-structure.xml"/>
+    <xi:include href="xml/gxps-error.xml"/>
+  </chapter>
+
+  <index id="api-index-full">
+    <title>Index of all symbols</title>
+    <xi:include href="xml/api-index-full.xml"><xi:fallback /></xi:include>
+  </index>
+
+  <xi:include href="xml/annotation-glossary.xml"><xi:fallback /></xi:include>
+</book>

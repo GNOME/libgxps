@@ -1,0 +1,137 @@
+<INCLUDE>libgxps/gxps.h</INCLUDE>
+
+<SECTION>
+<FILE>gxps-file</FILE>
+<TITLE>GXPSFile</TITLE>
+GXPSFile
+GXPS_FILE_ERROR
+GXPSFileError
+gxps_file_new
+gxps_file_get_n_documents
+gxps_file_get_document
+gxps_file_get_document_for_link_target
+
+<SUBSECTION Standard>
+GXPS_TYPE_FILE
+GXPS_FILE
+GXPS_FILE_CLASS
+GXPS_IS_FILE
+GXPS_IS_FILE_CLASS
+GXPS_FILE_GET_CLASS
+
+<SUBSECTION Private>
+gxps_file_get_type
+gxps_file_error_quark
+</SECTION>
+
+<SECTION>
+<FILE>gxps-document</FILE>
+<TITLE>GXPSDocument</TITLE>
+GXPSDocument
+gxps_document_get_n_pages
+gxps_document_get_page
+gxps_document_get_page_size
+gxps_document_get_page_for_anchor
+gxps_document_get_structure
+
+<SUBSECTION Standard>
+GXPS_TYPE_DOCUMENT
+GXPS_DOCUMENT
+GXPS_DOCUMENT_CLASS
+GXPS_IS_DOCUMENT
+GXPS_IS_DOCUMENT_CLASS
+GXPS_DOCUMENT_GET_CLASS
+
+<SUBSECTION Private>
+GXPSDocumentPrivate
+gxps_document_get_type
+</SECTION>
+
+<SECTION>
+<FILE>gxps-page</FILE>
+<TITLE>GXPSPage</TITLE>
+GXPSPage
+GXPS_PAGE_ERROR
+GXPSPageError
+gxps_page_get_size
+gxps_page_render
+gxps_page_get_links
+gxps_page_get_anchor_destination
+
+<SUBSECTION Standard>
+GXPS_TYPE_PAGE
+GXPS_PAGE
+GXPS_PAGE_CLASS
+GXPS_IS_PAGE
+GXPS_IS_PAGE_CLASS
+GXPS_PAGE_GET_CLASS
+
+<SUBSECTION Private>
+GXPSPagePrivate
+gxps_page_get_type
+gxps_page_error_quark
+</SECTION>
+
+<SECTION>
+<FILE>gxps-links</FILE>
+<TITLE>GXPS Links</TITLE>
+GXPSLinkTarget
+GXPSLink
+
+<SUBSECTION>
+gxps_link_target_copy
+gxps_link_target_free
+gxps_link_target_is_internal
+gxps_link_target_get_anchor
+gxps_link_target_get_uri
+
+<SUBSECTION>
+gxps_link_copy
+gxps_link_free
+gxps_link_get_target
+gxps_link_get_area
+
+<SUBSECTION Standard>
+GXPS_TYPE_LINK_TARGET
+GXPS_TYPE_LINK
+
+<SUBSECTION Private>
+gxps_link_target_get_type
+gxps_link_get_type
+</SECTION>
+
+<SECTION>
+<FILE>gxps-document-structure</FILE>
+<TITLE>GXPSDocumentStructure</TITLE>
+GXPSDocumentStructure
+GXPSOutlineIter
+gxps_document_structure_has_outline
+
+<SUBSECTION>
+gxps_document_structure_outline_iter_init
+gxps_outline_iter_next
+gxps_outline_iter_children
+gxps_outline_iter_get_description
+gxps_outline_iter_get_target
+
+<SUBSECTION Standard>
+GXPS_TYPE_DOCUMENT_STRUCTURE
+GXPS_DOCUMENT_STRUCTURE
+GXPS_DOCUMENT_STRUCTURE_CLASS
+GXPS_IS_DOCUMENT_STRUCTURE
+GXPS_IS_DOCUMENT_STRUCTURE_CLASS
+GXPS_DOCUMENT_STRUCTURE_GET_CLASS
+
+<SUBSECTION Private>
+GXPSDocumentStructurePrivate
+gxps_document_structure_get_type
+</SECTION>
+
+<SECTION>
+<FILE>gxps-error</FILE>
+GXPS_ERROR
+GXPSError
+
+<SUBSECTION Private>
+gxps_error_quark
+</SECTION>

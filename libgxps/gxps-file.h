@@ -39,8 +39,21 @@ G_BEGIN_DECLS
 #define GXPS_IS_FILE_CLASS(obj)  (G_TYPE_CHECK_CLASS_TYPE (obj, GXPS_TYPE_FILE))
 #define GXPS_FILE_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), GXPS_TYPE_FILE, GXPSFileClass))
 
+/**
+ * GXPS_FILE_ERROR:
+ *
+ * Error domain for #GXPSFile. Errors in this domain will be from
+ * the #GXPSFileError enumeration.
+ * See #GError for more information on error domains.
+ */
 #define GXPS_FILE_ERROR          (gxps_file_error_quark ())
 
+/**
+ * GXPSFileError:
+ * @GXPS_FILE_ERROR_INVALID: The XPS is invalid.
+ *
+ * Error codes returned by #GXPSFile functions.
+ */
 typedef enum {
 	GXPS_FILE_ERROR_INVALID
 } GXPSFileError;
@@ -49,9 +62,16 @@ typedef struct _GXPSFile        GXPSFile;
 typedef struct _GXPSFileClass   GXPSFileClass;
 typedef struct _GXPSFilePrivate GXPSFilePrivate;
 
+/**
+ * GXPSFile:
+ *
+ * The <structname>GXPSFile</structname> struct contains
+ * only private fields and should not be directly accessed.
+ */
 struct _GXPSFile {
 	GObject parent;
 
+        /*< private >*/
 	GXPSFilePrivate *priv;
 };
 

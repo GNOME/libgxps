@@ -25,6 +25,21 @@
 #include "gxps-private.h"
 #include "gxps-error.h"
 
+/**
+ * SECTION:gxps-document-structure
+ * @Short_description: Structure of XPS Document
+ * @Title: GXPSDocumentStructure
+ * @See_also: #GXPSDocument, #GXPSLinkTarget
+ *
+ * #GXPSDocumentStructure represents the structural organization of
+ * a XPS document. A #GXPSDocumentStructure can contain the document
+ * outline, similar to a table of contents, containing hyperlinks.
+ * To iterate over the outline items you can use #GXPSOutlineIter.
+ *
+ * #GXPSDocumentStructure objects can not be created directly, they
+ * are retrieved from a #GXPSDocument with gxps_document_get_structure().
+ */
+
 enum {
 	PROP_0,
 	PROP_ARCHIVE,
@@ -334,6 +349,14 @@ static const GMarkupParser check_outline_parser = {
 	NULL
 };
 
+/**
+ * gxps_document_structure_has_outline:
+ * @structure: a #GXPSDocumentStructure
+ *
+ * Whether @structure has an outline or not.
+ *
+ * Returns: %TRUE if @structure has an outline, %FALSE otherwise.
+ */
 gboolean
 gxps_document_structure_has_outline (GXPSDocumentStructure *structure)
 {
@@ -359,6 +382,41 @@ typedef struct {
 	GList                 *current;
 } OutlineIter;
 
+/**
+ * gxps_document_structure_outline_iter_init:
+ * @iter: an uninitialized #GXPSOutlineIter
+ * @structure: a #GXPSDocumentStructure
+ *
+ * Initializes @iter to the root item of the outline contained by @structure
+ * and a associates it with @structure.
+ *
+ * Here is a simple example of some code that walks the full outline:
+ *
+ * <informalexample><programlisting>
+ * static void
+ * walk_outline (GXPSOutlineIter *iter)
+ * {
+ *     do {
+ *         GXPSOutlineIter child_iter;
+ *         const gchar    *description = gxps_outline_iter_get_description (iter);
+ *         GXPSLinkTarget *target = gxps_outline_iter_get_target (iter);
+ *
+ *         /<!-- -->* Do something with description and taregt *<!-- -->/
+ *         if (gxps_outline_iter_children (&child_iter, iter))
+ *             walk_outline (&child_iter);
+ *     } while (gxps_outline_iter_next (iter));
+ * }
+ * ...
+ * {
+ *     GXPSOutlineIter iter;
+ *     if (gxps_document_structure_outline_iter_init (&iter, structure))
+ *         walk_outline (&iter);
+ * }
+ * </programlisting></informalexample>
+ *
+ * Returns: %TRUE if @iter was successfully initialized to the root item,
+ *     %FALSE if it failed or @structure does not have an outline.
+ */
 gboolean
 gxps_document_structure_outline_iter_init (GXPSOutlineIter       *iter,
 					   GXPSDocumentStructure *structure)
@@ -376,6 +434,17 @@ gxps_document_structure_outline_iter_init (GXPSOutlineIter       *iter,
 	return oi->current != NULL;
 }
 
+/**
+ * gxps_outline_iter_next:
+ * @iter: an initialized #GXPSOutlineIter
+ *
+ * Advances @iter to the next item at the current level.
+ * See gxps_document_structure_outline_iter_init() for
+ * more details.
+ *
+ * Returns: %TRUE if @iter was set to the next item,
+ *     %FALSE if the end of the current level has been reached
+ */
 gboolean
 gxps_outline_iter_next (GXPSOutlineIter *iter)
 {
@@ -388,6 +457,18 @@ gxps_outline_iter_next (GXPSOutlineIter *iter)
 	return oi->current != NULL;
 }
 
+/**
+ * gxps_outline_iter_children:
+ * @iter: an uninitialized #GXPSOutlineIter
+ * @parent: an initialized #GXPSOutlineIter
+ *
+ * Initializes @iter to the first child item of @parent.
+ * See gxps_document_structure_outline_iter_init() for
+ * more details.
+ *
+ * Returns: %TRUE if @iter was set to the first child of @parent,
+ *     %FALSE if @parent does not have children.
+ */
 gboolean
 gxps_outline_iter_children (GXPSOutlineIter *iter,
 			    GXPSOutlineIter *parent)
@@ -408,6 +489,16 @@ gxps_outline_iter_children (GXPSOutlineIter *iter,
 	return TRUE;
 }
 
+/**
+ * gxps_outline_iter_get_description:
+ * @iter: an initialized #GXPSOutlineIter
+ *
+ * Gets the description of the outline item associated with @iter.
+ * See gxps_document_structure_outline_iter_init() for
+ * more details.
+ *
+ * Returns: the description of the outline item
+ */
 const gchar *
 gxps_outline_iter_get_description (GXPSOutlineIter *iter)
 {
@@ -421,6 +512,17 @@ gxps_outline_iter_get_description (GXPSOutlineIter *iter)
 	return node->desc;
 }
 
+/**
+ * gxps_outline_iter_get_target:
+ * @iter: an initialized #GXPSOutlineIter
+ *
+ * Gets the #GXPSLinkTarget of the outline item associated with @iter.
+ * See gxps_document_structure_outline_iter_init() for
+ * more details.
+ *
+ * Returns: a new allocated #GXPSLinkTarget.
+ *     Free the returned object with gxps_link_target_free().
+ */
 GXPSLinkTarget *
 gxps_outline_iter_get_target (GXPSOutlineIter *iter)
 {

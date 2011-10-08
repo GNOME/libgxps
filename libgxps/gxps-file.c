@@ -26,6 +26,18 @@
 #include "gxps-private.h"
 #include "gxps-error.h"
 
+/**
+ * SECTION:gxps-file
+ * @Short_description: XPS Files
+ * @Title: GXPSFile
+ * @See_also: #GXPSDocument, #GXPSLinkTarget
+ *
+ * #GXPSFile represents a XPS file. A #GXPSFile is a set of one or more
+ * documents, you can get the amount of documents contained in the set
+ * with gxps_file_get_n_documents(). Documents can be retrieved by their
+ * index in the set with gxps_file_get_document().
+ */
+
 enum {
 	PROP_0,
 	PROP_FILE
@@ -359,6 +371,15 @@ initable_iface_init (GInitableIface *initable_iface)
 	initable_iface->init = gxps_file_initable_init;
 }
 
+/**
+ * gxps_file_new:
+ * @filename: a #GFile
+ * @error: #GError for error reporting, or %NULL to ignore
+ *
+ * Creates a new #GXPSFile for the given #GFile.
+ *
+ * Returns: a #GXPSFile or %NULL on error.
+ */
 GXPSFile *
 gxps_file_new (GFile   *filename,
 	       GError **error)
@@ -371,6 +392,14 @@ gxps_file_new (GFile   *filename,
 			       NULL);
 }
 
+/**
+ * gxps_file_get_n_documents:
+ * @xps: a #GXPSFile
+ *
+ * Gets the number of documents in @xps.
+ *
+ * Returns: the number of documents.
+ */
 guint
 gxps_file_get_n_documents (GXPSFile *xps)
 {
@@ -379,6 +408,18 @@ gxps_file_get_n_documents (GXPSFile *xps)
 	return g_list_length (xps->priv->docs);
 }
 
+/**
+ * gxps_file_get_document:
+ * @xps: a #GXPSFile
+ * @n_doc: the index of the document to get
+ * @error: #GError for error reporting, or %NULL to ignore
+ *
+ * Creates a new #GXPSDocument representing the document at
+ * index @n_doc in @xps file.
+ *
+ * Returns: a new #GXPSDocument or %NULL on error.
+ *     Free the returned object with g_object_unref().
+ */
 GXPSDocument *
 gxps_file_get_document (GXPSFile *xps,
 			guint     n_doc,
@@ -394,6 +435,22 @@ gxps_file_get_document (GXPSFile *xps,
 	return _gxps_document_new (xps->priv->zip, source, error);
 }
 
+/**
+ * gxps_file_get_document_for_link_target:
+ * @xps: a #GXPSFile
+ * @target: a #GXPSLinkTarget
+ *
+ * Gets the index of the document in @xps pointed by @target.
+ * If the #GXPSLinkTarget does not reference a document, or
+ * referenced document is not found in @xps file -1 will be
+ * returned. In this case you can look for the page pointed by
+ * the link target by calling gxps_document_get_page_for_anchor()
+ * with the anchor of the #GXPSLinkTarget for every document in
+ * @xps.
+ *
+ * Returns: the index of the document pointed by the given
+ *     #GXPSLinkTarget or -1.
+ */
 gint
 gxps_file_get_document_for_link_target (GXPSFile       *xps,
 					GXPSLinkTarget *target)

@@ -21,6 +21,12 @@
 
 #include "gxps-error.h"
 
+/**
+ * SECTION:gxps-error
+ * @Short_description: GXPS Errors
+ * @Title: GXPSError
+ */
+
 GQuark
 gxps_error_quark (void)
 {

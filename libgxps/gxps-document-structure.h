@@ -40,9 +40,16 @@ typedef struct _GXPSDocumentStructure        GXPSDocumentStructure;
 typedef struct _GXPSDocumentStructureClass   GXPSDocumentStructureClass;
 typedef struct _GXPSDocumentStructurePrivate GXPSDocumentStructurePrivate;
 
+/**
+ * GXPSDocumentStructure:
+ *
+ * The <structname>GXPSDocumentStructure</structname> struct contains
+ * only private fields and should not be directly accessed.
+ */
 struct _GXPSDocumentStructure {
 	GObject parent;
 
+        /*< private >*/
 	GXPSDocumentStructurePrivate *priv;
 };
 
@@ -50,6 +57,13 @@ struct _GXPSDocumentStructureClass {
 	GObjectClass parent_class;
 };
 
+/**
+ * GXPSOutlineIter:
+ *
+ * GXPSOutlineIter represents an iterator that can be
+ * used to iterate over the items of an outline
+ * contained in a #GXPSDocumentStructure
+ */
 typedef struct _GXPSOutlineIter GXPSOutlineIter;
 struct _GXPSOutlineIter {
 	/*< private >*/

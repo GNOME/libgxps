@@ -37,8 +37,23 @@ G_BEGIN_DECLS
 #define GXPS_IS_PAGE_CLASS(obj)  (G_TYPE_CHECK_CLASS_TYPE (obj, GXPS_TYPE_PAGE))
 #define GXPS_PAGE_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), GXPS_TYPE_PAGE, GXPSPageClass))
 
+/**
+ * GXPS_PAGE_ERROR:
+ *
+ * Error domain for #GXPSPage. Errors in this domain will be from
+ * #GXPSPageError enumeration.
+ * See #GError for more information on error domains.
+ */
 #define GXPS_PAGE_ERROR          (gxps_page_error_quark ())
 
+/**
+ * GXPSPageError:
+ * @GXPS_PAGE_ERROR_INVALID: The page is invalid.
+ * @GXPS_PAGE_ERROR_RENDER: Error rendering the page.
+ * @GXPS_PAGE_ERROR_INVALID_ANCHOR: Anchor is invalid for the page.
+ *
+ * Error codes returned by #GXPSPage functions
+ */
 typedef enum {
 	GXPS_PAGE_ERROR_INVALID,
 	GXPS_PAGE_ERROR_RENDER,
@@ -49,9 +64,16 @@ typedef struct _GXPSPage        GXPSPage;
 typedef struct _GXPSPageClass   GXPSPageClass;
 typedef struct _GXPSPagePrivate GXPSPagePrivate;
 
+/**
+ * GXPSPage:
+ *
+ * The <structname>GXPSPage</structname> struct contains
+ * only private fields and should not be directly accessed.
+ */
 struct _GXPSPage {
 	GObject parent;
 
+        /*< private >*/
 	GXPSPagePrivate *priv;
 };
 

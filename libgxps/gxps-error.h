@@ -28,8 +28,23 @@
 
 G_BEGIN_DECLS
 
+/**
+ * GXPS_ERROR:
+ *
+ * Error domain for GXPS. Errors in this domain will be from
+ * the #GXPSError enumeration.
+ * See #GError for more information on error domains.
+ */
 #define GXPS_ERROR (gxps_error_quark ())
 
+/**
+ * GXPSError:
+ * @GXPS_ERROR_SOURCE_NOT_FOUND: Internal source file not found in XPS file
+ * @GXPS_ERROR_FONT: Error loading fonts
+ * @GXPS_ERROR_IMAGE: Error loading images
+ *
+ * Error codes returned by GXPS functions.
+ */
 typedef enum {
 	GXPS_ERROR_SOURCE_NOT_FOUND,
 	GXPS_ERROR_FONT,

@@ -43,9 +43,16 @@ typedef struct _GXPSDocument        GXPSDocument;
 typedef struct _GXPSDocumentClass   GXPSDocumentClass;
 typedef struct _GXPSDocumentPrivate GXPSDocumentPrivate;
 
+/**
+ * GXPSDocument:
+ *
+ * The <structname>GXPSDocument</structname> struct contains
+ * only private fields and should not be directly accessed.
+ */
 struct _GXPSDocument {
 	GObject parent;
 
+        /*< private >*/
 	GXPSDocumentPrivate *priv;
 };
 

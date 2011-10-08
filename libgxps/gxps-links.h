@@ -32,7 +32,18 @@ G_BEGIN_DECLS
 #define GXPS_TYPE_LINK        (gxps_link_get_type ())
 #define GXPS_TYPE_LINK_TARGET (gxps_link_target_get_type ())
 
+/**
+ * GXPSLink:
+ *
+ * GXPSLink maps a location in a page to a #GXPSLinkTarget.
+ */
 typedef struct _GXPSLink       GXPSLink;
+
+/**
+ * GXPSLinkTarget:
+ *
+ * GXPSLinkTarget represents a hyperlink source.
+ */
 typedef struct _GXPSLinkTarget GXPSLinkTarget;
 
 GType           gxps_link_get_type            (void) G_GNUC_CONST;
