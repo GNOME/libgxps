@@ -2376,6 +2376,17 @@ gxps_glyphs_to_cairo_glyphs (GXPSGlyphs            *gxps_glyphs,
                                      GXPS_PAGE_ERROR,
                                      GXPS_PAGE_ERROR_RENDER,
                                      "Error parsing glyphs: Both UnicodeString and Indices are empty");
+
+                        *num_glyphs = 0;
+                        *glyphs = NULL;
+                        g_array_free (glyph_array, TRUE);
+
+                        if (clusters) {
+                                *num_clusters = 0;
+                                *clusters = NULL;
+                                g_array_free (cluster_array, TRUE);
+                        }
+
                         return FALSE;
                 }
 
