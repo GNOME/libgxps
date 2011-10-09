@@ -1947,6 +1947,7 @@ typedef struct {
 	gchar             *indices;
 	gchar             *clip_data;
         gint               bidi_level;
+        guint              is_sideways : 1;
 } GXPSGlyphs;
 
 static GXPSGlyphs *
@@ -2132,6 +2133,7 @@ glyphs_indices_parse (const char          *indices,
 		      gdouble              y,
 		      const char          *utf8,
                       gint                 bidi_level,
+                      gboolean             is_sideways,
 		      GArray              *glyph_array,
 		      GArray              *cluster_array,
 		      GError             **error)
@@ -2147,10 +2149,12 @@ glyphs_indices_parse (const char          *indices,
 	gdouble               h_offset = 0;
 	gdouble               v_offset = 0;
 	cairo_matrix_t        font_matrix;
+        cairo_font_extents_t  font_extents;
         gboolean              is_rtl = bidi_level % 2;
         gboolean              eof = FALSE;
 
         cairo_scaled_font_get_font_matrix (scaled_font, &font_matrix);
+        cairo_scaled_font_extents (scaled_font, &font_extents);
 
         cluster.num_glyphs = 1;
         cluster.num_bytes = 0;
@@ -2267,17 +2271,31 @@ glyphs_indices_parse (const char          *indices,
                         if (is_rtl)
                                 h_offset = -h_offset;
 
+                        if (is_sideways) {
+                                gdouble tmp = h_offset;
+
+                                h_offset = -v_offset;
+                                v_offset = tmp;
+                        }
+
 			cairo_matrix_transform_distance (&font_matrix, &h_offset, &v_offset);
 			glyph.x = x + h_offset;
 			glyph.y = y - v_offset;
 
 			cairo_scaled_font_glyph_extents (scaled_font, &glyph, 1, &extents);
+                        if (is_sideways) {
+                                glyph.x -= extents.x_bearing;
+                                glyph.y -= extents.y_advance / 2;
+                        }
 
+                        advance_height = 0;
 			if (!have_advance_width) {
-				advance_height = 0;
-                                advance_width = extents.x_advance;
+                                advance_width = is_sideways ? -extents.x_bearing + font_extents.descent : extents.x_advance;
 			} else {
-                                advance_height = 0;
+                                if (is_sideways) {
+                                        advance_height = advance_width;
+                                        advance_width = 0;
+                                }
 				cairo_matrix_transform_distance (&font_matrix, &advance_width, &advance_height);
 			}
 
@@ -2346,8 +2364,10 @@ gxps_glyphs_to_cairo_glyphs (GXPSGlyphs            *gxps_glyphs,
                 cairo_glyph_t         glyph;
                 cairo_text_cluster_t  cluster;
                 gboolean              is_rtl = gxps_glyphs->bidi_level % 2;
+                gboolean              is_sideways = gxps_glyphs->is_sideways;
                 double                x = gxps_glyphs->origin_x;
                 double                y = gxps_glyphs->origin_y;
+                cairo_font_extents_t  font_extents;
 
                 if (utf8 == NULL || *utf8 == '\0') {
                         g_set_error (error,
@@ -2358,6 +2378,7 @@ gxps_glyphs_to_cairo_glyphs (GXPSGlyphs            *gxps_glyphs,
                 }
 
                 cluster.num_glyphs = 1;
+                cairo_scaled_font_extents (scaled_font, &font_extents);
 
                 do {
                         cairo_text_extents_t extents;
@@ -2369,7 +2390,12 @@ gxps_glyphs_to_cairo_glyphs (GXPSGlyphs            *gxps_glyphs,
                         cluster.num_bytes = g_utf8_next_char (utf8) - utf8;
 
                         cairo_scaled_font_glyph_extents (scaled_font, &glyph, 1, &extents);
-                        advance_width = extents.x_advance;
+                        if (is_sideways) {
+                                glyph.x -= extents.x_bearing;
+                                glyph.y -= extents.y_advance / 2;
+                        }
+
+                        advance_width = is_sideways ? -extents.x_bearing + font_extents.descent : extents.x_advance;
 
                         if (is_rtl) {
                                 glyph.x -= extents.x_advance;
@@ -2390,6 +2416,7 @@ gxps_glyphs_to_cairo_glyphs (GXPSGlyphs            *gxps_glyphs,
                                                 gxps_glyphs->origin_y,
                                                 utf8,
                                                 gxps_glyphs->bidi_level,
+                                                gxps_glyphs->is_sideways,
                                                 glyph_array,
                                                 cluster_array,
                                                 error);
@@ -2572,6 +2599,7 @@ render_start_element (GMarkupParseContext  *context,
 		const gchar *indices = NULL;
 		const gchar *clip_data = NULL;
                 gint         bidi_level = 0;
+                gboolean     is_sideways = FALSE;
 		gint         i;
 
 		LOG (g_print ("save\n"));
@@ -2615,6 +2643,8 @@ render_start_element (GMarkupParseContext  *context,
 				clip_data = values[i];
                         } else if (strcmp (names[i], "BidiLevel") == 0) {
                                 bidi_level = g_ascii_strtoll (values[i], NULL, 10);
+                        } else if (strcmp (names[i], "IsSideways") == 0) {
+                                is_sideways = gxps_boolean_parse (values[i]);
 			}
 		}
 
@@ -2647,6 +2677,7 @@ render_start_element (GMarkupParseContext  *context,
 		glyphs->indices = (indices) ? g_strdup (indices) : NULL;
 		glyphs->clip_data = (clip_data) ? g_strdup (clip_data) : NULL;
                 glyphs->bidi_level = bidi_level;
+                glyphs->is_sideways = is_sideways;
 		if (fill_color) {
 			LOG (g_print ("set_fill_pattern (solid)\n"));
 			glyphs->fill_pattern = gxps_create_solid_color_pattern (fill_color);
@@ -2800,6 +2831,9 @@ render_end_element (GMarkupParseContext  *context,
 		cairo_matrix_init_identity (&font_matrix);
 		cairo_matrix_scale (&font_matrix, glyphs->em_size, glyphs->em_size);
 		cairo_get_matrix (ctx->cr, &ctm);
+
+                if (glyphs->is_sideways)
+                        cairo_matrix_rotate (&font_matrix, -G_PI_2);
 
 		scaled_font = cairo_scaled_font_create (font_face,
 							&font_matrix,
