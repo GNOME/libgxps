@@ -2679,9 +2679,9 @@ render_start_element (GMarkupParseContext  *context,
 
 		/* GXPSGlyphs takes ownership of font_uri */
 		glyphs = gxps_glyphs_new (ctx, font_uri, font_size, x, y);
-		glyphs->text = (text) ? g_strdup (text) : NULL;
-		glyphs->indices = (indices) ? g_strdup (indices) : NULL;
-		glyphs->clip_data = (clip_data) ? g_strdup (clip_data) : NULL;
+		glyphs->text = g_strdup (text);
+		glyphs->indices = g_strdup (indices);
+		glyphs->clip_data = g_strdup (clip_data);
                 glyphs->bidi_level = bidi_level;
                 glyphs->is_sideways = is_sideways;
                 glyphs->italic = italic;
