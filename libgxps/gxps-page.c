@@ -1946,6 +1946,7 @@ typedef struct {
 	gchar             *text;
 	gchar             *indices;
 	gchar             *clip_data;
+        gint               bidi_level;
 } GXPSGlyphs;
 
 static GXPSGlyphs *
@@ -2130,6 +2131,7 @@ glyphs_indices_parse (const char          *indices,
 		      gdouble              x,
 		      gdouble              y,
 		      const char          *utf8,
+                      gint                 bidi_level,
 		      GArray              *glyph_array,
 		      GArray              *cluster_array,
 		      GError             **error)
@@ -2145,6 +2147,7 @@ glyphs_indices_parse (const char          *indices,
 	gdouble               h_offset = 0;
 	gdouble               v_offset = 0;
 	cairo_matrix_t        font_matrix;
+        gboolean              is_rtl = bidi_level % 2;
         gboolean              eof = FALSE;
 
         cairo_scaled_font_get_font_matrix (scaled_font, &font_matrix);
@@ -2261,6 +2264,9 @@ glyphs_indices_parse (const char          *indices,
 			if (!have_index)
 				glyph.index = glyphs_lookup_index (scaled_font, utf8);
 
+                        if (is_rtl)
+                                h_offset = -h_offset;
+
 			cairo_matrix_transform_distance (&font_matrix, &h_offset, &v_offset);
 			glyph.x = x + h_offset;
 			glyph.y = y - v_offset;
@@ -2274,6 +2280,11 @@ glyphs_indices_parse (const char          *indices,
                                 advance_height = 0;
 				cairo_matrix_transform_distance (&font_matrix, &advance_width, &advance_height);
 			}
+
+                        if (is_rtl) {
+                                glyph.x -= extents.x_advance;
+                                advance_width = -advance_width;
+                        }
 
 			if (utf8 != NULL && *utf8 != '\0' && cluster.num_bytes == 0)
 				cluster.num_bytes = g_utf8_next_char (utf8) - utf8;
@@ -2334,6 +2345,7 @@ gxps_glyphs_to_cairo_glyphs (GXPSGlyphs            *gxps_glyphs,
         if (!gxps_glyphs->indices) {
                 cairo_glyph_t         glyph;
                 cairo_text_cluster_t  cluster;
+                gboolean              is_rtl = gxps_glyphs->bidi_level % 2;
                 double                x = gxps_glyphs->origin_x;
                 double                y = gxps_glyphs->origin_y;
 
@@ -2349,6 +2361,7 @@ gxps_glyphs_to_cairo_glyphs (GXPSGlyphs            *gxps_glyphs,
 
                 do {
                         cairo_text_extents_t extents;
+                        gdouble              advance_width;
 
                         glyph.index = glyphs_lookup_index (scaled_font, utf8);
                         glyph.x = x;
@@ -2356,7 +2369,14 @@ gxps_glyphs_to_cairo_glyphs (GXPSGlyphs            *gxps_glyphs,
                         cluster.num_bytes = g_utf8_next_char (utf8) - utf8;
 
                         cairo_scaled_font_glyph_extents (scaled_font, &glyph, 1, &extents);
-                        x += extents.x_advance;
+                        advance_width = extents.x_advance;
+
+                        if (is_rtl) {
+                                glyph.x -= extents.x_advance;
+                                advance_width = -advance_width;
+                        }
+
+                        x += advance_width;
 
                         g_array_append_val (glyph_array, glyph);
                         g_array_append_val (cluster_array, cluster);
@@ -2369,6 +2389,7 @@ gxps_glyphs_to_cairo_glyphs (GXPSGlyphs            *gxps_glyphs,
                                                 gxps_glyphs->origin_x,
                                                 gxps_glyphs->origin_y,
                                                 utf8,
+                                                gxps_glyphs->bidi_level,
                                                 glyph_array,
                                                 cluster_array,
                                                 error);
@@ -2550,6 +2571,7 @@ render_start_element (GMarkupParseContext  *context,
 		const gchar *fill_color = NULL;
 		const gchar *indices = NULL;
 		const gchar *clip_data = NULL;
+                gint         bidi_level = 0;
 		gint         i;
 
 		LOG (g_print ("save\n"));
@@ -2591,6 +2613,8 @@ render_start_element (GMarkupParseContext  *context,
 				cairo_transform (ctx->cr, &matrix);
 			} else if (strcmp (names[i], "Clip") == 0) {
 				clip_data = values[i];
+                        } else if (strcmp (names[i], "BidiLevel") == 0) {
+                                bidi_level = g_ascii_strtoll (values[i], NULL, 10);
 			}
 		}
 
@@ -2622,6 +2646,7 @@ render_start_element (GMarkupParseContext  *context,
 		glyphs->text = (text) ? g_strdup (text) : NULL;
 		glyphs->indices = (indices) ? g_strdup (indices) : NULL;
 		glyphs->clip_data = (clip_data) ? g_strdup (clip_data) : NULL;
+                glyphs->bidi_level = bidi_level;
 		if (fill_color) {
 			LOG (g_print ("set_fill_pattern (solid)\n"));
 			glyphs->fill_pattern = gxps_create_solid_color_pattern (fill_color);
