@@ -2095,30 +2095,73 @@ glyphs_indices_parse_error (GlyphsIndicesToken    *token,
 			     token->iter);
 }
 
-static gboolean
-glyphs_indices_parse (const gchar          *data,
-		      gdouble               font_size,
-		      gdouble              *advance_widths,
-		      cairo_glyph_t        *glyph_list,
-		      guint                 num_glyphs,
-		      cairo_text_cluster_t *cluster_list,
-		      guint                 num_clusters,
-		      GError              **error)
+static gulong
+glyphs_lookup_index (cairo_scaled_font_t *scaled_font,
+		     const gchar         *utf8)
 {
-	GlyphsIndicesToken token;
-	gint               i = 0;
+	cairo_status_t status;
+	cairo_glyph_t stack_glyphs[1];
+	cairo_glyph_t *glyphs = stack_glyphs;
+	int num_glyphs = 1;
+	int utf8_len = g_utf8_next_char (utf8) - utf8;
+	gulong index = 0;
 
-	token.iter = (gchar *)data;
-	token.end = token.iter + strlen (data);
+        if (utf8 == NULL || *utf8 == '\0')
+                return index;
 
-	glyphs_indices_iter_next (&token);
-	if (G_UNLIKELY (token.type == GI_TOKEN_EOF))
-		return TRUE;
+	status = cairo_scaled_font_text_to_glyphs (scaled_font,
+						   0, 0,
+						   utf8, utf8_len,
+						   &glyphs, &num_glyphs,
+						   NULL, NULL, NULL);
 
-	do {
+	if (status == CAIRO_STATUS_SUCCESS) {
+		index = glyphs[0].index;
+		if (glyphs != stack_glyphs)
+			cairo_glyph_free (glyphs);
+	}
 
+	return index;
+}
+
+static gboolean
+glyphs_indices_parse (const char          *indices,
+                      cairo_scaled_font_t *scaled_font,
+		      gdouble              x,
+		      gdouble              y,
+		      const char          *utf8,
+		      GArray              *glyph_array,
+		      GArray              *cluster_array,
+		      GError             **error)
+{
+	GlyphsIndicesToken    token;
+	cairo_text_cluster_t  cluster;
+	cairo_glyph_t         glyph;
+	gint                  cluster_pos = 1;
+	gboolean              have_index = FALSE;
+	gdouble               advance_width;
+	gdouble               advance_height;
+	gboolean              have_advance_width = FALSE;
+	gdouble               h_offset = 0;
+	gdouble               v_offset = 0;
+	cairo_matrix_t        font_matrix;
+        gboolean              eof = FALSE;
+
+        cairo_scaled_font_get_font_matrix (scaled_font, &font_matrix);
+
+        cluster.num_glyphs = 1;
+        cluster.num_bytes = 0;
+
+        token.iter = (gchar *)indices;
+        token.end = token.iter + strlen (indices);
+        glyphs_indices_iter_next (&token);
+
+        while (1) {
 		switch (token.type) {
-		case GI_TOKEN_START_CLUSTER:
+		case GI_TOKEN_START_CLUSTER: {
+                        gint num_code_units;
+                        const gchar *utf8_unit_end;
+
 			glyphs_indices_iter_next (&token);
 			if (token.type != GI_TOKEN_NUMBER) {
 				glyphs_indices_parse_error (&token,
@@ -2126,10 +2169,27 @@ glyphs_indices_parse (const gchar          *data,
 							    error);
 				return FALSE;
 			}
-			/* FIXME:
-			cluster_list[i].num_bytes = (gint)token.number;*/
+
+			/* Spec defines ClusterCodeUnitCount in terms of UTF-16 code units */
+			num_code_units = (gint)token.number;
+			utf8_unit_end = utf8;
+
+			while (utf8 && num_code_units > 0) {
+				gunichar utf8_char = g_utf8_get_char (utf8_unit_end);
+
+				if (*utf8_unit_end != '\0')
+					utf8_unit_end = g_utf8_next_char (utf8_unit_end);
+
+				num_code_units--;
+				if (utf8_char > 0xFFFF) /* 2 code units */
+					num_code_units--;
+			}
+			cluster.num_bytes = utf8_unit_end - utf8;
 
 			glyphs_indices_iter_next (&token);
+			if (token.type == GI_TOKEN_END_CLUSTER)
+				break;
+
 			if (token.type != GI_TOKEN_COLON) {
 				glyphs_indices_parse_error (&token,
 							    GI_TOKEN_COLON,
@@ -2145,8 +2205,9 @@ glyphs_indices_parse (const gchar          *data,
 
 				return FALSE;
 			}
-			/* FIXME:
-			cluster_list[i].num_glyphs = (gint)token.number;*/
+
+			cluster.num_glyphs = (gint)token.number;
+			cluster_pos = (gint)token.number;
 
 			glyphs_indices_iter_next (&token);
 			if (token.type != GI_TOKEN_END_CLUSTER) {
@@ -2155,14 +2216,17 @@ glyphs_indices_parse (const gchar          *data,
 							    error);
 				return FALSE;
 			}
+                }
 			break;
 		case GI_TOKEN_NUMBER:
-			glyph_list[i].index = (gint)token.number;
+			glyph.index = (gint)token.number;
+			have_index = TRUE;
 			break;
 		case GI_TOKEN_COMMA:
 			glyphs_indices_iter_next (&token);
 			if (token.type == GI_TOKEN_NUMBER) {
-				advance_widths[i] = token.number * font_size / 100.0;
+				advance_width = token.number / 100.0;
+				have_advance_width = TRUE;
 				glyphs_indices_iter_next (&token);
 			}
 
@@ -2171,7 +2235,7 @@ glyphs_indices_parse (const gchar          *data,
 
 			glyphs_indices_iter_next (&token);
 			if (token.type == GI_TOKEN_NUMBER) {
-				advance_widths[i] += token.number / 100.0;
+				h_offset = token.number / 100.0;
 				glyphs_indices_iter_next (&token);
 			}
 
@@ -2186,11 +2250,54 @@ glyphs_indices_parse (const gchar          *data,
 
 				return FALSE;
 			}
-			/* TODO: vOffset */
 
+			v_offset = token.number / 100.0;
 			break;
-		case GI_TOKEN_SEMICOLON:
-			i++;
+                case GI_TOKEN_EOF:
+                        eof = TRUE;
+		case GI_TOKEN_SEMICOLON: {
+                        cairo_text_extents_t extents;
+
+			if (!have_index)
+				glyph.index = glyphs_lookup_index (scaled_font, utf8);
+
+			cairo_matrix_transform_distance (&font_matrix, &h_offset, &v_offset);
+			glyph.x = x + h_offset;
+			glyph.y = y - v_offset;
+
+			cairo_scaled_font_glyph_extents (scaled_font, &glyph, 1, &extents);
+
+			if (!have_advance_width) {
+				advance_height = 0;
+                                advance_width = extents.x_advance;
+			} else {
+                                advance_height = 0;
+				cairo_matrix_transform_distance (&font_matrix, &advance_width, &advance_height);
+			}
+
+			if (utf8 != NULL && *utf8 != '\0' && cluster.num_bytes == 0)
+				cluster.num_bytes = g_utf8_next_char (utf8) - utf8;
+
+			if (cluster_pos == 1) {
+				utf8 += cluster.num_bytes;
+				g_array_append_val (cluster_array, cluster);
+				cluster.num_bytes = 0;
+				cluster.num_glyphs = 1;
+			} else {
+				cluster_pos--;
+			}
+
+			x += advance_width;
+			y += advance_height;
+			have_index = FALSE;
+			have_advance_width = FALSE;
+			h_offset = 0;
+			v_offset = 0;
+			g_array_append_val (glyph_array, glyph);
+
+                        if (eof && (utf8 == NULL || *utf8 == '\0'))
+                                return TRUE;
+                }
 			break;
 		case GI_TOKEN_INVALID:
 			g_set_error (error,
@@ -2205,7 +2312,82 @@ glyphs_indices_parse (const gchar          *data,
 		}
 
 		glyphs_indices_iter_next (&token);
-	} while (token.type != GI_TOKEN_EOF);
+        }
+
+	return TRUE;
+}
+
+static gboolean
+gxps_glyphs_to_cairo_glyphs (GXPSGlyphs            *gxps_glyphs,
+			     cairo_scaled_font_t   *scaled_font,
+			     const gchar           *utf8,
+			     cairo_glyph_t        **glyphs,
+			     int                   *num_glyphs,
+			     cairo_text_cluster_t **clusters,
+			     int                   *num_clusters,
+			     GError               **error)
+{
+	GArray  *glyph_array = g_array_new (FALSE, FALSE, sizeof (cairo_glyph_t));
+	GArray  *cluster_array = g_array_new (FALSE, FALSE, sizeof (cairo_text_cluster_t));
+        gboolean success;
+
+        if (!gxps_glyphs->indices) {
+                cairo_glyph_t         glyph;
+                cairo_text_cluster_t  cluster;
+                double                x = gxps_glyphs->origin_x;
+                double                y = gxps_glyphs->origin_y;
+
+                if (utf8 == NULL || *utf8 == '\0') {
+                        g_set_error (error,
+                                     GXPS_PAGE_ERROR,
+                                     GXPS_PAGE_ERROR_RENDER,
+                                     "Error parsing glyphs: Both UnicodeString and Indices are empty");
+                        return FALSE;
+                }
+
+                cluster.num_glyphs = 1;
+
+                do {
+                        cairo_text_extents_t extents;
+
+                        glyph.index = glyphs_lookup_index (scaled_font, utf8);
+                        glyph.x = x;
+                        glyph.y = y;
+                        cluster.num_bytes = g_utf8_next_char (utf8) - utf8;
+
+                        cairo_scaled_font_glyph_extents (scaled_font, &glyph, 1, &extents);
+                        x += extents.x_advance;
+
+                        g_array_append_val (glyph_array, glyph);
+                        g_array_append_val (cluster_array, cluster);
+
+                        utf8 += cluster.num_bytes;
+                } while (utf8 != NULL && *utf8 != '\0');
+        } else {
+                success = glyphs_indices_parse (gxps_glyphs->indices,
+                                                scaled_font,
+                                                gxps_glyphs->origin_x,
+                                                gxps_glyphs->origin_y,
+                                                utf8,
+                                                glyph_array,
+                                                cluster_array,
+                                                error);
+                if (!success) {
+                        *num_glyphs = 0;
+                        *glyphs = NULL;
+                        *num_clusters = 0;
+                        *clusters = NULL;
+                        g_array_free (glyph_array, TRUE);
+                        g_array_free (cluster_array, TRUE);
+
+                        return FALSE;
+                }
+        }
+
+	*num_glyphs = glyph_array->len;
+	*glyphs = (cairo_glyph_t *)g_array_free (glyph_array, FALSE);
+	*num_clusters = cluster_array->len;
+	*clusters = (cairo_text_cluster_t *)g_array_free (cluster_array, FALSE);
 
 	return TRUE;
 }
@@ -2553,30 +2735,19 @@ render_end_element (GMarkupParseContext  *context,
 		LOG (g_print ("restore\n"));
 		cairo_restore (ctx->cr);
 	} else if (strcmp (element_name, "Glyphs") == 0) {
-		GXPSGlyphs                *glyphs;
-		gint                       utf8_len;
-		gdouble                   *advance_widths;
-		cairo_text_cluster_t      *cluster_list = NULL;
-		gint                       num_clusters;
-		cairo_text_cluster_flags_t cluster_flags;
-		cairo_glyph_t             *glyph_list = NULL;
-		gint                       num_glyphs;
-		cairo_matrix_t             ctm, font_matrix;
-		cairo_font_face_t         *font_face;
-		cairo_font_options_t      *font_options;
-		cairo_scaled_font_t       *scaled_font;
-		gint                       i;
-		gdouble                    acc;
+		GXPSGlyphs           *glyphs;
+		gchar                *utf8;
+		cairo_text_cluster_t *cluster_list = NULL;
+		gint                  num_clusters;
+		cairo_glyph_t        *glyph_list = NULL;
+		gint                  num_glyphs;
+		cairo_matrix_t        ctm, font_matrix;
+		cairo_font_face_t    *font_face;
+		cairo_font_options_t *font_options;
+		cairo_scaled_font_t  *scaled_font;
+                gboolean              success;
 
 		glyphs = g_markup_parse_context_pop (context);
-
-		if (!glyphs->text) {
-			gxps_glyphs_free (glyphs);
-			LOG (g_print ("restore\n"));
-			cairo_restore (ctx->cr);
-
-			return;
-		}
 
 		font_face = gxps_fonts_get_font (ctx->page->priv->zip, glyphs->font_uri, error);
 		if (!font_face) {
@@ -2586,7 +2757,6 @@ render_end_element (GMarkupParseContext  *context,
 			cairo_restore (ctx->cr);
 			return;
 		}
-		cairo_set_font_face (ctx->cr, font_face);
 
 		if (glyphs->clip_data) {
 			if (!path_data_parse (glyphs->clip_data, ctx->cr, error)) {
@@ -2598,10 +2768,6 @@ render_end_element (GMarkupParseContext  *context,
 			LOG (g_print ("clip\n"));
 			cairo_clip (ctx->cr);
 		}
-
-		utf8_len = g_utf8_strlen (glyphs->text, -1);
-
-		advance_widths = g_new0 (gdouble, utf8_len);
 
 		font_options = cairo_font_options_create ();
 		cairo_get_font_options (ctx->cr, font_options);
@@ -2617,66 +2783,41 @@ render_end_element (GMarkupParseContext  *context,
 
 		cairo_font_options_destroy (font_options);
 
-		cairo_scaled_font_text_to_glyphs (scaled_font,
-						  glyphs->origin_x,
-						  glyphs->origin_y,
-						  glyphs->text,
-						  strlen (glyphs->text),
-						  &glyph_list, &num_glyphs,
-						  &cluster_list, &num_clusters,
-						  &cluster_flags);
+                /* UnicodeString may begin with escape sequence "{}" */
+                utf8 = glyphs->text;
+                if (utf8 && g_str_has_prefix (utf8, "{}"))
+                        utf8 += 2;
 
-		if (glyphs->indices) {
-			gboolean success;
-
-			success = glyphs_indices_parse (glyphs->indices,
-							glyphs->em_size,
-							advance_widths,
-							glyph_list,
-							num_glyphs,
-							cluster_list,
-							num_clusters,
-							error);
-			if (!success) {
-				g_free (advance_widths);
-				gxps_glyphs_free (glyphs);
-				LOG (g_print ("restore\n"));
-				cairo_restore (ctx->cr);
-				return;
-			}
+		success = gxps_glyphs_to_cairo_glyphs (glyphs,
+						       scaled_font,
+						       utf8,
+						       &glyph_list, &num_glyphs,
+						       &cluster_list, &num_clusters,
+						       error);
+		if (!success) {
+			gxps_glyphs_free (glyphs);
+			cairo_scaled_font_destroy (scaled_font);
+			LOG (g_print ("restore\n"));
+			cairo_restore (ctx->cr);
+			return;
 		}
-
-		acc = glyph_list[0].x;
-		for (i = 0; i < num_glyphs; i++) {
-			glyph_list[i].x = acc;
-			if (advance_widths[i] > 0) {
-				acc = glyph_list[i].x + advance_widths[i];
-			} else {
-				cairo_text_extents_t extents;
-
-				cairo_scaled_font_glyph_extents (scaled_font, &glyph_list[i], 1, &extents);
-				acc = glyph_list[i].x + extents.x_advance;
-			}
-		}
-
-		g_free (advance_widths);
 
 		if (glyphs->fill_pattern)
 			cairo_set_source (ctx->cr, glyphs->fill_pattern);
 
 		LOG (g_print ("show_text (%s)\n", glyphs->text));
 
-		cairo_set_font_size (ctx->cr, glyphs->em_size);
+		cairo_set_scaled_font (ctx->cr, scaled_font);
 		cairo_show_text_glyphs (ctx->cr,
-					glyphs->text, -1,
+					utf8, -1,
 					glyph_list, num_glyphs,
 					cluster_list, num_clusters,
-					cluster_flags);
+					0);
 
-		cairo_glyph_free (glyph_list);
-		cairo_text_cluster_free (cluster_list);
-
+		g_free (glyph_list);
+		g_free (cluster_list);
 		gxps_glyphs_free (glyphs);
+		cairo_scaled_font_destroy (scaled_font);
 
 		LOG (g_print ("restore\n"));
 		cairo_restore (ctx->cr);
