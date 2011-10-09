@@ -1948,6 +1948,7 @@ typedef struct {
 	gchar             *clip_data;
         gint               bidi_level;
         guint              is_sideways : 1;
+        guint              italic : 1;
 } GXPSGlyphs;
 
 static GXPSGlyphs *
@@ -2600,6 +2601,7 @@ render_start_element (GMarkupParseContext  *context,
 		const gchar *clip_data = NULL;
                 gint         bidi_level = 0;
                 gboolean     is_sideways = FALSE;
+                gboolean     italic = FALSE;
 		gint         i;
 
 		LOG (g_print ("save\n"));
@@ -2645,6 +2647,10 @@ render_start_element (GMarkupParseContext  *context,
                                 bidi_level = g_ascii_strtoll (values[i], NULL, 10);
                         } else if (strcmp (names[i], "IsSideways") == 0) {
                                 is_sideways = gxps_boolean_parse (values[i]);
+                        } else if (strcmp (names[i], "StyleSimulations") == 0) {
+                                if (strcmp (values[i], "ItalicSimulation") == 0) {
+                                        italic = TRUE;
+                                }
 			}
 		}
 
@@ -2678,6 +2684,7 @@ render_start_element (GMarkupParseContext  *context,
 		glyphs->clip_data = (clip_data) ? g_strdup (clip_data) : NULL;
                 glyphs->bidi_level = bidi_level;
                 glyphs->is_sideways = is_sideways;
+                glyphs->italic = italic;
 		if (fill_color) {
 			LOG (g_print ("set_fill_pattern (solid)\n"));
 			glyphs->fill_pattern = gxps_create_solid_color_pattern (fill_color);
@@ -2831,6 +2838,10 @@ render_end_element (GMarkupParseContext  *context,
 		cairo_matrix_init_identity (&font_matrix);
 		cairo_matrix_scale (&font_matrix, glyphs->em_size, glyphs->em_size);
 		cairo_get_matrix (ctx->cr, &ctm);
+
+                /* italics is 20 degrees slant.  0.342 = sin(20 deg) */
+                if (glyphs->italic)
+                        font_matrix.xy = glyphs->em_size * -0.342;
 
                 if (glyphs->is_sideways)
                         cairo_matrix_rotate (&font_matrix, -G_PI_2);
