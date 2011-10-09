@@ -2310,7 +2310,8 @@ glyphs_indices_parse (const char          *indices,
 
 			if (cluster_pos == 1) {
 				utf8 += cluster.num_bytes;
-				g_array_append_val (cluster_array, cluster);
+                                if (cluster_array)
+                                        g_array_append_val (cluster_array, cluster);
 				cluster.num_bytes = 0;
 				cluster.num_glyphs = 1;
 			} else {
@@ -2358,7 +2359,7 @@ gxps_glyphs_to_cairo_glyphs (GXPSGlyphs            *gxps_glyphs,
 			     GError               **error)
 {
 	GArray  *glyph_array = g_array_new (FALSE, FALSE, sizeof (cairo_glyph_t));
-	GArray  *cluster_array = g_array_new (FALSE, FALSE, sizeof (cairo_text_cluster_t));
+	GArray  *cluster_array = clusters ? g_array_new (FALSE, FALSE, sizeof (cairo_text_cluster_t)) : NULL;
         gboolean success;
 
         if (!gxps_glyphs->indices) {
@@ -2406,7 +2407,8 @@ gxps_glyphs_to_cairo_glyphs (GXPSGlyphs            *gxps_glyphs,
                         x += advance_width;
 
                         g_array_append_val (glyph_array, glyph);
-                        g_array_append_val (cluster_array, cluster);
+                        if (cluster_array)
+                                g_array_append_val (cluster_array, cluster);
 
                         utf8 += cluster.num_bytes;
                 } while (utf8 != NULL && *utf8 != '\0');
@@ -2424,10 +2426,13 @@ gxps_glyphs_to_cairo_glyphs (GXPSGlyphs            *gxps_glyphs,
                 if (!success) {
                         *num_glyphs = 0;
                         *glyphs = NULL;
-                        *num_clusters = 0;
-                        *clusters = NULL;
                         g_array_free (glyph_array, TRUE);
-                        g_array_free (cluster_array, TRUE);
+
+                        if (clusters) {
+                                *num_clusters = 0;
+                                *clusters = NULL;
+                                g_array_free (cluster_array, TRUE);
+                        }
 
                         return FALSE;
                 }
@@ -2435,8 +2440,10 @@ gxps_glyphs_to_cairo_glyphs (GXPSGlyphs            *gxps_glyphs,
 
 	*num_glyphs = glyph_array->len;
 	*glyphs = (cairo_glyph_t *)g_array_free (glyph_array, FALSE);
-	*num_clusters = cluster_array->len;
-	*clusters = (cairo_text_cluster_t *)g_array_free (cluster_array, FALSE);
+        if (clusters) {
+                *num_clusters = cluster_array->len;
+                *clusters = (cairo_text_cluster_t *)g_array_free (cluster_array, FALSE);
+        }
 
 	return TRUE;
 }
@@ -2808,6 +2815,7 @@ render_end_element (GMarkupParseContext  *context,
 		cairo_font_face_t    *font_face;
 		cairo_font_options_t *font_options;
 		cairo_scaled_font_t  *scaled_font;
+                gboolean              use_show_text_glyphs;
                 gboolean              success;
 
 		glyphs = g_markup_parse_context_pop (context);
@@ -2858,11 +2866,12 @@ render_end_element (GMarkupParseContext  *context,
                 if (utf8 && g_str_has_prefix (utf8, "{}"))
                         utf8 += 2;
 
-		success = gxps_glyphs_to_cairo_glyphs (glyphs,
-						       scaled_font,
-						       utf8,
+                use_show_text_glyphs = cairo_surface_has_show_text_glyphs (cairo_get_target (ctx->cr));
+
+		success = gxps_glyphs_to_cairo_glyphs (glyphs, scaled_font, utf8,
 						       &glyph_list, &num_glyphs,
-						       &cluster_list, &num_clusters,
+						       use_show_text_glyphs ? &cluster_list : NULL,
+                                                       use_show_text_glyphs ? &num_clusters : NULL,
 						       error);
 		if (!success) {
 			gxps_glyphs_free (glyphs);
@@ -2878,14 +2887,17 @@ render_end_element (GMarkupParseContext  *context,
 		LOG (g_print ("show_text (%s)\n", glyphs->text));
 
 		cairo_set_scaled_font (ctx->cr, scaled_font);
-		cairo_show_text_glyphs (ctx->cr,
-					utf8, -1,
-					glyph_list, num_glyphs,
-					cluster_list, num_clusters,
-					0);
+                if (use_show_text_glyphs) {
+                        cairo_show_text_glyphs (ctx->cr, utf8, -1,
+                                                glyph_list, num_glyphs,
+                                                cluster_list, num_clusters,
+                                                0);
+                        g_free (cluster_list);
+                } else {
+                        cairo_show_glyphs (ctx->cr, glyph_list, num_glyphs);
+                }
 
 		g_free (glyph_list);
-		g_free (cluster_list);
 		gxps_glyphs_free (glyphs);
 		cairo_scaled_font_destroy (scaled_font);
 
