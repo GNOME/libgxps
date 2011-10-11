@@ -15,7 +15,8 @@ INST_H_FILES = \
 	gxps-error.h			\
 	gxps-file.h			\
 	gxps-links.h			\
-	gxps-page.h
+	gxps-page.h			\
+	gxps-version.h
 
 libgxpsincludedir = $(includedir)/libgxps
 libgxpsinclude_HEADERS = $(INST_H_FILES)
@@ -60,6 +61,12 @@ libgxps_la_LIBADD = \
 	$(LIBJPEG)	\
 	$(LIBTIFF)
 
+EXTRA_DIST = \
+	gxps-version.h.in
+
+DISTCLEANFILES = \
+	gxps-version.h
+
 CLEANFILES =
 
 -include $(INTROSPECTION_MAKEFILE)
@@ -68,7 +75,7 @@ INTROSPECTION_SCANNER_ARGS = --add-include-path=$(srcdir) --warn-all --identifie
 INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
 
 if HAVE_INTROSPECTION
-introspection_sources = $(filter-out $(NOINST_H_FILES) gxps-archive.c gxps-fonts.c gxps-images.c gxps-parse-utils.c, $(libgxps_la_SOURCES))
+introspection_sources = $(filter-out $(NOINST_H_FILES) gxps-archive.c gxps-fonts.c gxps-images.c gxps-parse-utils.c gxps-version.h, $(libgxps_la_SOURCES))
 
 GXPS-0.1.gir: libgxps.la
 GXPS_0_1_gir_INCLUDES = GObject-2.0 Gio-2.0 cairo-1.0

@@ -19,6 +19,7 @@
     <xi:include href="xml/gxps-links.xml"/>
     <xi:include href="xml/gxps-document-structure.xml"/>
     <xi:include href="xml/gxps-error.xml"/>
+    <xi:include href="xml/gxps-version.xml"/>
   </chapter>
 
   <index id="api-index-full">

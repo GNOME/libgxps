@@ -181,6 +181,7 @@ AC_CONFIG_FILES([
 Makefile
 libgxps.pc
 libgxps/Makefile
+libgxps/gxps-version.h
 test/Makefile
 docs/Makefile
 docs/reference/Makefile
