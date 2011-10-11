@@ -148,7 +148,7 @@ AC_ARG_ENABLE(test,
               [AC_HELP_STRING([--enable-test], [Compile tests])],enable_test="$enableval",enable_test=yes)
 
 if test "x$enable_test" = "xyes"; then
-   PKG_CHECK_MODULES(GTK, gtk+-2.0, enable_test=yes,enable_test=no)
+   PKG_CHECK_MODULES(GTK, gtk+-3.0, enable_test=yes,enable_test=no)
 
   if test "x$enable_test" != "xyes"; then
     AC_MSG_WARN("Tests disabled since required GTK+ library was not found")

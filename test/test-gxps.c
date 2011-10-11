@@ -15,23 +15,20 @@ typedef struct {
 } GXPSView;
 
 static gboolean
-drawing_area_expose (GtkWidget      *drawing_area,
-		     GdkEventExpose *event,
-		     GXPSView       *view)
+drawing_area_draw (GtkWidget *drawing_area,
+                   cairo_t   *cr,
+                   GXPSView  *view)
 {
-	cairo_t *cr;
-
-	gdk_window_clear (drawing_area->window);
-
 	if (!view->surface)
 		return FALSE;
 
-	cr = gdk_cairo_create (drawing_area->window);
-	cairo_set_source_rgb (cr, 1., 1., 1.);
-	cairo_paint (cr);
+        cairo_set_source_rgb (cr, 1., 1., 1.);
+        cairo_rectangle (cr, 0, 0,
+                         cairo_image_surface_get_width (view->surface),
+                         cairo_image_surface_get_height (view->surface));
+	cairo_fill (cr);
 	cairo_set_source_surface (cr, view->surface, 0, 0);
 	cairo_paint (cr);
-	cairo_destroy (cr);
 
 	return TRUE;
 }
@@ -138,8 +135,8 @@ gint main (gint argc, gchar **argv)
 	gtk_widget_show (hbox);
 
 	view->darea = gtk_drawing_area_new ();
-	g_signal_connect (view->darea, "expose-event",
-			  G_CALLBACK (drawing_area_expose),
+	g_signal_connect (view->darea, "draw",
+			  G_CALLBACK (drawing_area_draw),
 			  view);
 
 	sw = gtk_scrolled_window_new (NULL, NULL);
