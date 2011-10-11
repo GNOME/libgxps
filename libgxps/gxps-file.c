@@ -114,8 +114,8 @@ rels_start_element (GMarkupParseContext  *context,
 		} else if (strcmp (type, REL_METATADA_CORE_PROPS) == 0) {
 			xps->priv->core_props = g_strdup (target);
 		} else {
-			g_warning ("Unsupported attribute of %s, %s=%s\n",
-				   element_name, type, target);
+			g_debug ("Unsupported attribute of %s, %s=%s\n",
+                                 element_name, type, target);
 		}
 	} else if (strcmp (element_name, "Relationships") == 0) {
 		/* Nothing to do */

@@ -29,6 +29,7 @@
 #include "gxps-images.h"
 #include "gxps-private.h"
 #include "gxps-error.h"
+#include "gxps-debug.h"
 
 /**
  * SECTION:gxps-page
@@ -41,14 +42,6 @@
  * #GXPSPage objects can not be created directly, they are retrieved
  * from a #GXPSDocument with gxps_document_get_page().
  */
-
-// #define ENABLE_LOG
-
-#ifdef ENABLE_LOG
-#define LOG(x) (x)
-#else
-#define LOG(x)
-#endif
 
 enum {
 	PROP_0,
@@ -395,31 +388,31 @@ path_data_token_type_to_string (PathDataTokenType type)
 	}
 }
 
-#ifdef ENABLE_DEBUG_PATH
+#ifdef GXPS_ENABLE_DEBUG
 static void
 print_token (PathDataToken *token)
 {
 	switch (token->type) {
 	case PD_TOKEN_INVALID:
-		g_print ("Invalid token\n");
+		g_debug ("Invalid token");
 		break;
 	case PD_TOKEN_NUMBER:
-		g_print ("Token number: %f\n", token->number);
+		g_debug ("Token number: %f", token->number);
 		break;
 	case PD_TOKEN_COMMA:
-		g_print ("Token comma\n");
+		g_debug ("Token comma");
 		break;
 	case PD_TOKEN_COMMAND:
-		g_print ("Token command %c\n", token->command);
+		g_debug ("Token command %c", token->command);
 		break;
 	case PD_TOKEN_EOF:
-		g_print ("Token EOF\n");
+		g_debug ("Token EOF");
 		break;
 	default:
 		g_assert_not_reached ();
 	}
 }
-#endif /* ENABLE_DEBUG_PATH */
+#endif /* GXPS_ENABLE_DEBUG */
 
 static inline gboolean
 advance_char (PathDataToken *token)
@@ -456,9 +449,8 @@ path_data_iter_next (PathDataToken *token)
 
 	if (token->iter == token->end) {
 		token->type = PD_TOKEN_EOF;
-#ifdef ENABLE_DEBUG_PATH
-		print_token (token);
-#endif
+                GXPS_DEBUG (print_token (token));
+
 		return;
 	}
 
@@ -487,9 +479,8 @@ path_data_iter_next (PathDataToken *token)
 		token->type = PD_TOKEN_INVALID;
 		token->iter++;
 	}
-#ifdef ENABLE_DEBUG_PATH
-	print_token (token);
-#endif
+
+	GXPS_DEBUG (print_token (token));
 }
 
 static void
@@ -569,7 +560,7 @@ path_data_parse (const gchar *data,
 				if (!path_data_get_point (&token, &x, &y, error))
 					return FALSE;
 
-				LOG (g_print ("%s (%f, %f)\n", is_rel ? "rel_move_to" : "move_to", x, y));
+				GXPS_DEBUG (g_message ("%s (%f, %f)", is_rel ? "rel_move_to" : "move_to", x, y));
 
 				if (is_rel)
 					cairo_rel_move_to (cr, x, y);
@@ -589,7 +580,7 @@ path_data_parse (const gchar *data,
 				if (!path_data_get_point (&token, &x, &y, error))
 					return FALSE;
 
-				LOG (g_print ("%s (%f, %f)\n", is_rel ? "rel_line_to" : "line_to", x, y));
+				GXPS_DEBUG (g_message ("%s (%f, %f)", is_rel ? "rel_line_to" : "line_to", x, y));
 
 				if (is_rel)
 					cairo_rel_line_to (cr, x, y);
@@ -609,7 +600,7 @@ path_data_parse (const gchar *data,
 
 				offset = token.number;
 
-				LOG (g_print ("%s (%f)\n", is_rel ? "rel_hline_to" : "hline_to", offset));
+				GXPS_DEBUG (g_message ("%s (%f)", is_rel ? "rel_hline_to" : "hline_to", offset));
 
 				cairo_get_current_point (cr, &x, &y);
 				x = is_rel ? x + offset : offset;
@@ -628,7 +619,7 @@ path_data_parse (const gchar *data,
 
 				offset = token.number;
 
-				LOG (g_print ("%s (%f)\n", is_rel ? "rel_vline_to" : "vline_to", offset));
+				GXPS_DEBUG (g_message ("%s (%f)", is_rel ? "rel_vline_to" : "vline_to", offset));
 
 				cairo_get_current_point (cr, &x, &y);
 				y = is_rel ? y + offset : offset;
@@ -655,7 +646,7 @@ path_data_parse (const gchar *data,
 				if (!path_data_get_point (&token, &x3, &y3, error))
 					return FALSE;
 
-				LOG (g_print ("%s (%f, %f, %f, %f, %f, %f)\n", is_rel ? "rel_curve_to" : "curve_to",
+				GXPS_DEBUG (g_message ("%s (%f, %f, %f, %f, %f, %f)", is_rel ? "rel_curve_to" : "curve_to",
 					      x1, y1, x2, y2, x3, y3));
 
 				if (is_rel)
@@ -680,9 +671,9 @@ path_data_parse (const gchar *data,
 				if (!path_data_get_point (&token, &x2, &y2, error))
 					return FALSE;
 
-				LOG (g_print ("%s (%f, %f, %f, %f)\n", is_rel ? "rel_quad_curve_to" : "quad_curve_to",
+				GXPS_DEBUG (g_message ("%s (%f, %f, %f, %f)", is_rel ? "rel_quad_curve_to" : "quad_curve_to",
 					      x1, y1, x2, y2));
-				g_warning ("Unsupported command in path: %c\n", command);
+				GXPS_DEBUG (g_debug ("Unsupported command in path: %c", command));
 
 				path_data_iter_next (&token);
 			}
@@ -701,9 +692,9 @@ path_data_parse (const gchar *data,
 				if (!path_data_get_point (&token, &x2, &y2, error))
 					return FALSE;
 
-				LOG (g_print ("%s (%f, %f, %f, %f)\n", is_rel ? "rel_smooth_curve_to" : "smooth_curve_to",
+				GXPS_DEBUG (g_message ("%s (%f, %f, %f, %f)", is_rel ? "rel_smooth_curve_to" : "smooth_curve_to",
 					      x1, y1, x2, y2));
-				g_warning ("Unsupported command in path: %c\n", command);
+				GXPS_DEBUG (g_debug ("Unsupported command in path: %c", command));
 
 				path_data_iter_next (&token);
 			}
@@ -743,9 +734,9 @@ path_data_parse (const gchar *data,
 				if (!path_data_get_point (&token, &x, &y, error))
 					return FALSE;
 
-				LOG (g_print ("%s (%f, %f, %f, %f, %f, %f, %f)\n", is_rel ? "rel_arc" : "arc",
+				GXPS_DEBUG (g_message ("%s (%f, %f, %f, %f, %f, %f, %f)", is_rel ? "rel_arc" : "arc",
 					      xr, yr, rx, farc, fsweep, x, y));
-				g_warning ("Unsupported command in path: %c\n", command);
+				GXPS_DEBUG (g_debug ("Unsupported command in path: %c", command));
 
 				path_data_iter_next (&token);
 			}
@@ -755,7 +746,7 @@ path_data_parse (const gchar *data,
 			is_rel = TRUE;
 		case 'Z':
 			cairo_close_path (cr);
-			LOG (g_print ("close_path\n"));
+			GXPS_DEBUG (g_message ("close_path"));
 			break;
 			/* Fill Rule */
 		case 'F': {
@@ -766,7 +757,7 @@ path_data_parse (const gchar *data,
 					     (fill_rule == 0) ?
 					     CAIRO_FILL_RULE_EVEN_ODD :
 					     CAIRO_FILL_RULE_WINDING);
-			LOG (g_print ("set_fill_rule (%s)\n", (fill_rule == 0) ? "EVEN_ODD" : "WINDING"));
+			GXPS_DEBUG (g_message ("set_fill_rule (%s)", (fill_rule == 0) ? "EVEN_ODD" : "WINDING"));
 
 			path_data_iter_next (&token);
 		}
@@ -899,7 +890,7 @@ gxps_line_cap_parse (const gchar *cap)
 	else if (strcmp (cap, "Square") == 0)
 		return CAIRO_LINE_CAP_SQUARE;
 	else if (strcmp (cap, "Triangle") == 0)
-		g_warning ("Unsupported dash cap Triangle\n");
+		GXPS_DEBUG (g_debug ("Unsupported dash cap Triangle"));
 
 	return CAIRO_LINE_CAP_BUTT;
 }
@@ -1039,11 +1030,11 @@ gxps_tile_mode_parse (const gchar *tile)
 	if (strcmp (tile, "Tile") == 0)
 		return CAIRO_EXTEND_REPEAT;
 	else if (strcmp (tile, "FlipX") == 0)
-		g_warning ("Unsupported tile mode FlipX\n");
+		GXPS_DEBUG (g_debug ("Unsupported tile mode FlipX"));
 	else if (strcmp (tile, "FlipY") == 0)
-		g_warning ("Unsupported tile mode FlipY\n");
+		GXPS_DEBUG (g_debug ("Unsupported tile mode FlipY"));
 	else if (strcmp (tile, "FlipXY") == 0)
-		g_warning ("Unsupported tile mode FlipXY\n");
+		GXPS_DEBUG (g_debug ("Unsupported tile mode FlipXY"));
 
 	return CAIRO_EXTEND_NONE;
 }
@@ -1285,7 +1276,7 @@ brush_start_element (GMarkupParseContext  *context,
 			if (strcmp (names[i], "Color") == 0) {
 
 				brush->pattern = gxps_create_solid_color_pattern (values[i]);
-				LOG (g_print ("set_fill_pattern (solid)\n"));
+				GXPS_DEBUG (g_message ("set_fill_pattern (solid)"));
 				if (!brush->pattern) {
 					gxps_parse_error (context,
 							  brush->ctx->page->priv->source,
@@ -1411,7 +1402,7 @@ brush_start_element (GMarkupParseContext  *context,
 
 		/* TODO: check required values */
 
-		LOG (g_print ("set_fill_pattern (linear)\n"));
+		GXPS_DEBUG (g_message ("set_fill_pattern (linear)"));
 		brush->pattern = cairo_pattern_create_linear (x0, y0, x1, y1);
 		cairo_pattern_set_matrix (brush->pattern, &matrix);
 		cairo_pattern_set_extend (brush->pattern, extend);
@@ -1464,7 +1455,7 @@ brush_start_element (GMarkupParseContext  *context,
 
 		/* TODO: Check required values */
 
-		LOG (g_print ("set_fill_pattern (radial)\n"));
+		GXPS_DEBUG (g_message ("set_fill_pattern (radial)"));
 		brush->pattern = cairo_pattern_create_radial (cx0, cy0, 0, cx1, cy1, r1);
 		cairo_pattern_set_matrix (brush->pattern, &matrix);
 		cairo_pattern_set_extend (brush->pattern, extend);
@@ -1533,7 +1524,7 @@ brush_start_element (GMarkupParseContext  *context,
 		sub_ctx->visual = visual;
 		g_markup_parse_context_push (context, &render_parser, sub_ctx);
 	} else {
-		g_warning ("Unsupported Brush: %s\n", element_name);
+		GXPS_DEBUG (g_debug ("Unsupported Brush: %s", element_name));
 
 	}
 }
@@ -1558,7 +1549,7 @@ brush_end_element (GMarkupParseContext  *context,
 
 		image = g_markup_parse_context_pop (context);
 
-		LOG (g_print ("set_fill_pattern (image)\n"));
+		GXPS_DEBUG (g_message ("set_fill_pattern (image)"));
 		surface = gxps_page_get_image (brush->ctx->page, image->image_uri, &err);
 		if (surface) {
 			cairo_matrix_t matrix, port_matrix;
@@ -1583,12 +1574,12 @@ brush_end_element (GMarkupParseContext  *context,
 					   -port_matrix.y0 * y_scale);
 			cairo_pattern_set_matrix (image->brush->pattern, &matrix);
 			if (cairo_pattern_status (image->brush->pattern)) {
-				g_warning ("%s\n", cairo_status_to_string (cairo_pattern_status (image->brush->pattern)));
+				GXPS_DEBUG (g_debug ("%s", cairo_status_to_string (cairo_pattern_status (image->brush->pattern))));
 				cairo_pattern_destroy (image->brush->pattern);
 				image->brush->pattern = NULL;
 			}
 		} else if (err) {
-			g_warning ("%s\n", err->message);
+			GXPS_DEBUG (g_debug ("%s", err->message));
 			g_error_free (err);
 		}
 		gxps_brush_image_free (image);
@@ -1602,7 +1593,7 @@ brush_end_element (GMarkupParseContext  *context,
 		visual = sub_ctx->visual;
 		g_slice_free (GXPSRenderContext, sub_ctx);
 
-		LOG (g_print ("set_fill_pattern (visual)\n"));
+		GXPS_DEBUG (g_message ("set_fill_pattern (visual)"));
 		visual->brush->pattern = cairo_pop_group (brush->ctx->cr);
 		/* Undo the clip */
 		cairo_restore (brush->ctx->cr);
@@ -1623,14 +1614,14 @@ brush_end_element (GMarkupParseContext  *context,
 
 		cairo_pattern_set_matrix (visual->brush->pattern, &matrix);
 		if (cairo_pattern_status (visual->brush->pattern)) {
-			g_warning ("%s\n", cairo_status_to_string (cairo_pattern_status (visual->brush->pattern)));
+			GXPS_DEBUG (g_debug ("%s", cairo_status_to_string (cairo_pattern_status (visual->brush->pattern))));
 			cairo_pattern_destroy (visual->brush->pattern);
 			visual->brush->pattern = NULL;
 		}
 
 		gxps_brush_visual_free (visual);
 	} else {
-		g_warning ("Unsupported Brush: %s\n", element_name);
+		GXPS_DEBUG (g_debug ("Unsupported Brush: %s", element_name));
 
 	}
 }
@@ -1673,7 +1664,7 @@ path_geometry_start_element (GMarkupParseContext  *context,
 					return;
 				}
 
-				LOG (g_print ("move_to (%f, %f)\n", x, y));
+				GXPS_DEBUG (g_message ("move_to (%f, %f)", x, y));
 				cairo_move_to (path->ctx->cr, x, y);
 			} else if (strcmp (names[i], "IsClosed") == 0) {
 				path->is_closed = gxps_boolean_parse (values[i]);
@@ -1713,7 +1704,7 @@ path_geometry_start_element (GMarkupParseContext  *context,
 			}
 
 			for (j = 0; j < n_points * 2; j += 2) {
-				LOG (g_print ("line_to (%f, %f)\n", points[j], points[j + 1]));
+				GXPS_DEBUG (g_message ("line_to (%f, %f)", points[j], points[j + 1]));
 				cairo_line_to (path->ctx->cr, points[j], points[j + 1]);
 			}
 
@@ -1751,7 +1742,7 @@ path_geometry_start_element (GMarkupParseContext  *context,
 			}
 
 			for (j = 0; j < n_points * 2; j += 6) {
-				LOG (g_print ("curve_to (%f, %f, %f, %f, %f, %f)\n",
+				GXPS_DEBUG (g_message ("curve_to (%f, %f, %f, %f, %f, %f)",
 					      points[j], points[j + 1],
 					      points[j + 2], points[j + 3],
 					      points[j + 4], points[j + 5]));
@@ -1778,7 +1769,7 @@ path_geometry_end_element (GMarkupParseContext  *context,
 		GXPSMatrix *matrix;
 
 		matrix = g_markup_parse_context_pop (context);
-		LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+		GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
 			      matrix->matrix.xx, matrix->matrix.yx,
 			      matrix->matrix.xy, matrix->matrix.yy,
 			      matrix->matrix.x0, matrix->matrix.y0));
@@ -1787,12 +1778,12 @@ path_geometry_end_element (GMarkupParseContext  *context,
 		gxps_matrix_free (matrix);
 	} else if (strcmp (element_name, "PathFigure") == 0) {
 		if (path->is_closed) {
-			LOG (g_print ("close_path\n"));
+			GXPS_DEBUG (g_message ("close_path"));
 			cairo_close_path (path->ctx->cr);
 		}
 
 		if (path->is_filled && path->fill_pattern) {
-			LOG (g_print ("fill\n"));
+			GXPS_DEBUG (g_message ("fill"));
 			cairo_set_source (path->ctx->cr, path->fill_pattern);
 			if (path->is_stroked && path->stroke_pattern)
 				cairo_fill_preserve (path->ctx->cr);
@@ -1801,7 +1792,7 @@ path_geometry_end_element (GMarkupParseContext  *context,
 		}
 
 		if (path->stroke_pattern) {
-			LOG (g_print ("stroke\n"));
+			GXPS_DEBUG (g_message ("stroke"));
 			cairo_set_source (path->ctx->cr, path->stroke_pattern);
 			cairo_set_line_width (path->ctx->cr, path->line_width);
 			if (path->dash && path->dash_len > 0)
@@ -1849,7 +1840,7 @@ path_start_element (GMarkupParseContext  *context,
 				path->data = g_strdup (values[i]);
 			} else if (strcmp (names[i], "FillRule") == 0) {
 				path->fill_rule = gxps_fill_rule_parse (values[i]);
-				LOG (g_print ("set_fill_rule (%s)\n", values[i]));
+				GXPS_DEBUG (g_message ("set_fill_rule (%s)", values[i]));
 			} else if (strcmp (names[i], "Transform") == 0) {
 				cairo_matrix_t matrix;
 
@@ -1861,7 +1852,7 @@ path_start_element (GMarkupParseContext  *context,
 							  values[i], error);
 					return;
 				}
-				LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+				GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
 					      matrix.xx, matrix.yx,
 					      matrix.xy, matrix.yy,
 					      matrix.x0, matrix.y0));
@@ -1874,7 +1865,7 @@ path_start_element (GMarkupParseContext  *context,
 			if (path->clip_data) {
 				if (!path_data_parse (path->clip_data, path->ctx->cr, error))
 					return;
-				LOG (g_print ("clip\n"));
+				GXPS_DEBUG (g_message ("clip"));
 				cairo_clip (path->ctx->cr);
 			}
 			g_markup_parse_context_push (context, &path_geometry_parser, path);
@@ -1885,7 +1876,7 @@ path_start_element (GMarkupParseContext  *context,
 		matrix = gxps_matrix_new (path->ctx);
 		g_markup_parse_context_push (context, &matrix_parser, matrix);
 	} else {
-		g_warning ("Unsupported path child %s\n", element_name);
+		GXPS_DEBUG (g_debug ("Unsupported path child %s", element_name));
 	}
 }
 
@@ -1917,7 +1908,7 @@ path_end_element (GMarkupParseContext  *context,
 		GXPSMatrix *matrix;
 
 		matrix = g_markup_parse_context_pop (context);
-		LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+		GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
 			      matrix->matrix.xx, matrix->matrix.yx,
 			      matrix->matrix.xy, matrix->matrix.yy,
 			      matrix->matrix.x0, matrix->matrix.y0));
@@ -2496,7 +2487,7 @@ glyphs_end_element (GMarkupParseContext  *context,
 		GXPSMatrix *matrix;
 
 		matrix = g_markup_parse_context_pop (context);
-		LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+		GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
 			      matrix->matrix.xx, matrix->matrix.yx,
 			      matrix->matrix.xy, matrix->matrix.yy,
 			      matrix->matrix.x0, matrix->matrix.y0));
@@ -2535,7 +2526,7 @@ render_start_element (GMarkupParseContext  *context,
 		GXPSPath *path;
 		gint      i;
 
-		LOG (g_print ("save\n"));
+		GXPS_DEBUG (g_message ("save"));
 		cairo_save (ctx->cr);
 
 		path = gxps_path_new (ctx);
@@ -2553,7 +2544,7 @@ render_start_element (GMarkupParseContext  *context,
 							  "Path", "RenderTransform", values[i], error);
 					return;
 				}
-				LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+				GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
 					      matrix.xx, matrix.yx,
 					      matrix.xy, matrix.yy,
 					      matrix.x0, matrix.y0));
@@ -2561,7 +2552,7 @@ render_start_element (GMarkupParseContext  *context,
 			} else if (strcmp (names[i], "Clip") == 0) {
 				path->clip_data = g_strdup (values[i]);
 			} else if (strcmp (names[i], "Fill") == 0) {
-				LOG (g_print ("set_fill_pattern (solid)\n"));
+				GXPS_DEBUG (g_message ("set_fill_pattern (solid)"));
 				path->fill_pattern = gxps_create_solid_color_pattern (values[i]);
 				if (!path->fill_pattern) {
 					gxps_parse_error (context,
@@ -2571,7 +2562,7 @@ render_start_element (GMarkupParseContext  *context,
 					return;
 				}
 			} else if (strcmp (names[i], "Stroke") == 0) {
-				LOG (g_print ("set_stroke_pattern (solid)\n"));
+				GXPS_DEBUG (g_message ("set_stroke_pattern (solid)"));
 				path->stroke_pattern = gxps_create_solid_color_pattern (values[i]);
 				if (!path->stroke_pattern) {
 					gxps_parse_error (context,
@@ -2582,7 +2573,7 @@ render_start_element (GMarkupParseContext  *context,
 				}
 			} else if (strcmp (names[i], "StrokeThickness") == 0) {
 				path->line_width = g_strtod (values[i], NULL);
-				LOG (g_print ("set_line_width (%f)\n", path->line_width));
+				GXPS_DEBUG (g_message ("set_line_width (%f)", path->line_width));
 			} else if (strcmp (names[i], "StrokeDashArray") == 0) {
 				if (!gxps_dash_array_parse (values[i], &path->dash, &path->dash_len)) {
 					gxps_parse_error (context,
@@ -2591,19 +2582,19 @@ render_start_element (GMarkupParseContext  *context,
 							  "Path", "StrokeDashArray", values[i], error);
 					return;
 				}
-				LOG (g_print ("set_dash\n"));
+				GXPS_DEBUG (g_message ("set_dash"));
 			} else if (strcmp (names[i], "StrokeDashOffset") == 0) {
 				path->dash_offset = g_strtod (values[i], NULL);
-				LOG (g_print ("set_dash_offset (%f)\n", path->dash_offset));
+				GXPS_DEBUG (g_message ("set_dash_offset (%f)", path->dash_offset));
 			} else if (strcmp (names[i], "StrokeDashCap") == 0) {
 				path->line_cap = gxps_line_cap_parse (values[i]);
-				LOG (g_print ("set_line_cap (%s)\n", values[i]));
+				GXPS_DEBUG (g_message ("set_line_cap (%s)", values[i]));
 			} else if (strcmp (names[i], "StrokeLineJoin") == 0) {
 				path->line_join = gxps_line_join_parse (values[i]);
-				LOG (g_print ("set_line_join (%s)\n", values[i]));
+				GXPS_DEBUG (g_message ("set_line_join (%s)", values[i]));
 			} else if (strcmp (names[i], "StrokeMiterLimit") == 0) {
 				path->miter_limit = g_strtod (values[i], NULL);
-				LOG (g_print ("set_miter_limit (%f)\n", path->miter_limit));
+				GXPS_DEBUG (g_message ("set_miter_limit (%f)", path->miter_limit));
 			}
 		}
 
@@ -2622,7 +2613,7 @@ render_start_element (GMarkupParseContext  *context,
                 gboolean     italic = FALSE;
 		gint         i;
 
-		LOG (g_print ("save\n"));
+		GXPS_DEBUG (g_message ("save"));
 		cairo_save (ctx->cr);
 
 		for (i = 0; names[i] != NULL; i++) {
@@ -2654,7 +2645,7 @@ render_start_element (GMarkupParseContext  *context,
 					return;
 				}
 
-				LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+				GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
 					      matrix.xx, matrix.yx,
 					      matrix.xy, matrix.yy,
 					      matrix.x0, matrix.y0));
@@ -2704,7 +2695,7 @@ render_start_element (GMarkupParseContext  *context,
                 glyphs->is_sideways = is_sideways;
                 glyphs->italic = italic;
 		if (fill_color) {
-			LOG (g_print ("set_fill_pattern (solid)\n"));
+			GXPS_DEBUG (g_message ("set_fill_pattern (solid)"));
 			glyphs->fill_pattern = gxps_create_solid_color_pattern (fill_color);
 		}
 
@@ -2712,7 +2703,7 @@ render_start_element (GMarkupParseContext  *context,
 	} else if (strcmp (element_name, "Canvas") == 0) {
 		gint i;
 
-		LOG (g_print ("save\n"));
+		GXPS_DEBUG (g_message ("save"));
 		cairo_save (ctx->cr);
 
 		for (i = 0; names[i] != NULL; i++) {
@@ -2726,7 +2717,7 @@ render_start_element (GMarkupParseContext  *context,
 							  "Canvas", "RenderTransform", values[i], error);
 					return;
 				}
-				LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+				GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
 					      matrix.xx, matrix.yx,
 					      matrix.xy, matrix.yy,
 					      matrix.x0, matrix.y0));
@@ -2736,7 +2727,7 @@ render_start_element (GMarkupParseContext  *context,
 			} else if (strcmp (names[i], "Clip") == 0) {
 				if (!path_data_parse (values[i], ctx->cr, error))
 					return;
-				LOG (g_print ("clip\n"));
+				GXPS_DEBUG (g_message ("clip"));
 				cairo_clip (ctx->cr);
 			}
 		}
@@ -2766,7 +2757,7 @@ render_end_element (GMarkupParseContext  *context,
 		path = g_markup_parse_context_pop (context);
 
 		if (!path->data) {
-			LOG (g_print ("restore\n"));
+			GXPS_DEBUG (g_message ("restore"));
 			cairo_restore (ctx->cr);
 			gxps_path_free (path);
 			return;
@@ -2779,7 +2770,7 @@ render_end_element (GMarkupParseContext  *context,
 				gxps_path_free (path);
 				return;
 			}
-			LOG (g_print ("clip\n"));
+			GXPS_DEBUG (g_message ("clip"));
 			cairo_clip (ctx->cr);
 		}
 
@@ -2789,7 +2780,7 @@ render_end_element (GMarkupParseContext  *context,
 		}
 
 		if (path->fill_pattern) {
-			LOG (g_print ("fill\n"));
+			GXPS_DEBUG (g_message ("fill"));
 
 			cairo_set_source (ctx->cr, path->fill_pattern);
 			if (path->stroke_pattern)
@@ -2799,7 +2790,7 @@ render_end_element (GMarkupParseContext  *context,
 		}
 
 		if (path->stroke_pattern) {
-			LOG (g_print ("stroke\n"));
+			GXPS_DEBUG (g_message ("stroke"));
 			cairo_set_source (ctx->cr, path->stroke_pattern);
 			cairo_set_line_width (ctx->cr, path->line_width);
 			if (path->dash && path->dash_len > 0)
@@ -2813,7 +2804,7 @@ render_end_element (GMarkupParseContext  *context,
 
 		gxps_path_free (path);
 
-		LOG (g_print ("restore\n"));
+		GXPS_DEBUG (g_message ("restore"));
 		cairo_restore (ctx->cr);
 	} else if (strcmp (element_name, "Glyphs") == 0) {
 		GXPSGlyphs           *glyphs;
@@ -2835,7 +2826,7 @@ render_end_element (GMarkupParseContext  *context,
 		if (!font_face) {
 			gxps_glyphs_free (glyphs);
 
-			LOG (g_print ("restore\n"));
+			GXPS_DEBUG (g_message ("restore"));
 			cairo_restore (ctx->cr);
 			return;
 		}
@@ -2843,11 +2834,11 @@ render_end_element (GMarkupParseContext  *context,
 		if (glyphs->clip_data) {
 			if (!path_data_parse (glyphs->clip_data, ctx->cr, error)) {
 				gxps_glyphs_free (glyphs);
-				LOG (g_print ("restore\n"));
+				GXPS_DEBUG (g_message ("restore"));
 				cairo_restore (ctx->cr);
 				return;
 			}
-			LOG (g_print ("clip\n"));
+			GXPS_DEBUG (g_message ("clip"));
 			cairo_clip (ctx->cr);
 		}
 
@@ -2887,7 +2878,7 @@ render_end_element (GMarkupParseContext  *context,
 		if (!success) {
 			gxps_glyphs_free (glyphs);
 			cairo_scaled_font_destroy (scaled_font);
-			LOG (g_print ("restore\n"));
+			GXPS_DEBUG (g_message ("restore"));
 			cairo_restore (ctx->cr);
 			return;
 		}
@@ -2895,7 +2886,7 @@ render_end_element (GMarkupParseContext  *context,
 		if (glyphs->fill_pattern)
 			cairo_set_source (ctx->cr, glyphs->fill_pattern);
 
-		LOG (g_print ("show_text (%s)\n", glyphs->text));
+		GXPS_DEBUG (g_message ("show_text (%s)", glyphs->text));
 
 		cairo_set_scaled_font (ctx->cr, scaled_font);
                 if (use_show_text_glyphs) {
@@ -2912,16 +2903,16 @@ render_end_element (GMarkupParseContext  *context,
 		gxps_glyphs_free (glyphs);
 		cairo_scaled_font_destroy (scaled_font);
 
-		LOG (g_print ("restore\n"));
+		GXPS_DEBUG (g_message ("restore"));
 		cairo_restore (ctx->cr);
 	} else if (strcmp (element_name, "Canvas") == 0) {
 		cairo_restore (ctx->cr);
-		LOG (g_print ("restore\n"));
+		GXPS_DEBUG (g_message ("restore"));
 	} else if (strcmp (element_name, "Canvas.RenderTransform") == 0) {
 		GXPSMatrix *matrix;
 
 		matrix = g_markup_parse_context_pop (context);
-		LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+		GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
 			      matrix->matrix.xx, matrix->matrix.yx,
 			      matrix->matrix.xy, matrix->matrix.yy,
 			      matrix->matrix.x0, matrix->matrix.y0));
@@ -2970,7 +2961,7 @@ gxps_page_parse_for_rendering (GXPSPage *page,
 		g_set_error (error,
 			     GXPS_PAGE_ERROR,
 			     GXPS_PAGE_ERROR_RENDER,
-			     "Error rendering page %s: %s\n",
+			     "Error rendering page %s: %s",
 			     page->priv->source, err->message);
 		g_error_free (err);
 	}
@@ -3006,7 +2997,7 @@ links_start_element (GMarkupParseContext  *context,
 	if (strcmp (element_name, "Canvas") == 0) {
 		gint i;
 
-		LOG (g_print ("save\n"));
+		GXPS_DEBUG (g_message ("save"));
 		cairo_save (ctx->cr);
 
 		for (i = 0; names[i] != NULL; i++) {
@@ -3020,7 +3011,7 @@ links_start_element (GMarkupParseContext  *context,
 							  "Canvas", "RenderTransform", values[i], error);
 					return;
 				}
-				LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+				GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
 					      matrix.xx, matrix.yx,
 					      matrix.xy, matrix.yy,
 					      matrix.x0, matrix.y0));
@@ -3031,7 +3022,7 @@ links_start_element (GMarkupParseContext  *context,
 				/* FIXME: do we really need clips? */
 				if (!path_data_parse (values[i], ctx->cr, error))
 					return;
-				LOG (g_print ("clip\n"));
+				GXPS_DEBUG (g_message ("clip"));
 				cairo_clip (ctx->cr);
 			}
 		}
@@ -3041,7 +3032,7 @@ links_start_element (GMarkupParseContext  *context,
 		const gchar *data = NULL;
 		const gchar *link_uri = NULL;
 
-		LOG (g_print ("save\n"));
+		GXPS_DEBUG (g_message ("save"));
 		cairo_save (ctx->cr);
 
 		for (i = 0; names[i] != NULL; i++) {
@@ -3057,7 +3048,7 @@ links_start_element (GMarkupParseContext  *context,
 							  "Path", "RenderTransform", values[i], error);
 					return;
 				}
-				LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+				GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
 					      matrix.xx, matrix.yx,
 					      matrix.xy, matrix.yy,
 					      matrix.x0, matrix.y0));
@@ -3077,7 +3068,7 @@ links_start_element (GMarkupParseContext  *context,
 	} else if (strcmp (element_name, "Glyphs") == 0) {
 		gint i;
 
-		LOG (g_print ("save\n"));
+		GXPS_DEBUG (g_message ("save"));
 		cairo_save (ctx->cr);
 
 		for (i = 0; names[i] != NULL; i++) {
@@ -3091,7 +3082,7 @@ links_start_element (GMarkupParseContext  *context,
 							  "Glyphs", "RenderTransform", values[i], error);
 					return;
 				}
-				LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+				GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
 					      matrix.xx, matrix.yx,
 					      matrix.xy, matrix.yy,
 					      matrix.x0, matrix.y0));
@@ -3123,7 +3114,7 @@ links_start_element (GMarkupParseContext  *context,
 							  values[i], error);
 					return;
 				}
-				LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+				GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
 					      matrix.xx, matrix.yx,
 					      matrix.xy, matrix.yy,
 					      matrix.x0, matrix.y0));
@@ -3143,7 +3134,7 @@ links_end_element (GMarkupParseContext  *context,
 	GXPSLinksContext *ctx = (GXPSLinksContext *)user_data;
 
 	if (strcmp (element_name, "Canvas") == 0) {
-		LOG (g_print ("restore\n"));
+		GXPS_DEBUG (g_message ("restore"));
 		cairo_restore (ctx->cr);
 	} else if (strcmp (element_name, "Path") == 0) {
 		GXPSPathLink *path_link;
@@ -3173,10 +3164,10 @@ links_end_element (GMarkupParseContext  *context,
 		g_free (path_link->data);
 		g_slice_free (GXPSPathLink, path_link);
 		cairo_new_path (ctx->cr);
-		LOG (g_print ("restore\n"));
+		GXPS_DEBUG (g_message ("restore"));
 		cairo_restore (ctx->cr);
 	} else if (strcmp (element_name, "Glyphs") == 0) {
-		LOG (g_print ("restore\n"));
+		GXPS_DEBUG (g_message ("restore"));
 		cairo_restore (ctx->cr);
 	} else if (strcmp (element_name, "Canvas.RenderTransform") == 0 ||
 		   strcmp (element_name, "Path.RenderTransform") == 0 ||
@@ -3253,7 +3244,7 @@ anchors_start_element (GMarkupParseContext  *context,
 	if (strcmp (element_name, "Canvas") == 0) {
 		gint i;
 
-		LOG (g_print ("save\n"));
+		GXPS_DEBUG (g_message ("save"));
 		cairo_save (ctx->cr);
 
 		for (i = 0; names[i] != NULL; i++) {
@@ -3267,7 +3258,7 @@ anchors_start_element (GMarkupParseContext  *context,
 							  "Canvas", "RenderTransform", values[i], error);
 					return;
 				}
-				LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+				GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
 					      matrix.xx, matrix.yx,
 					      matrix.xy, matrix.yy,
 					      matrix.x0, matrix.y0));
@@ -3282,7 +3273,7 @@ anchors_start_element (GMarkupParseContext  *context,
 		const gchar *data = NULL;
 		const gchar *name = NULL;
 
-		LOG (g_print ("save\n"));
+		GXPS_DEBUG (g_message ("save"));
 		cairo_save (ctx->cr);
 
 		for (i = 0; names[i] != NULL; i++) {
@@ -3298,7 +3289,7 @@ anchors_start_element (GMarkupParseContext  *context,
 							  "Path", "RenderTransform", values[i], error);
 					return;
 				}
-				LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+				GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
 					      matrix.xx, matrix.yx,
 					      matrix.xy, matrix.yy,
 					      matrix.x0, matrix.y0));
@@ -3318,7 +3309,7 @@ anchors_start_element (GMarkupParseContext  *context,
 	} else if (strcmp (element_name, "Glyphs") == 0) {
 		gint i;
 
-		LOG (g_print ("save\n"));
+		GXPS_DEBUG (g_message ("save"));
 		cairo_save (ctx->cr);
 
 		for (i = 0; names[i] != NULL; i++) {
@@ -3332,7 +3323,7 @@ anchors_start_element (GMarkupParseContext  *context,
 							  "Glyphs", "RenderTransform", values[i], error);
 					return;
 				}
-				LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+				GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
 					      matrix.xx, matrix.yx,
 					      matrix.xy, matrix.yy,
 					      matrix.x0, matrix.y0));
@@ -3364,7 +3355,7 @@ anchors_start_element (GMarkupParseContext  *context,
 							  values[i], error);
 					return;
 				}
-				LOG (g_print ("transform (%f, %f, %f, %f) [%f, %f]\n",
+				GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
 					      matrix.xx, matrix.yx,
 					      matrix.xy, matrix.yy,
 					      matrix.x0, matrix.y0));
@@ -3384,7 +3375,7 @@ anchors_end_element (GMarkupParseContext  *context,
 	GXPSAnchorsContext *ctx = (GXPSAnchorsContext *)user_data;
 
 	if (strcmp (element_name, "Canvas") == 0) {
-		LOG (g_print ("restore\n"));
+		GXPS_DEBUG (g_message ("restore"));
 		cairo_restore (ctx->cr);
 	} else if (strcmp (element_name, "Path") == 0) {
 		GXPSPathAnchor *path_anchor;
@@ -3412,10 +3403,10 @@ anchors_end_element (GMarkupParseContext  *context,
 		g_free (path_anchor->data);
 		g_slice_free (GXPSPathAnchor, path_anchor);
 		cairo_new_path (ctx->cr);
-		LOG (g_print ("restore\n"));
+		GXPS_DEBUG (g_message ("restore"));
 		cairo_restore (ctx->cr);
 	} else if (strcmp (element_name, "Glyphs") == 0) {
-		LOG (g_print ("restore\n"));
+		GXPS_DEBUG (g_message ("restore"));
 		cairo_restore (ctx->cr);
 	} else if (strcmp (element_name, "Canvas.RenderTransform") == 0 ||
 		   strcmp (element_name, "Path.RenderTransform") == 0 ||

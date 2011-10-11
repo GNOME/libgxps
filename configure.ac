@@ -52,6 +52,16 @@ GNOME_MAINTAINER_MODE_DEFINES
 GNOME_COMPILE_WARNINGS
 GNOME_CXX_WARNINGS
 
+AC_ARG_ENABLE(debug,
+              [AS_HELP_STRING([--enable-debug],
+                              [Turn on debugging])],,
+              [enable_debug=no])
+
+if test "x$enable_debug" = "xyes"; then
+   GXPS_DEBUG_CFLAGS="-DGXPS_ENABLE_DEBUG"
+fi
+AC_SUBST(GXPS_DEBUG_CFLAGS)
+
 dnl Specify required versions of dependencies
 GLIB_REQUIRED=2.24
 CAIRO_REQUIRED=1.9.10
