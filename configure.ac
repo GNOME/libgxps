@@ -3,8 +3,8 @@
 # *****************************************************************************
 
 m4_define([gxps_major_version],[0])
-m4_define([gxps_minor_version],[0])
-m4_define([gxps_micro_version],[1])
+m4_define([gxps_minor_version],[1])
+m4_define([gxps_micro_version],[0])
 m4_define([gxps_extra_version],[])
 m4_define([gxps_version],[gxps_major_version.gxps_minor_version.gxps_micro_version()gxps_extra_version])
 
