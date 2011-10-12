@@ -5,6 +5,7 @@
          xmlns="http://usefulinc.com/ns/doap#">
   <name xml:lang="en">libgxps</name>
   <shortdesc xml:lang="en">XPS Documents library</shortdesc>
+  <homepage rdf:resource="http://live.gnome.org/libgxps" />
   <maintainer>
     <foaf:Person>
       <foaf:name>Carlos Garcia Campos</foaf:name>
