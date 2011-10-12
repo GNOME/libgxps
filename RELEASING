@@ -1,0 +1,81 @@
+Here are the steps to follow to create a new libgxps release:
+
+1) Ensure that there are no local, uncommitted modifications.
+   It's probably good enough if "git diff HEAD" doesn't output
+   anything and your "master" and "origin" branchs are at the current
+   revision.
+
+2) Fill out an entry in the NEWS file
+
+        Sift through the logs since the last release. This is most
+        easily done with a comand such as:
+
+                git log --stat X.Y.Z..
+
+        where X.Y.Z is the previous release version.
+
+        Summarize major changes briefly in a style similar to other
+        entries in NEWS. Take special care to note any additions in
+        the API. These should be easy to find by noting modifications
+        to .h files in the log command above. And more specifically,
+        the following command will show each patch that has changed a
+        public header file since the given version:
+
+                find libgxps -name 'gxps*.h' ! -name '*-private.h' \
+                ! -name 'gxps-archive.h' ! -name 'gxps-debug.h' \
+                ! -name 'gxps-fonts.h' ! -name 'gxps-images.h' \
+                ! -name 'gxps-parse-utils.h' | xargs git log -p X.Y.Z.. --
+
+3) Increment gxps_{minor|micro}_version and LT_{CURRENT|REVISION|AGE}
+   in configure.ac:
+
+        If there are API additions, then increment gxps_minor_version
+        and reset gxps_micro_version to 0.
+
+        Otherwise, (ie. there are only bug fixes), increment
+        gxps_micro_version to the next larger number.
+
+        Adjust LT_CURRENT, LT_REVISION, and LT_AGE as described in the
+        comments in configure.ac.
+
+4) Verify that the code passes "make distcheck"
+
+        First, make sure you have 'nm' and 'readelf' commands in PATH.
+        this should be Ok with any Linux distro.
+
+        Running "make distcheck" should result in no warnings or
+        errors and end with a message of the form:
+
+        ==================================================
+        libgxps-X.Y.Z archives ready for distribution:
+        libgxps-X.Y.Z.tar.bz2
+        ==================================================
+
+        (But the tar file isn't actually ready yet, as we still have
+        some more steps to follow).
+
+5) Commit the changes to NEWS and configure.ac and push
+
+        It's especially important to mention the new version number in your
+        commit log.
+
+6) Tag the release with the following command:
+
+        git tag -s -m "libgxps X.Y.Z release" X.Y.Z
+
+7) Push the newly created tag out to the central tree with a command
+   something like:
+
+        git push origin X.Y.Z
+
+8) Upload the tarball to ftp.gnome.org, by scp-ing it to
+   master.gnome.org:
+
+        scp libgxps-X.Y.Z.tar.bz2 (username)@master.gnome.org:
+
+9) ssh into master.gnome.org and call ftpadmin install command:
+
+        ftpadmin install libgxps-X.Y.Z.tar.bz2
+
+10) Send a message to announce the new release to gnome-announce-list@gnome.org
+
