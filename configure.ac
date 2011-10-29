@@ -182,6 +182,7 @@ Makefile
 libgxps.pc
 libgxps/Makefile
 libgxps/gxps-version.h
+tools/Makefile
 test/Makefile
 docs/Makefile
 docs/reference/Makefile

@@ -1,4 +1,4 @@
-SUBDIRS = libgxps
+SUBDIRS = libgxps tools
 
 if ENABLE_TEST
 SUBDIRS += test
