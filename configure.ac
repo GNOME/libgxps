@@ -157,6 +157,16 @@ fi
 
 AM_CONDITIONAL(ENABLE_TEST, test x$enable_test = xyes)
 
+dnl Tools
+
+dnl libpng
+PKG_CHECK_MODULES(LIBPNG, libpng, [have_libpng="yes"], [have_libpng="no"])
+
+AM_CONDITIONAL(HAVE_LIBPNG, test x$have_libpng = xyes)
+
+AC_SUBST(LIBPNG_CFLAGS)
+AC_SUBST(LIBPNG_LIBS)
+
 dnl gtk-doc
 GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
 
