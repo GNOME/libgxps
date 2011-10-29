@@ -98,6 +98,7 @@ gxps_converter_real_init_with_args (GXPSConverter *converter,
         g_option_context_free (context);
 
         file = g_file_new_for_commandline_arg (file_arguments[0]);
+        converter->input_filename = g_file_get_path (file);
         xps = gxps_file_new (file, &error);
         g_object_unref (file);
         if (!xps) {
@@ -200,6 +201,11 @@ gxps_converter_finalize (GObject *object)
         if (converter->surface) {
                 g_object_unref (converter->surface);
                 converter->surface = NULL;
+        }
+
+        if (converter->input_filename) {
+                g_free (converter->input_filename);
+                converter->input_filename = NULL;
         }
 
         G_OBJECT_CLASS (gxps_converter_parent_class)->finalize (object);

@@ -40,6 +40,7 @@ struct _GXPSConverter {
 
         GXPSDocument    *document;
         cairo_surface_t *surface;
+        gchar           *input_filename;
 
         guint                 first_page;
         guint                 last_page;
