@@ -167,6 +167,14 @@ AM_CONDITIONAL(HAVE_LIBPNG, test x$have_libpng = xyes)
 AC_SUBST(LIBPNG_CFLAGS)
 AC_SUBST(LIBPNG_LIBS)
 
+dnl Cairo PDF
+PKG_CHECK_MODULES(CAIRO_PDF, cairo-pdf, [have_cairo_pdf="yes"], [have_cairo_pdf="no"])
+
+AM_CONDITIONAL(HAVE_CAIRO_PDF, test x$have_cairo_pdf = xyes)
+
+AC_SUBST(CAIRO_PDF_CFLAGS)
+AC_SUBST(CAIRO_PDF_LIBS)
+
 dnl gtk-doc
 GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
 

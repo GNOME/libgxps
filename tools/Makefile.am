@@ -56,3 +56,25 @@ xpstopng_LDADD = \
 	libgxpstools.la		\
 	$(LIBPNG_LIBS)
 endif # HAVE_LIBPNG
+
+if HAVE_CAIRO_PDF
+bin_PROGRAMS += xpstopdf
+
+xpstopdf_SOURCES = \
+	gxps-converter-main.c	\
+	gxps-pdf-converter.c	\
+	gxps-pdf-converter.h
+
+xpstopdf_CPPFLAGS = \
+	$(tools_cppflags)				\
+	-DCONVERTER_TYPE=GXPS_TYPE_PDF_CONVERTER	\
+	-DCONVERTER_HEADER=gxps-pdf-converter.h
+
+xpstopdf_CFLAGS = \
+	$(tools_cflags)		\
+	$(CAIRO_PDF_CFLAGS)
+
+xpstopdf_LDADD = \
+	libgxpstools.la		\
+	$(CAIRO_PDF_LIBS)
+endif # HAVE_CAIRO_PDF
