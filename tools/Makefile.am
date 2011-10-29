@@ -6,7 +6,9 @@ libgxpstools_la_SOURCES = \
 	gxps-image-converter.c	\
 	gxps-image-converter.h	\
 	gxps-image-writer.c	\
-	gxps-image-writer.h
+	gxps-image-writer.h	\
+	gxps-print-converter.c	\
+	gxps-print-converter.h
 
 libgxpstools_la_CPPFLAGS = \
 	-I$(top_srcdir)		\
