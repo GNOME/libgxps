@@ -100,3 +100,25 @@ xpstops_LDADD = \
 	libgxpstools.la		\
 	$(CAIRO_PS_LIBS)
 endif # HAVE_CAIRO_PS
+
+if HAVE_CAIRO_SVG
+bin_PROGRAMS += xpstosvg
+
+xpstosvg_SOURCES = \
+	gxps-converter-main.c	\
+	gxps-svg-converter.c	\
+	gxps-svg-converter.h
+
+xpstosvg_CPPFLAGS = \
+	$(tools_cppflags)				\
+	-DCONVERTER_TYPE=GXPS_TYPE_SVG_CONVERTER	\
+	-DCONVERTER_HEADER=gxps-svg-converter.h
+
+xpstosvg_CFLAGS = \
+	$(tools_cflags)		\
+	$(CAIRO_SVG_CFLAGS)
+
+xpstosvg_LDADD = \
+	libgxpstools.la		\
+	$(CAIRO_SVG_LIBS)
+endif # HAVE_CAIRO_SVG

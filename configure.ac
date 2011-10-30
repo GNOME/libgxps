@@ -183,6 +183,14 @@ AM_CONDITIONAL(HAVE_CAIRO_PS, test x$have_cairo_ps = xyes)
 AC_SUBST(CAIRO_PS_CFLAGS)
 AC_SUBST(CAIRO_PS_LIBS)
 
+dnl Cairo SVG
+PKG_CHECK_MODULES(CAIRO_SVG, cairo-svg, [have_cairo_svg="yes"], [have_cairo_svg="no"])
+
+AM_CONDITIONAL(HAVE_CAIRO_SVG, test x$have_cairo_svg = xyes)
+
+AC_SUBST(CAIRO_SVG_CFLAGS)
+AC_SUBST(CAIRO_SVG_LIBS)
+
 dnl gtk-doc
 GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
 
