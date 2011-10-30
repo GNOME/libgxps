@@ -117,6 +117,7 @@ if test x$with_libjpeg != xno && test -z "$LIBJPEG"; then
   fi
 fi
 
+AM_CONDITIONAL(HAVE_LIBJPEG, test ! -z "$LIBJPEG")
 AC_SUBST(LIBJPEG)
 
 dnl libtiff

@@ -57,6 +57,29 @@ xpstopng_LDADD = \
 	$(LIBPNG_LIBS)
 endif # HAVE_LIBPNG
 
+if HAVE_LIBJPEG
+bin_PROGRAMS += xpstojpeg
+
+xpstojpeg_SOURCES = \
+	gxps-converter-main.c	\
+	gxps-jpeg-converter.c	\
+	gxps-jpeg-converter.h	\
+	gxps-jpeg-writer.c	\
+	gxps-jpeg-writer.h
+
+xpstojpeg_CPPFLAGS = \
+	$(tools_cppflags)				\
+	-DCONVERTER_TYPE=GXPS_TYPE_JPEG_CONVERTER	\
+	-DCONVERTER_HEADER=gxps-jpeg-converter.h
+
+xpstojpeg_CFLAGS = \
+	$(tools_cflags)
+
+xpstojpeg_LDADD = \
+	libgxpstools.la		\
+	$(LIBJPEG)
+endif # HAVE_LIBJPEG
+
 if HAVE_CAIRO_PDF
 bin_PROGRAMS += xpstopdf
 
