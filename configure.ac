@@ -175,6 +175,14 @@ AM_CONDITIONAL(HAVE_CAIRO_PDF, test x$have_cairo_pdf = xyes)
 AC_SUBST(CAIRO_PDF_CFLAGS)
 AC_SUBST(CAIRO_PDF_LIBS)
 
+dnl Cairo PostScript
+PKG_CHECK_MODULES(CAIRO_PS, cairo-ps, [have_cairo_ps="yes"], [have_cairo_ps="no"])
+
+AM_CONDITIONAL(HAVE_CAIRO_PS, test x$have_cairo_ps = xyes)
+
+AC_SUBST(CAIRO_PS_CFLAGS)
+AC_SUBST(CAIRO_PS_LIBS)
+
 dnl gtk-doc
 GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
 

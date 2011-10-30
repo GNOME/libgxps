@@ -78,3 +78,25 @@ xpstopdf_LDADD = \
 	libgxpstools.la		\
 	$(CAIRO_PDF_LIBS)
 endif # HAVE_CAIRO_PDF
+
+if HAVE_CAIRO_PS
+bin_PROGRAMS += xpstops
+
+xpstops_SOURCES = \
+	gxps-converter-main.c	\
+	gxps-ps-converter.c	\
+	gxps-ps-converter.h
+
+xpstops_CPPFLAGS = \
+	$(tools_cppflags)				\
+	-DCONVERTER_TYPE=GXPS_TYPE_PS_CONVERTER	\
+	-DCONVERTER_HEADER=gxps-ps-converter.h
+
+xpstops_CFLAGS = \
+	$(tools_cflags)		\
+	$(CAIRO_PS_CFLAGS)
+
+xpstops_LDADD = \
+	libgxpstools.la		\
+	$(CAIRO_PS_LIBS)
+endif # HAVE_CAIRO_PS
