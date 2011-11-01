@@ -507,8 +507,12 @@ gxps_document_get_page (GXPSDocument *doc,
  *
  * Gets the size of the page at index @n_page in @doc document.
  * This function is useful to get the size of the pages in a document
- * without creating #GXPSPage objects. To get the size of a #GXPSPage
- * you can use gxps_page_get_size() instead.
+ * without creating #GXPSPage objects. However, page sizes are not always
+ * available in @doc, in which case this function returns %FALSE.
+ * To get the size of a #GXPSPage you can use gxps_page_get_size() instead.
+ *
+ * Returns: %TRUE if the page size information is available in @doc,
+ *     %FALSE otherwise.
  */
 gboolean
 gxps_document_get_page_size (GXPSDocument *doc,
