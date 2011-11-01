@@ -34,6 +34,7 @@
 
 #include "gxps-images.h"
 #include "gxps-error.h"
+#include "gxps-debug.h"
 
 /* PNG */
 static cairo_status_t
@@ -263,8 +264,8 @@ gxps_images_create_from_jpeg (GXPSArchive *zip,
 					p[3] = 0xff;
 					break;
 				default:
-					g_warning ("Unsupported jpeg color space %s\n",
-						   _jpeg_color_space_name (cinfo.out_color_space));
+					GXPS_DEBUG (g_message ("Unsupported jpeg color space %s",
+                                                               _jpeg_color_space_name (cinfo.out_color_space)));
 
 					cairo_surface_destroy (surface);
 					jpeg_destroy_decompress (&cinfo);
@@ -618,7 +619,7 @@ gxps_images_get_image (GXPSArchive *zip,
 	} else if (g_str_has_suffix (image_uri, ".tif")) {
 		surface = gxps_images_create_from_tiff (zip, image_uri, error);
 	} else if (g_str_has_suffix (image_uri, "wdp")) {
-		g_warning ("Unsupported image format windows media photo\n");
+		GXPS_DEBUG (g_message ("Unsupported image format windows media photo"));
 		return NULL;
 	}
 
@@ -633,7 +634,7 @@ gxps_images_get_image (GXPSArchive *zip,
 		} else if (g_strcmp0 (mime_type, "image/tiff") == 0) {
 			surface = gxps_images_create_from_tiff (zip, image_uri, error);
 		} else {
-			g_warning ("Unsupported image format: %s\n", mime_type);
+			GXPS_DEBUG (g_message ("Unsupported image format: %s", mime_type));
 		}
 		g_free (mime_type);
 	}

@@ -25,6 +25,7 @@
 #include "gxps-archive.h"
 #include "gxps-private.h"
 #include "gxps-error.h"
+#include "gxps-debug.h"
 
 /**
  * SECTION:gxps-file
@@ -114,8 +115,8 @@ rels_start_element (GMarkupParseContext  *context,
 		} else if (strcmp (type, REL_METATADA_CORE_PROPS) == 0) {
 			xps->priv->core_props = g_strdup (target);
 		} else {
-			g_debug ("Unsupported attribute of %s, %s=%s\n",
-                                 element_name, type, target);
+			GXPS_DEBUG (g_debug ("Unsupported attribute of %s, %s=%s",
+                                             element_name, type, target));
 		}
 	} else if (strcmp (element_name, "Relationships") == 0) {
 		/* Nothing to do */
