@@ -1,0 +1,8 @@
+#include <libgxps/gxps.h>
+
+gxps_file_get_type
+gxps_document_get_type
+gxps_page_get_type
+gxps_link_target_get_type
+gxps_link_get_type
+gxps_document_structure_get_type
