@@ -256,17 +256,18 @@ gboolean
 gxps_value_get_int (const gchar *value,
 		    gint        *int_value)
 {
-	long l;
+	gint64 result;
 	gchar *endptr;
 
-	errno = 0;
-	l = strtol (value, &endptr, 0);
-	if (errno || endptr == value) {
-		g_warning ("Error converting value %s to int\n", value);
-		return FALSE;
-	}
+        if (!value)
+                return FALSE;
 
-	*int_value = (gint)l;
+	errno = 0;
+	result = g_ascii_strtoll (value, &endptr, 10);
+	if (errno || endptr == value || result > G_MAXINT || result < G_MININT)
+		return FALSE;
+
+	*int_value = result;
 
 	return TRUE;
 }
