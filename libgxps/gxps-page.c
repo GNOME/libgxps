@@ -1760,6 +1760,7 @@ typedef struct {
 	GXPSRenderContext *ctx;
 
 	gdouble            opacity;
+	cairo_pattern_t   *opacity_mask;
 } GXPSCanvas;
 
 static GXPSCanvas *
@@ -1782,6 +1783,7 @@ gxps_canvas_free (GXPSCanvas *canvas)
 	if (G_UNLIKELY (!canvas))
 		return;
 
+	cairo_pattern_destroy (canvas->opacity_mask);
 	g_slice_free (GXPSCanvas, canvas);
 }
 
@@ -1795,12 +1797,24 @@ canvas_start_element (GMarkupParseContext  *context,
 {
 	GXPSCanvas *canvas = (GXPSCanvas *)user_data;
 
-	return render_start_element (context,
-				     element_name,
-				     names,
-				     values,
-				     canvas->ctx,
-				     error);
+	if (strcmp (element_name, "Canvas.RenderTransform") == 0) {
+		GXPSMatrix *matrix;
+
+		matrix = gxps_matrix_new (canvas->ctx);
+		g_markup_parse_context_push (context, &matrix_parser, matrix);
+	} else if (strcmp (element_name, "Canvas.OpacityMask") == 0) {
+		GXPSBrush *brush;
+
+		brush = gxps_brush_new (canvas->ctx);
+		g_markup_parse_context_push (context, &brush_parser, brush);
+	} else {
+		render_start_element (context,
+				      element_name,
+				      names,
+				      values,
+				      canvas->ctx,
+				      error);
+	}
 }
 
 static void
@@ -1811,10 +1825,31 @@ canvas_end_element (GMarkupParseContext  *context,
 {
 	GXPSCanvas *canvas = (GXPSCanvas *)user_data;
 
-	return render_end_element (context,
-				   element_name,
-				   canvas->ctx,
-				   error);
+	if (strcmp (element_name, "Canvas.RenderTransform") == 0) {
+		GXPSMatrix *matrix;
+
+		matrix = g_markup_parse_context_pop (context);
+		GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
+			      matrix->matrix.xx, matrix->matrix.yx,
+			      matrix->matrix.xy, matrix->matrix.yy,
+			      matrix->matrix.x0, matrix->matrix.y0));
+		cairo_transform (canvas->ctx->cr, &matrix->matrix);
+		gxps_matrix_free (matrix);
+	} else if (strcmp (element_name, "Canvas.OpacityMask") == 0) {
+		GXPSBrush *brush;
+
+		brush = g_markup_parse_context_pop (context);
+		if (!canvas->opacity_mask) {
+			canvas->opacity_mask = cairo_pattern_reference (brush->pattern);
+			cairo_push_group (canvas->ctx->cr);
+		}
+		gxps_brush_free (brush);
+	} else {
+		render_end_element (context,
+				    element_name,
+				    canvas->ctx,
+				    error);
+	}
 }
 
 static GMarkupParser canvas_parser = {
@@ -3044,11 +3079,6 @@ render_start_element (GMarkupParseContext  *context,
 		if (canvas->opacity != 1.0)
 			cairo_push_group (canvas->ctx->cr);
 		g_markup_parse_context_push (context, &canvas_parser, canvas);
-	} else if (strcmp (element_name, "Canvas.RenderTransform") == 0) {
-		GXPSMatrix *matrix;
-
-		matrix = gxps_matrix_new (ctx);
-		g_markup_parse_context_push (context, &matrix_parser, matrix);
 	} else if (strcmp (element_name, "FixedPage") == 0) {
 		/* Do Nothing */
 	} else {
@@ -3246,6 +3276,10 @@ render_end_element (GMarkupParseContext  *context,
 
 		canvas = g_markup_parse_context_pop (context);
 
+		if (canvas->opacity_mask) {
+			cairo_pop_group_to_source (ctx->cr);
+			cairo_mask (ctx->cr, canvas->opacity_mask);
+		}
 		if (canvas->opacity != 1.0) {
 			cairo_pop_group_to_source (ctx->cr);
 			cairo_paint_with_alpha (ctx->cr, canvas->opacity);
@@ -3253,16 +3287,6 @@ render_end_element (GMarkupParseContext  *context,
 		cairo_restore (ctx->cr);
 		GXPS_DEBUG (g_message ("restore"));
 		gxps_canvas_free (canvas);
-	} else if (strcmp (element_name, "Canvas.RenderTransform") == 0) {
-		GXPSMatrix *matrix;
-
-		matrix = g_markup_parse_context_pop (context);
-		GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
-			      matrix->matrix.xx, matrix->matrix.yx,
-			      matrix->matrix.xy, matrix->matrix.yy,
-			      matrix->matrix.x0, matrix->matrix.y0));
-		cairo_transform (ctx->cr, &matrix->matrix);
-		gxps_matrix_free (matrix);
 	} else if (strcmp (element_name, "FixedPage") == 0) {
 		/* Do Nothing */
 	} else {
