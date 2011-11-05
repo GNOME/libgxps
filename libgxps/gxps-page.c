@@ -1423,7 +1423,14 @@ brush_start_element (GMarkupParseContext  *context,
 			} else if (strcmp (names[i], "TileMode") == 0) {
 				extend = gxps_tile_mode_parse (values[i]);
 			} else if (strcmp (names[i], "Opacity") == 0) {
-				/* TODO */
+                                if (!gxps_value_get_double (values[i], &brush->opacity)) {
+                                        gxps_parse_error (context,
+                                                          brush->ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "ImageBrush", "Opacity",
+                                                          values[i], error);
+                                        return;
+                                }
 			} else if (strcmp (names[i], "X:Key") == 0) {
 				/* TODO */
 			}
@@ -1691,6 +1698,15 @@ brush_end_element (GMarkupParseContext  *context,
 					   -port_matrix.x0 * x_scale,
 					   -port_matrix.y0 * y_scale);
 			cairo_pattern_set_matrix (image->brush->pattern, &matrix);
+
+			if (brush->opacity != 1.0) {
+				cairo_push_group (brush->ctx->cr);
+				cairo_set_source (brush->ctx->cr, image->brush->pattern);
+				cairo_pattern_destroy (image->brush->pattern);
+				cairo_paint_with_alpha (brush->ctx->cr, brush->opacity);
+				image->brush->pattern = cairo_pop_group (brush->ctx->cr);
+			}
+
 			if (cairo_pattern_status (image->brush->pattern)) {
 				GXPS_DEBUG (g_debug ("%s", cairo_status_to_string (cairo_pattern_status (image->brush->pattern))));
 				cairo_pattern_destroy (image->brush->pattern);
