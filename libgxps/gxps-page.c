@@ -2167,6 +2167,7 @@ typedef struct {
         guint              is_sideways : 1;
         guint              italic : 1;
 	gdouble            opacity;
+	cairo_pattern_t   *opacity_mask;
 } GXPSGlyphs;
 
 static GXPSGlyphs *
@@ -2202,6 +2203,7 @@ gxps_glyphs_free (GXPSGlyphs *glyphs)
 	g_free (glyphs->indices);
 	g_free (glyphs->clip_data);
 	cairo_pattern_destroy (glyphs->fill_pattern);
+	cairo_pattern_destroy (glyphs->opacity_mask);
 
 	g_slice_free (GXPSGlyphs, glyphs);
 }
@@ -2723,6 +2725,11 @@ glyphs_start_element (GMarkupParseContext  *context,
 
 		brush = gxps_brush_new (glyphs->ctx);
 		g_markup_parse_context_push (context, &brush_parser, brush);
+	} else if (strcmp (element_name, "Glyphs.OpacityMask") == 0) {
+		GXPSBrush *brush;
+
+		brush = gxps_brush_new (glyphs->ctx);
+		g_markup_parse_context_push (context, &brush_parser, brush);
 	} else {
 	}
 }
@@ -2752,6 +2759,15 @@ glyphs_end_element (GMarkupParseContext  *context,
 
 		brush = g_markup_parse_context_pop (context);
 		glyphs->fill_pattern = cairo_pattern_reference (brush->pattern);
+		gxps_brush_free (brush);
+	} else if (strcmp (element_name, "Glyphs.OpacityMask") == 0) {
+		GXPSBrush *brush;
+
+		brush = g_markup_parse_context_pop (context);
+		if (!glyphs->opacity_mask) {
+			glyphs->opacity_mask = cairo_pattern_reference (brush->pattern);
+			cairo_push_group (glyphs->ctx->cr);
+		}
 		gxps_brush_free (brush);
 	} else {
 	}
@@ -3180,6 +3196,8 @@ render_end_element (GMarkupParseContext  *context,
 
 		font_face = gxps_fonts_get_font (ctx->page->priv->zip, glyphs->font_uri, error);
 		if (!font_face) {
+			if (glyphs->opacity_mask)
+				cairo_pattern_destroy (cairo_pop_group (ctx->cr));
 			if (glyphs->opacity != 1.0)
 				cairo_pattern_destroy (cairo_pop_group (ctx->cr));
 			gxps_glyphs_free (glyphs);
@@ -3191,6 +3209,8 @@ render_end_element (GMarkupParseContext  *context,
 
 		if (glyphs->clip_data) {
 			if (!path_data_parse (glyphs->clip_data, ctx->cr, error)) {
+				if (glyphs->opacity_mask)
+					cairo_pattern_destroy (cairo_pop_group (ctx->cr));
 				if (glyphs->opacity != 1.0)
 					cairo_pattern_destroy (cairo_pop_group (ctx->cr));
 				gxps_glyphs_free (glyphs);
@@ -3236,6 +3256,8 @@ render_end_element (GMarkupParseContext  *context,
                                                        use_show_text_glyphs ? &num_clusters : NULL,
 						       error);
 		if (!success) {
+			if (glyphs->opacity_mask)
+				cairo_pattern_destroy (cairo_pop_group (ctx->cr));
 			if (glyphs->opacity != 1.0)
 				cairo_pattern_destroy (cairo_pop_group (ctx->cr));
 			gxps_glyphs_free (glyphs);
@@ -3261,6 +3283,10 @@ render_end_element (GMarkupParseContext  *context,
                         cairo_show_glyphs (ctx->cr, glyph_list, num_glyphs);
                 }
 
+		if (glyphs->opacity_mask) {
+			cairo_pop_group_to_source (ctx->cr);
+			cairo_mask (ctx->cr, glyphs->opacity_mask);
+		}
 		if (glyphs->opacity != 1.0) {
 			cairo_pop_group_to_source (ctx->cr);
 			cairo_paint_with_alpha (ctx->cr, glyphs->opacity);
