@@ -852,22 +852,17 @@ hex (const gchar *spec,
 }
 
 static gboolean
-gxps_color_parse (const gchar *color,
-		  gdouble     *alpha,
-		  gdouble     *red,
-		  gdouble     *green,
-		  gdouble     *blue)
+gxps_color_rgb_parse (const gchar *color,
+                      gdouble     *alpha,
+                      gdouble     *red,
+                      gdouble     *green,
+                      gdouble     *blue)
 {
-	gsize len;
-	guint a, r, g, b;
+        gsize len = strlen (color);
+        guint a = 255;
+        guint r, g, b;
 
-	if (color[0] != '#')
-		return FALSE;
-
-	color++;
-	a = 255;
-	len = strlen (color);
-	switch (len) {
+        switch (len) {
 	case 6:
 		if (!hex (color, 2, &r) ||
 		    !hex (color + 2, 2, &g) ||
@@ -891,6 +886,83 @@ gxps_color_parse (const gchar *color,
 	*blue = b / 255.0;
 
 	return TRUE;
+}
+
+static gboolean
+gxps_color_scrgb_parse (const gchar *color,
+                        gdouble     *alpha,
+                        gdouble     *red,
+                        gdouble     *green,
+                        gdouble     *blue)
+{
+        gchar **tokens;
+        gsize   len;
+        gdouble c[4];
+        guint   i, start;
+
+        tokens = g_strsplit (color, ",", 4);
+        len = g_strv_length (tokens);
+
+        switch (len) {
+        case 4:
+                if (!gxps_value_get_double (tokens[0], &c[0])) {
+                        g_strfreev (tokens);
+
+                        return FALSE;
+                }
+                start = 1;
+
+                break;
+        case 3:
+                c[0] = 1.0;
+                start = 0;
+                break;
+        default:
+                return FALSE;
+        }
+
+        for (i = start; i < len; i++) {
+                if (!gxps_value_get_double (tokens[i], &c[i])) {
+                        g_strfreev (tokens);
+
+                        return FALSE;
+                }
+        }
+
+        g_strfreev (tokens);
+
+        *alpha = CLAMP (c[0], 0., 1.);
+        *red = CLAMP (c[1], 0., 1.);
+        *green = CLAMP (c[2], 0., 1.);
+        *blue = CLAMP (c[3], 0., 1.);
+
+        return TRUE;
+}
+
+static gboolean
+gxps_color_parse (const gchar *color,
+		  gdouble     *alpha,
+		  gdouble     *red,
+		  gdouble     *green,
+		  gdouble     *blue)
+{
+        const gchar *p;
+
+        p = strstr (color, "#");
+        if (!p) {
+                GXPS_DEBUG (g_debug ("Unsupported color %s", color));
+                return FALSE;
+        }
+
+        if (p == color)
+                return gxps_color_rgb_parse (++p, alpha, red, green, blue);
+
+        if (strncmp (color, "sc", 2) == 0 && p == color + 2)
+                return gxps_color_scrgb_parse (++p, alpha, red, green, blue);
+
+        GXPS_DEBUG (g_debug ("Unsupported color %s", color));
+
+        return FALSE;
 }
 
 static cairo_pattern_t *
