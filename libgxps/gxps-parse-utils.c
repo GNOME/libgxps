@@ -272,6 +272,26 @@ gxps_value_get_int (const gchar *value,
 	return TRUE;
 }
 
+gboolean
+gxps_value_get_double (const gchar *value,
+                       gdouble     *double_value)
+{
+        gdouble result;
+        gchar  *endptr;
+
+        if (!value)
+                return FALSE;
+
+        errno = 0;
+        result = g_ascii_strtod (value, &endptr);
+        if (errno || endptr == value)
+                return FALSE;
+
+        *double_value = result;
+
+        return TRUE;
+}
+
 gchar *
 gxps_resolve_relative_path (const gchar *source,
 			    const gchar *target)

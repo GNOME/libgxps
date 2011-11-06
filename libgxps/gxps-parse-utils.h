@@ -36,6 +36,8 @@ void     gxps_parse_error           (GMarkupParseContext  *context,
 				     GError              **error);
 gboolean gxps_value_get_int         (const gchar          *value,
 				     gint                 *int_value);
+gboolean gxps_value_get_double      (const gchar          *value,
+                                     gdouble              *double_value);
 gchar   *gxps_resolve_relative_path (const gchar          *source,
 				     const gchar          *target);
 
