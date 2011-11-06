@@ -39,7 +39,7 @@ page_changed_callback (GtkSpinButton *button,
 {
 	GXPSPage *xps_page;
 	gint      page;
-	guint     width, height;
+	gdouble   width, height;
 	cairo_t  *cr;
 	GError   *error = NULL;
 

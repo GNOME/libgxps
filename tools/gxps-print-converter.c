@@ -167,7 +167,7 @@ gxps_converter_print_converter_begin_page (GXPSConverter *converter,
                                            guint          n_page)
 {
         GXPSPrintConverter *print_converter = GXPS_PRINT_CONVERTER (converter);
-        guint               page_width, page_height;
+        gdouble             page_width, page_height;
         gdouble             cropped_width, cropped_height;
         gdouble             output_width, output_height;
         cairo_matrix_t      matrix;
@@ -183,7 +183,7 @@ gxps_converter_print_converter_begin_page (GXPSConverter *converter,
 
         gxps_page_get_size (page, &page_width, &page_height);
         gxps_converter_get_crop_size (converter,
-                                      (gdouble)page_width, (gdouble)page_height,
+                                      page_width, page_height,
                                       &cropped_width, &cropped_height);
         _gxps_converter_print_get_output_size (print_converter, page,
                                                &output_width, &output_height);
@@ -262,17 +262,17 @@ _gxps_converter_print_get_output_size (GXPSPrintConverter *converter,
                                        gdouble            *output_width,
                                        gdouble            *output_height)
 {
-        guint page_width, page_height;
+        gdouble page_width, page_height;
 
         gxps_page_get_size (page, &page_width, &page_height);
 
         if (output_width) {
                 *output_width = converter->paper_width == 0 ?
-                        (gdouble)page_width : (gdouble)converter->paper_width;
+                        page_width : converter->paper_width;
         }
 
         if (output_height) {
                 *output_height = converter->paper_height == 0 ?
-                        (gdouble)page_height : (gdouble)converter->paper_height;
+                        page_height : converter->paper_height;
         }
 }

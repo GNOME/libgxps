@@ -56,8 +56,8 @@ struct _GXPSPagePrivate {
 	gboolean     initialized;
 	GError      *init_error;
 
-	gint         width;
-	gint         height;
+	gdouble      width;
+	gdouble      height;
 	gchar       *lang;
 	gchar       *name;
 
@@ -137,11 +137,23 @@ fixed_page_start_element (GMarkupParseContext  *context,
 	if (strcmp (element_name, "FixedPage") == 0) {
 		for (i = 0; names[i] != NULL; i++) {
 			if (strcmp (names[i], "Width") == 0) {
-				if (!gxps_value_get_int (values[i], &page->priv->width))
-					page->priv->width = -1;
+				if (!gxps_value_get_double_positive (values[i], &page->priv->width)) {
+                                        gxps_parse_error (context,
+                                                          page->priv->source,
+                                                          G_MARKUP_ERROR_MISSING_ATTRIBUTE,
+                                                          element_name, "Width",
+                                                          NULL, error);
+                                        return;
+                                }
 			} else if (strcmp (names[i], "Height") == 0) {
-				if (!gxps_value_get_int (values[i], &page->priv->height))
-					page->priv->height = -1;
+				if (!gxps_value_get_double_positive (values[i], &page->priv->height)) {
+                                        gxps_parse_error (context,
+                                                          page->priv->source,
+                                                          G_MARKUP_ERROR_MISSING_ATTRIBUTE,
+                                                          element_name, "Height",
+                                                          NULL, error);
+                                        return;
+                                }
 			} else if (strcmp (names[i], "xml:lang") == 0) {
 				page->priv->lang = g_strdup (values[i]);
 			} else if (strcmp (names[i], "ContentBox") == 0) {
@@ -3975,8 +3987,8 @@ _gxps_page_new (GXPSArchive *zip,
  */
 void
 gxps_page_get_size (GXPSPage *page,
-		    guint    *width,
-		    guint    *height)
+		    gdouble  *width,
+		    gdouble  *height)
 {
 	g_return_if_fail (GXPS_IS_PAGE (page));
 

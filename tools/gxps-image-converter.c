@@ -58,7 +58,7 @@ gxps_converter_image_converter_begin_page (GXPSConverter *converter,
                                            guint          n_page)
 {
         GXPSImageConverter *image_converter = GXPS_IMAGE_CONVERTER (converter);
-        guint               page_width, page_height;
+        gdouble             page_width, page_height;
         gdouble             output_width, output_height;
         cairo_t            *cr;
 

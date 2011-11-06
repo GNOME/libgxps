@@ -68,8 +68,8 @@ GXPSPage              *gxps_document_get_page            (GXPSDocument *doc,
 							  GError      **error);
 gboolean               gxps_document_get_page_size       (GXPSDocument *doc,
 							  guint         n_page,
-							  guint        *width,
-							  guint        *height);
+							  gdouble      *width,
+							  gdouble      *height);
 gint                   gxps_document_get_page_for_anchor (GXPSDocument *doc,
 							  const gchar  *anchor);
 GXPSDocumentStructure *gxps_document_get_structure       (GXPSDocument *doc);

@@ -75,13 +75,7 @@ G_DEFINE_TYPE_WITH_CODE (GXPSDocument, gxps_document, G_TYPE_OBJECT,
 static Page *
 page_new (void)
 {
-	Page *page;
-
-	page = g_slice_new0 (Page);
-	page->width = -1;
-	page->height = -1;
-
-	return page;
+	return g_slice_new0 (Page);
 }
 
 static void
@@ -114,19 +108,19 @@ fixed_doc_start_element (GMarkupParseContext  *context,
 	gint                i;
 
 	if (strcmp (element_name, "PageContent") == 0) {
-		gchar *source = NULL;
-		gint   width = -1, height = -1;
+		gchar  *source = NULL;
+		gdouble width = -1, height = -1;
 
 		for (i = 0; names[i]; i++) {
 			if (strcmp (names[i], "Source") == 0) {
 				source = gxps_resolve_relative_path (data->doc->priv->source,
 								     values[i]);
 			} else if (strcmp (names[i], "Width") == 0) {
-				if (!gxps_value_get_int (values[i], &width))
-					width = -1;
+				if (!gxps_value_get_double_positive (values[i], &width))
+					width = 0;
 			} else if (strcmp (names[i], "Height") == 0) {
-				if (!gxps_value_get_int (values[i], &height))
-					height = -1;
+				if (!gxps_value_get_double_positive (values[i], &height))
+					height = 0;
 			}
 		}
 
@@ -517,8 +511,8 @@ gxps_document_get_page (GXPSDocument *doc,
 gboolean
 gxps_document_get_page_size (GXPSDocument *doc,
 			     guint         n_page,
-			     guint        *width,
-			     guint        *height)
+			     gdouble      *width,
+			     gdouble      *height)
 {
 	Page *page;
 
@@ -526,7 +520,7 @@ gxps_document_get_page_size (GXPSDocument *doc,
 	g_return_val_if_fail (n_page < doc->priv->n_pages, FALSE);
 
 	page = doc->priv->pages[n_page];
-	if (page->width == -1 || page->height == -1)
+	if (page->width == 0 || page->height == 0)
 		return FALSE;
 
 	if (width)

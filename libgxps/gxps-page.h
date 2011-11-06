@@ -85,8 +85,8 @@ GType    gxps_page_get_type               (void) G_GNUC_CONST;
 GQuark   gxps_page_error_quark            (void) G_GNUC_CONST;
 
 void     gxps_page_get_size               (GXPSPage          *page,
-					   guint             *width,
-					   guint             *height);
+					   gdouble           *width,
+					   gdouble           *height);
 gboolean gxps_page_render                 (GXPSPage          *page,
 					   cairo_t           *cr,
 					   GError           **error);
