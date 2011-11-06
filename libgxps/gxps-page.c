@@ -234,6 +234,8 @@ gxps_matrix_parse (const gchar    *data,
 		   cairo_matrix_t *matrix)
 {
 	gchar **items;
+        gdouble mm[6];
+        guint   i;
 
 	items = g_strsplit (data, ",", 6);
 	if (g_strv_length (items) != 6) {
@@ -242,15 +244,16 @@ gxps_matrix_parse (const gchar    *data,
 		return FALSE;
 	}
 
-	cairo_matrix_init (matrix,
-			   g_strtod (items[0], NULL),
-			   g_strtod (items[1], NULL),
-			   g_strtod (items[2], NULL),
-			   g_strtod (items[3], NULL),
-			   g_strtod (items[4], NULL),
-			   g_strtod (items[5], NULL));
+        for (i = 0; i < 6; i++) {
+                if (!gxps_value_get_double (items[i], &mm[i])) {
+                        g_strfreev (items);
+                        return FALSE;
+                }
+        }
 
-	g_strfreev (items);
+        g_strfreev (items);
+
+	cairo_matrix_init (matrix, mm[0], mm[1], mm[2], mm[3], mm[4], mm[5]);
 
 	return TRUE;
 }
@@ -442,8 +445,9 @@ skip_spaces (PathDataToken *token)
 	} while (advance_char (token));
 }
 
-static void
-path_data_iter_next (PathDataToken *token)
+static gboolean
+path_data_iter_next (PathDataToken *token,
+                     GError        **error)
 {
 	gchar c;
 
@@ -453,7 +457,7 @@ path_data_iter_next (PathDataToken *token)
 		token->type = PD_TOKEN_EOF;
                 GXPS_DEBUG (print_token (token));
 
-		return;
+		return TRUE;
 	}
 
 	c = *token->iter;
@@ -467,7 +471,17 @@ path_data_iter_next (PathDataToken *token)
 		while (token->iter != token->end && (g_ascii_isdigit (*token->iter) || *token->iter == '.'))
 			token->iter++;
 		str = g_strndup (start, token->iter - start);
-		token->number = g_ascii_strtod (str, NULL);
+                if (!gxps_value_get_double (str, &token->number)) {
+                        g_set_error (error,
+                                     GXPS_PAGE_ERROR,
+                                     GXPS_PAGE_ERROR_RENDER,
+                                     "Error parsing abreviated path: error converting token %s (%s) to double at %s",
+                                     path_data_token_type_to_string (token->type),
+                                     str, token->iter);
+                        g_free (str);
+
+                        return FALSE;
+                }
 		g_free (str);
 		token->type = PD_TOKEN_NUMBER;
 	} else if (c == ',') {
@@ -483,6 +497,8 @@ path_data_iter_next (PathDataToken *token)
 	}
 
 	GXPS_DEBUG (print_token (token));
+
+        return TRUE;
 }
 
 static void
@@ -515,13 +531,15 @@ path_data_get_point (PathDataToken *token,
 {
 	*x = token->number;
 
-	path_data_iter_next (token);
+	if (!path_data_iter_next (token, error))
+                return FALSE;
 	if (token->type != PD_TOKEN_COMMA) {
 		path_data_parse_error (token, PD_TOKEN_COMMA, error);
 		return FALSE;
 	}
 
-	path_data_iter_next (token);
+	if (!path_data_iter_next (token, error))
+                return FALSE;
 	if (token->type != PD_TOKEN_NUMBER) {
 		path_data_parse_error (token, PD_TOKEN_NUMBER, error);
 		return FALSE;
@@ -541,7 +559,8 @@ path_data_parse (const gchar *data,
 	token.iter = (gchar *)data;
 	token.end = token.iter + strlen (data);
 
-	path_data_iter_next (&token);
+	if (!path_data_iter_next (&token, error))
+                return FALSE;
 	if (G_UNLIKELY (token.type != PD_TOKEN_COMMAND))
 		return TRUE;
 
@@ -549,7 +568,8 @@ path_data_parse (const gchar *data,
 		gchar    command = token.command;
 		gboolean is_rel = FALSE;
 
-		path_data_iter_next (&token);
+		if (!path_data_iter_next (&token, error))
+                        return FALSE;
 
 		switch (command) {
 			/* Move */
@@ -569,7 +589,8 @@ path_data_parse (const gchar *data,
 				else
 					cairo_move_to (cr, x, y);
 
-				path_data_iter_next (&token);
+				if (!path_data_iter_next (&token, error))
+                                        return FALSE;
 			}
 			break;
 			/* Line */
@@ -589,7 +610,8 @@ path_data_parse (const gchar *data,
 				else
 					cairo_line_to (cr, x, y);
 
-				path_data_iter_next (&token);
+				if (!path_data_iter_next (&token, error))
+                                        return FALSE;
 			}
 			break;
 			/* Horizontal Line */
@@ -608,7 +630,8 @@ path_data_parse (const gchar *data,
 				x = is_rel ? x + offset : offset;
 				cairo_line_to (cr, x, y);
 
-				path_data_iter_next (&token);
+				if (!path_data_iter_next (&token, error))
+                                        return FALSE;
 			}
 			break;
 			/* Vertical Line */
@@ -627,7 +650,8 @@ path_data_parse (const gchar *data,
 				y = is_rel ? y + offset : offset;
 				cairo_line_to (cr, x, y);
 
-				path_data_iter_next (&token);
+				if (!path_data_iter_next (&token, error))
+                                        return FALSE;
 			}
 			break;
 			/* Cubic Bézier curve */
@@ -640,11 +664,13 @@ path_data_parse (const gchar *data,
 				if (!path_data_get_point (&token, &x1, &y1, error))
 					return FALSE;
 
-				path_data_iter_next (&token);
+				if (!path_data_iter_next (&token, error))
+                                        return FALSE;
 				if (!path_data_get_point (&token, &x2, &y2, error))
 					return FALSE;
 
-				path_data_iter_next (&token);
+				if (!path_data_iter_next (&token, error))
+                                        return FALSE;
 				if (!path_data_get_point (&token, &x3, &y3, error))
 					return FALSE;
 
@@ -656,7 +682,8 @@ path_data_parse (const gchar *data,
 				else
 					cairo_curve_to (cr, x1, y1, x2, y2, x3, y3);
 
-				path_data_iter_next (&token);
+				if (!path_data_iter_next (&token, error))
+                                        return FALSE;
 			}
 			break;
 			/* Quadratic Bézier curve */
@@ -669,7 +696,8 @@ path_data_parse (const gchar *data,
 				if (!path_data_get_point (&token, &x1, &y1, error))
 					return FALSE;
 
-				path_data_iter_next (&token);
+				if (!path_data_iter_next (&token, error))
+                                        return FALSE;
 				if (!path_data_get_point (&token, &x2, &y2, error))
 					return FALSE;
 
@@ -677,7 +705,8 @@ path_data_parse (const gchar *data,
 					      x1, y1, x2, y2));
 				GXPS_DEBUG (g_debug ("Unsupported command in path: %c", command));
 
-				path_data_iter_next (&token);
+				if (!path_data_iter_next (&token, error))
+                                        return FALSE;
 			}
 			break;
 			/* Smooth Cubic Bézier curve */
@@ -690,7 +719,8 @@ path_data_parse (const gchar *data,
 				if (!path_data_get_point (&token, &x1, &y1, error))
 					return FALSE;
 
-				path_data_iter_next (&token);
+				if (!path_data_iter_next (&token, error))
+                                        return FALSE;
 				if (!path_data_get_point (&token, &x2, &y2, error))
 					return FALSE;
 
@@ -698,7 +728,8 @@ path_data_parse (const gchar *data,
 					      x1, y1, x2, y2));
 				GXPS_DEBUG (g_debug ("Unsupported command in path: %c", command));
 
-				path_data_iter_next (&token);
+				if (!path_data_iter_next (&token, error))
+                                        return FALSE;
 			}
 			break;
 			/* Elliptical Arc */
@@ -711,28 +742,32 @@ path_data_parse (const gchar *data,
 				if (!path_data_get_point (&token, &xr, &yr, error))
 					return FALSE;
 
-				path_data_iter_next (&token);
+				if (!path_data_iter_next (&token, error))
+                                        return FALSE;
 				if (token.type != PD_TOKEN_NUMBER) {
 					path_data_parse_error (&token, PD_TOKEN_NUMBER, error);
 					return FALSE;
 				}
 				rx = token.number;
 
-				path_data_iter_next (&token);
+				if (!path_data_iter_next (&token, error))
+                                        return FALSE;
 				if (token.type != PD_TOKEN_NUMBER) {
 					path_data_parse_error (&token, PD_TOKEN_NUMBER, error);
 					return FALSE;
 				}
 				farc = token.number;
 
-				path_data_iter_next (&token);
+				if (!path_data_iter_next (&token, error))
+                                        return FALSE;
 				if (token.type != PD_TOKEN_NUMBER) {
 					path_data_parse_error (&token, PD_TOKEN_NUMBER, error);
 					return FALSE;
 				}
 				fsweep = token.number;
 
-				path_data_iter_next (&token);
+				if (!path_data_iter_next (&token, error))
+                                        return FALSE;
 				if (!path_data_get_point (&token, &x, &y, error))
 					return FALSE;
 
@@ -740,7 +775,8 @@ path_data_parse (const gchar *data,
 					      xr, yr, rx, farc, fsweep, x, y));
 				GXPS_DEBUG (g_debug ("Unsupported command in path: %c", command));
 
-				path_data_iter_next (&token);
+				if (!path_data_iter_next (&token, error))
+                                        return FALSE;
 			}
 			break;
 			/* Close */
@@ -761,7 +797,8 @@ path_data_parse (const gchar *data,
 					     CAIRO_FILL_RULE_WINDING);
 			GXPS_DEBUG (g_message ("set_fill_rule (%s)", (fill_rule == 0) ? "EVEN_ODD" : "WINDING"));
 
-			path_data_iter_next (&token);
+			if (!path_data_iter_next (&token, error))
+                                return FALSE;
 		}
 			break;
 		default:
@@ -861,23 +898,34 @@ gxps_boolean_parse (const gchar *value)
 
 static gboolean
 gxps_dash_array_parse (const gchar *dash,
-		       gdouble    **dashes,
-		       guint       *num_dashes)
+		       gdouble    **dashes_out,
+		       guint       *num_dashes_out)
 {
-	gchar **items;
-	guint   i;
+	gchar  **items;
+	guint    i;
+        gdouble *dashes;
+        guint    num_dashes;
 
 	items = g_strsplit (dash, " ", -1);
 	if (!items)
 		return FALSE;
 
-	*num_dashes = g_strv_length (items);
-	*dashes = g_malloc (*num_dashes * sizeof (gdouble));
+	num_dashes = g_strv_length (items);
+	dashes = g_malloc (num_dashes * sizeof (gdouble));
 
-	for (i = 0; i < *num_dashes; i++)
-		dashes[0][i] = g_strtod (items[i], NULL);
+	for (i = 0; i < num_dashes; i++) {
+                if (!gxps_value_get_double (items[i], &dashes[i])) {
+                        g_free (dashes);
+                        g_strfreev (items);
+
+                        return FALSE;
+                }
+        }
 
 	g_strfreev (items);
+
+        *dashes_out = dashes;
+        *num_dashes_out = num_dashes;
 
 	return TRUE;
 }
@@ -924,6 +972,8 @@ gxps_box_parse (const gchar       *box,
 		cairo_rectangle_t *rect)
 {
 	gchar **tokens;
+        gdouble b[4];
+        guint   i;
 
 	tokens = g_strsplit (box, ",", 4);
 	if (g_strv_length (tokens) != 4) {
@@ -932,10 +982,18 @@ gxps_box_parse (const gchar       *box,
 		return FALSE;
 	}
 
-	rect->x = g_strtod (tokens[0], NULL);
-	rect->y = g_strtod (tokens[1], NULL);
-	rect->width = g_strtod (tokens[2], NULL);
-	rect->height = g_strtod (tokens[3], NULL);
+        for (i = 0; i < 4; i++) {
+                if (!gxps_value_get_double (tokens[i], &b[i])) {
+                        g_strfreev (tokens);
+
+                        return FALSE;
+                }
+        }
+
+	rect->x = b[0];
+	rect->y = b[1];
+	rect->width = b[2];
+	rect->height = b[3];
 
 	g_strfreev (tokens);
 
@@ -957,13 +1015,17 @@ gxps_point_parse (const gchar *point,
 		gchar *str;
 
 		str = g_strndup (point, p - point);
-		*x = g_strtod (str, NULL);
+                if (!gxps_value_get_double (str, x)) {
+                        g_free (str);
+
+                        return FALSE;
+                }
 		g_free (str);
 	}
 
 	if (y) {
-		p++;
-		*y = g_strtod (p, NULL);
+                if (!gxps_value_get_double (++p, y))
+                        return FALSE;
 	}
 
 	return TRUE;
@@ -1230,7 +1292,14 @@ brush_gradient_start_element (GMarkupParseContext  *context,
 					return;
 				}
 			} else if (strcmp (names[i], "Offset") == 0) {
-				offset = g_strtod (values[i], NULL);
+                                if (!gxps_value_get_double (values[i], &offset)) {
+                                        gxps_parse_error (context,
+                                                          brush->ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "GradientStop", "Offset",
+                                                          values[i], error);
+                                        return;
+                                }
 			}
 		}
 
@@ -1394,7 +1463,14 @@ brush_start_element (GMarkupParseContext  *context,
 			} else if (strcmp (names[i], "SpreadMethod") == 0) {
 				extend = gxps_spread_method_parse (values[i]);
 			} else if (strcmp (names[i], "Opacity") == 0) {
-				brush->opacity = g_ascii_strtod (values[i], NULL);
+                                if (!gxps_value_get_double (values[i], &brush->opacity)) {
+                                        gxps_parse_error (context,
+                                                          brush->ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "LinearGradientBrush", "Opacity",
+                                                          values[i], error);
+                                        return;
+                                }
 			} else if (strcmp (names[i], "Transform") == 0) {
 				if (!gxps_matrix_parse (values[i], &matrix)) {
 					gxps_parse_error (context,
@@ -1443,13 +1519,34 @@ brush_start_element (GMarkupParseContext  *context,
 					return;
 				}
 			} else if (strcmp (names[i], "RadiusX") == 0) {
-				r0 = g_strtod (values[i], NULL);
+                                if (!gxps_value_get_double (values[i], &r0)) {
+                                        gxps_parse_error (context,
+                                                          brush->ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "RadialGradientBrush", "RadiusX",
+                                                          values[i], error);
+                                        return;
+                                }
 			} else if (strcmp (names[i], "RadiusY") == 0) {
-				r1 = g_strtod (values[i], NULL);
+                                if (!gxps_value_get_double (values[i], &r1)) {
+                                        gxps_parse_error (context,
+                                                          brush->ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "RadialGradientBrush", "RadiusY",
+                                                          values[i], error);
+                                        return;
+                                }
 			} else if (strcmp (names[i], "SpreadMethod") == 0) {
 				extend = gxps_spread_method_parse (values[i]);
 			} else if (strcmp (names[i], "Opacity") == 0) {
-				brush->opacity = g_ascii_strtod (values[i], NULL);
+                                if (!gxps_value_get_double (values[i], &brush->opacity)) {
+                                        gxps_parse_error (context,
+                                                          brush->ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "RadialGradientBrush", "Opacity",
+                                                          values[i], error);
+                                        return;
+                                }
 			} else if (strcmp (names[i], "Transform") == 0) {
 				if (!gxps_matrix_parse (values[i], &matrix)) {
 					gxps_parse_error (context,
@@ -2100,15 +2197,16 @@ glyphs_indices_token_type_to_string (GlyphsIndicesTokenType type)
 	}
 }
 
-static void
-glyphs_indices_iter_next (GlyphsIndicesToken *token)
+static gboolean
+glyphs_indices_iter_next (GlyphsIndicesToken *token,
+                          GError            **error)
 {
 	gchar c;
 
 	if (token->iter == token->end) {
 		token->type = GI_TOKEN_EOF;
 
-		return;
+		return TRUE;
 	}
 
 	c = *token->iter;
@@ -2122,7 +2220,17 @@ glyphs_indices_iter_next (GlyphsIndicesToken *token)
 		while (token->iter != token->end && (g_ascii_isdigit (*token->iter) || *token->iter == '.'))
 			token->iter++;
 		str = g_strndup (start, token->iter - start);
-		token->number = g_ascii_strtod (str, NULL);
+                if (!gxps_value_get_double (str, &token->number)) {
+                        g_set_error (error,
+                                     GXPS_PAGE_ERROR,
+                                     GXPS_PAGE_ERROR_RENDER,
+                                     "Error parsing glyphs indices: error converting token %s (%s) to double at %s",
+                                     glyphs_indices_token_type_to_string (token->type),
+                                     str, token->iter);
+                        g_free (str);
+
+                        return FALSE;
+                }
 		g_free (str);
 		token->type = GI_TOKEN_NUMBER;
 	} else if (c == '(') {
@@ -2144,6 +2252,8 @@ glyphs_indices_iter_next (GlyphsIndicesToken *token)
 		token->type = GI_TOKEN_INVALID;
 		token->iter++;
 	}
+
+        return TRUE;
 }
 
 static void
@@ -2232,7 +2342,8 @@ glyphs_indices_parse (const char          *indices,
 
         token.iter = (gchar *)indices;
         token.end = token.iter + strlen (indices);
-        glyphs_indices_iter_next (&token);
+        if (!glyphs_indices_iter_next (&token, error))
+                return FALSE;
 
         while (1) {
 		switch (token.type) {
@@ -2240,7 +2351,8 @@ glyphs_indices_parse (const char          *indices,
                         gint num_code_units;
                         const gchar *utf8_unit_end;
 
-			glyphs_indices_iter_next (&token);
+			if (!glyphs_indices_iter_next (&token, error))
+                                return FALSE;
 			if (token.type != GI_TOKEN_NUMBER) {
 				glyphs_indices_parse_error (&token,
 							    GI_TOKEN_NUMBER,
@@ -2264,7 +2376,8 @@ glyphs_indices_parse (const char          *indices,
 			}
 			cluster.num_bytes = utf8_unit_end - utf8;
 
-			glyphs_indices_iter_next (&token);
+			if (!glyphs_indices_iter_next (&token, error))
+                                return FALSE;
 			if (token.type == GI_TOKEN_END_CLUSTER)
 				break;
 
@@ -2275,7 +2388,8 @@ glyphs_indices_parse (const char          *indices,
 				return FALSE;
 			}
 
-			glyphs_indices_iter_next (&token);
+			if (!glyphs_indices_iter_next (&token, error))
+                                return FALSE;
 			if (token.type != GI_TOKEN_NUMBER) {
 				glyphs_indices_parse_error (&token,
 							    GI_TOKEN_NUMBER,
@@ -2287,7 +2401,8 @@ glyphs_indices_parse (const char          *indices,
 			cluster.num_glyphs = (gint)token.number;
 			cluster_pos = (gint)token.number;
 
-			glyphs_indices_iter_next (&token);
+			if (!glyphs_indices_iter_next (&token, error))
+                                return FALSE;
 			if (token.type != GI_TOKEN_END_CLUSTER) {
 				glyphs_indices_parse_error (&token,
 							    GI_TOKEN_END_CLUSTER,
@@ -2301,26 +2416,31 @@ glyphs_indices_parse (const char          *indices,
 			have_index = TRUE;
 			break;
 		case GI_TOKEN_COMMA:
-			glyphs_indices_iter_next (&token);
+			if (!glyphs_indices_iter_next (&token, error))
+                                return FALSE;
 			if (token.type == GI_TOKEN_NUMBER) {
 				advance_width = token.number / 100.0;
 				have_advance_width = TRUE;
-				glyphs_indices_iter_next (&token);
+				if (!glyphs_indices_iter_next (&token, error))
+                                        return FALSE;
 			}
 
 			if (token.type != GI_TOKEN_COMMA)
 				continue;
 
-			glyphs_indices_iter_next (&token);
+			if (!glyphs_indices_iter_next (&token, error))
+                                return FALSE;
 			if (token.type == GI_TOKEN_NUMBER) {
 				h_offset = token.number / 100.0;
-				glyphs_indices_iter_next (&token);
+				if (!glyphs_indices_iter_next (&token, error))
+                                        return FALSE;
 			}
 
 			if (token.type != GI_TOKEN_COMMA)
 				continue;
 
-			glyphs_indices_iter_next (&token);
+			if (!glyphs_indices_iter_next (&token, error))
+                                return FALSE;
 			if (token.type != GI_TOKEN_NUMBER) {
 				glyphs_indices_parse_error (&token,
 							    GI_TOKEN_NUMBER,
@@ -2412,7 +2532,8 @@ glyphs_indices_parse (const char          *indices,
 			return FALSE;
 		}
 
-		glyphs_indices_iter_next (&token);
+		if (!glyphs_indices_iter_next (&token, error))
+                        return FALSE;
         }
 
 	return TRUE;
@@ -2651,7 +2772,13 @@ render_start_element (GMarkupParseContext  *context,
 					return;
 				}
 			} else if (strcmp (names[i], "StrokeThickness") == 0) {
-				path->line_width = g_strtod (values[i], NULL);
+                                if (!gxps_value_get_double (values[i], &path->line_width)) {
+                                        gxps_parse_error (context,
+                                                          ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "Path", "StrokeThickness", values[i], error);
+                                        return;
+                                }
 				GXPS_DEBUG (g_message ("set_line_width (%f)", path->line_width));
 			} else if (strcmp (names[i], "StrokeDashArray") == 0) {
 				if (!gxps_dash_array_parse (values[i], &path->dash, &path->dash_len)) {
@@ -2663,7 +2790,13 @@ render_start_element (GMarkupParseContext  *context,
 				}
 				GXPS_DEBUG (g_message ("set_dash"));
 			} else if (strcmp (names[i], "StrokeDashOffset") == 0) {
-				path->dash_offset = g_strtod (values[i], NULL);
+                                if (!gxps_value_get_double (values[i], &path->dash_offset)) {
+                                        gxps_parse_error (context,
+                                                          ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "Path", "StrokeDashOffset", values[i], error);
+                                        return;
+                                }
 				GXPS_DEBUG (g_message ("set_dash_offset (%f)", path->dash_offset));
 			} else if (strcmp (names[i], "StrokeDashCap") == 0) {
 				path->line_cap = gxps_line_cap_parse (values[i]);
@@ -2672,10 +2805,22 @@ render_start_element (GMarkupParseContext  *context,
 				path->line_join = gxps_line_join_parse (values[i]);
 				GXPS_DEBUG (g_message ("set_line_join (%s)", values[i]));
 			} else if (strcmp (names[i], "StrokeMiterLimit") == 0) {
-				path->miter_limit = g_strtod (values[i], NULL);
+                                if (!gxps_value_get_double (values[i], &path->miter_limit)) {
+                                        gxps_parse_error (context,
+                                                          ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "Path", "StrokeMiterLimit", values[i], error);
+                                        return;
+                                }
 				GXPS_DEBUG (g_message ("set_miter_limit (%f)", path->miter_limit));
 			} else if (strcmp (names[i], "Opacity") == 0) {
-				path->opacity = g_ascii_strtod (values[i], NULL);
+                                if (!gxps_value_get_double (values[i], &path->opacity)) {
+                                        gxps_parse_error (context,
+                                                          ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "Path", "Opacity", values[i], error);
+                                        return;
+                                }
 				GXPS_DEBUG (g_message ("set_opacity (%f)", path->opacity));
 			}
 		}
@@ -2703,14 +2848,38 @@ render_start_element (GMarkupParseContext  *context,
 
 		for (i = 0; names[i] != NULL; i++) {
 			if (strcmp (names[i], "FontRenderingEmSize") == 0) {
-				font_size = g_ascii_strtod (values[i], NULL);
+                                if (!gxps_value_get_double (values[i], &font_size)) {
+                                        gxps_parse_error (context,
+                                                          ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "Glyphs", "FontRenderingEmSize",
+                                                          values[i], error);
+                                        g_free (font_uri);
+                                        return;
+                                }
 			} else if (strcmp (names[i], "FontUri") == 0) {
 				font_uri = gxps_resolve_relative_path (ctx->page->priv->source,
 								       values[i]);
 			} else if (strcmp (names[i], "OriginX") == 0) {
-				x = g_ascii_strtod (values[i], NULL);
+                                if (!gxps_value_get_double (values[i], &x)) {
+                                        gxps_parse_error (context,
+                                                          ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "Glyphs", "OriginX",
+                                                          values[i], error);
+                                        g_free (font_uri);
+                                        return;
+                                }
 			} else if (strcmp (names[i], "OriginY") == 0) {
-				y = g_ascii_strtod (values[i], NULL);
+                                if (!gxps_value_get_double (values[i], &y)) {
+                                        gxps_parse_error (context,
+                                                          ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "Glyphs", "OriginY",
+                                                          values[i], error);
+                                        g_free (font_uri);
+                                        return;
+                                }
 			} else if (strcmp (names[i], "UnicodeString") == 0) {
 				text = values[i];
 			} else if (strcmp (names[i], "Fill") == 0) {
@@ -2742,7 +2911,15 @@ render_start_element (GMarkupParseContext  *context,
                         } else if (strcmp (names[i], "IsSideways") == 0) {
                                 is_sideways = gxps_boolean_parse (values[i]);
 			} else if (strcmp (names[i], "Opacity") == 0) {
-				opacity = g_ascii_strtod (values[i], NULL);
+                                if (!gxps_value_get_double (values[i], &opacity)) {
+                                        gxps_parse_error (context,
+                                                          ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "Glyphs", "Opacity",
+                                                          values[i], error);
+                                        g_free (font_uri);
+                                        return;
+                                }
                         } else if (strcmp (names[i], "StyleSimulations") == 0) {
                                 if (strcmp (values[i], "ItalicSimulation") == 0) {
                                         italic = TRUE;
@@ -2817,8 +2994,15 @@ render_start_element (GMarkupParseContext  *context,
 					      matrix.x0, matrix.y0));
 				cairo_transform (ctx->cr, &matrix);
 			} else if (strcmp (names[i], "Opacity") == 0) {
-				canvas->opacity = g_ascii_strtod (values[i], NULL);
-				GXPS_DEBUG (g_message ("set_opacity (%f)", path->opacity));
+                                if (!gxps_value_get_double (values[i], &canvas->opacity)) {
+                                        gxps_parse_error (context,
+                                                          ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "Canvas", "Opacity", values[i], error);
+                                        gxps_canvas_free (canvas);
+                                        return;
+                                }
+				GXPS_DEBUG (g_message ("set_opacity (%f)", canvas->opacity));
 			} else if (strcmp (names[i], "Clip") == 0) {
 				if (!path_data_parse (values[i], ctx->cr, error)) {
 					gxps_parse_error (context,
