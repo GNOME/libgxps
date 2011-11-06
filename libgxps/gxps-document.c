@@ -499,11 +499,14 @@ gxps_document_get_page (GXPSDocument *doc,
  * @width: (out) (allow-none): return location for the width of @n_page
  * @height: (out) (allow-none): return location for the height of @n_page
  *
- * Gets the size of the page at index @n_page in @doc document.
- * This function is useful to get the size of the pages in a document
- * without creating #GXPSPage objects. However, page sizes are not always
- * available in @doc, in which case this function returns %FALSE.
- * To get the size of a #GXPSPage you can use gxps_page_get_size() instead.
+ * Gets the typical size of the page at index @n_page in @doc document.
+ * This function is useful to get the advisory size of pages in a document
+ * without creating #GXPSPage objects. This page size might be different than
+ * the actual page size so page dimension might need to be updated once the
+ * page is loaded. Advisory page sizes are not always available in @doc,
+ * in which case this function returns %FALSE.
+ * To get the authoritative size of a page you should use gxps_page_get_size()
+ * instead.
  *
  * Returns: %TRUE if the page size information is available in @doc,
  *     %FALSE otherwise.
