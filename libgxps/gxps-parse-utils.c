@@ -292,6 +292,16 @@ gxps_value_get_double (const gchar *value,
         return TRUE;
 }
 
+gboolean
+gxps_value_get_double_positive (const gchar *value,
+                                gdouble     *double_value)
+{
+        if (!gxps_value_get_double (value, double_value))
+                return FALSE;
+
+        return *double_value >= 1;
+}
+
 gchar *
 gxps_resolve_relative_path (const gchar *source,
 			    const gchar *target)

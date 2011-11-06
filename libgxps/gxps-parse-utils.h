@@ -24,22 +24,24 @@
 
 G_BEGIN_DECLS
 
-gboolean gxps_parse_stream          (GMarkupParseContext  *context,
-				     GInputStream         *stream,
-				     GError              **error);
-void     gxps_parse_error           (GMarkupParseContext  *context,
-				     const gchar          *source,
-				     GMarkupError          error_type,
-				     const gchar          *element_name,
-				     const gchar          *attribute_name,
-				     const gchar          *content,
-				     GError              **error);
-gboolean gxps_value_get_int         (const gchar          *value,
-				     gint                 *int_value);
-gboolean gxps_value_get_double      (const gchar          *value,
-                                     gdouble              *double_value);
-gchar   *gxps_resolve_relative_path (const gchar          *source,
-				     const gchar          *target);
+gboolean gxps_parse_stream              (GMarkupParseContext  *context,
+                                         GInputStream         *stream,
+                                         GError              **error);
+void     gxps_parse_error               (GMarkupParseContext  *context,
+                                         const gchar          *source,
+                                         GMarkupError          error_type,
+                                         const gchar          *element_name,
+                                         const gchar          *attribute_name,
+                                         const gchar          *content,
+                                         GError              **error);
+gboolean gxps_value_get_int             (const gchar          *value,
+                                         gint                 *int_value);
+gboolean gxps_value_get_double          (const gchar          *value,
+                                         gdouble              *double_value);
+gboolean gxps_value_get_double_positive (const gchar          *value,
+                                         gdouble              *double_value);
+gchar   *gxps_resolve_relative_path     (const gchar          *source,
+                                         const gchar          *target);
 
 G_END_DECLS
 
