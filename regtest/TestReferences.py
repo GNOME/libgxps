@@ -54,8 +54,8 @@ class TestReferences:
             raise
         doc_path = os.path.join(self._docsdir, filename)
 
-        if not self.config.force and self._test.has_md5(refs_path):
-            print("Checksum file found, skipping '%s' (%d/%d)" % (doc_path, n_doc, total_docs))
+        if not self.config.force and self._test.has_results(refs_path):
+            print("Results found, skipping '%s' (%d/%d)" % (doc_path, n_doc, total_docs))
             return
 
         print("Creating refs for '%s' (%d/%d)" % (doc_path, n_doc, total_docs))
