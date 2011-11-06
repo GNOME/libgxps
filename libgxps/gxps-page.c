@@ -704,6 +704,7 @@ path_data_parse (const gchar *data,
 		case 'Q':
 			while (token.type == PD_TOKEN_NUMBER) {
 				gdouble x1, y1, x2, y2;
+                                gdouble x, y;
 
 				if (!path_data_get_point (&token, &x1, &y1, error))
 					return FALSE;
@@ -715,7 +716,18 @@ path_data_parse (const gchar *data,
 
 				GXPS_DEBUG (g_message ("%s (%f, %f, %f, %f)", is_rel ? "rel_quad_curve_to" : "quad_curve_to",
 					      x1, y1, x2, y2));
-				GXPS_DEBUG (g_debug ("Unsupported command in path: %c", command));
+
+                                cairo_get_current_point (cr, &x, &y);
+                                x1 += is_rel ? x : 0;
+                                y1 += is_rel ? y : 0;
+                                x2 += is_rel ? x : 0;
+                                y2 += is_rel ? y : 0;
+                                cairo_curve_to (cr,
+                                                2.0 / 3.0 * x1 + 1.0 / 3.0 * x,
+                                                2.0 / 3.0 * y1 + 1.0 / 3.0 * y,
+                                                2.0 / 3.0 * x1 + 1.0 / 3.0 * x2,
+                                                2.0 / 3.0 * y1 + 1.0 / 3.0 * y2,
+                                                x2, y2);
 
 				if (!path_data_iter_next (&token, error))
                                         return FALSE;
