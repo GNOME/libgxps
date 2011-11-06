@@ -890,10 +890,7 @@ gxps_create_solid_color_pattern (const gchar *color)
 	if (!gxps_color_parse (color, &a, &r, &g, &b))
 		return NULL;
 
-	pattern = (a != 1.0) ?
-		cairo_pattern_create_rgba (r, g, b, a) :
-		cairo_pattern_create_rgb (r, g, b);
-
+	pattern = cairo_pattern_create_rgba (r, g, b, a);
 	if (cairo_pattern_status (pattern)) {
 		cairo_pattern_destroy (pattern);
 		return NULL;
