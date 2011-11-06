@@ -2907,7 +2907,15 @@ render_start_element (GMarkupParseContext  *context,
 			} else if (strcmp (names[i], "Clip") == 0) {
 				clip_data = values[i];
                         } else if (strcmp (names[i], "BidiLevel") == 0) {
-                                bidi_level = g_ascii_strtoll (values[i], NULL, 10);
+                                if (!gxps_value_get_int (values[i], &bidi_level)) {
+                                        gxps_parse_error (context,
+                                                          ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "Glyphs", "BidiLevel",
+                                                          values[i], error);
+                                        g_free (font_uri);
+                                        return;
+                                }
                         } else if (strcmp (names[i], "IsSideways") == 0) {
                                 is_sideways = gxps_boolean_parse (values[i]);
 			} else if (strcmp (names[i], "Opacity") == 0) {
