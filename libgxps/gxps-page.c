@@ -1323,15 +1323,7 @@ brush_gradient_start_element (GMarkupParseContext  *context,
 		}
 
 		a *= brush->opacity;
-		if (a != 1.0) {
-			cairo_pattern_add_color_stop_rgba (brush->pattern,
-							   offset,
-							   r, g, b, a);
-		} else {
-			cairo_pattern_add_color_stop_rgb (brush->pattern,
-							  offset,
-							  r, g, b);
-		}
+                cairo_pattern_add_color_stop_rgba (brush->pattern, offset, r, g, b, a);
 	}
 }
 
