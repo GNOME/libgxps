@@ -966,7 +966,7 @@ gxps_color_parse (const gchar *color,
 }
 
 static cairo_pattern_t *
-gxps_create_solid_color_pattern (const gchar *color)
+gxps_create_solid_color_pattern_with_alpha (const gchar *color, gdouble alpha)
 {
 	cairo_pattern_t *pattern;
 	gdouble          a, r, g, b;
@@ -974,13 +974,19 @@ gxps_create_solid_color_pattern (const gchar *color)
 	if (!gxps_color_parse (color, &a, &r, &g, &b))
 		return NULL;
 
-	pattern = cairo_pattern_create_rgba (r, g, b, a);
+	pattern = cairo_pattern_create_rgba (r, g, b, a * alpha);
 	if (cairo_pattern_status (pattern)) {
 		cairo_pattern_destroy (pattern);
 		return NULL;
 	}
 
 	return pattern;
+}
+
+static cairo_pattern_t *
+gxps_create_solid_color_pattern (const gchar *color)
+{
+	return gxps_create_solid_color_pattern_with_alpha (color, 1.0);
 }
 
 static gboolean
@@ -1429,26 +1435,44 @@ brush_start_element (GMarkupParseContext  *context,
 	GXPSBrush *brush = (GXPSBrush *)user_data;
 
 	if (strcmp (element_name, "SolidColorBrush") == 0) {
+		const gchar *color_str = NULL;
 		gint i;
 
 		for (i = 0; names[i] != NULL; i++) {
 			if (strcmp (names[i], "Color") == 0) {
-
-				brush->pattern = gxps_create_solid_color_pattern (values[i]);
-				GXPS_DEBUG (g_message ("set_fill_pattern (solid)"));
-				if (!brush->pattern) {
+				color_str = values[i];
+			} else if (strcmp (names[i], "Opacity") == 0) {
+				if (!gxps_value_get_double (values[i], &brush->opacity)) {
 					gxps_parse_error (context,
 							  brush->ctx->page->priv->source,
 							  G_MARKUP_ERROR_INVALID_CONTENT,
-							  "SolidColorBrush", "Color",
+                                                          "SolidColorBrush", "Opacity",
 							  values[i], error);
 					return;
 				}
-			} else if (strcmp (names[i], "Opacity") == 0) {
-				/* TODO */
 			} else if (strcmp (names[i], "X:Key") == 0) {
 				/* TODO */
 			}
+		}
+
+                if (!color_str) {
+                        gxps_parse_error (context,
+                                          brush->ctx->page->priv->source,
+                                          G_MARKUP_ERROR_MISSING_ATTRIBUTE,
+                                          "SolidColorBrush", "Color",
+                                          NULL, error);
+                        return;
+                }
+
+                brush->pattern = gxps_create_solid_color_pattern_with_alpha (color_str, brush->opacity);
+                GXPS_DEBUG (g_message ("set_fill_pattern (solid)"));
+		if (!brush->pattern) {
+			gxps_parse_error (context,
+					  brush->ctx->page->priv->source,
+					  G_MARKUP_ERROR_INVALID_CONTENT,
+                                          "SolidColorBrush", "Color",
+					  color_str, error);
+			return;
 		}
 	} else if (strcmp (element_name, "ImageBrush") == 0) {
 		GXPSBrushImage *image;
