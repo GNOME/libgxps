@@ -27,6 +27,7 @@
 #include "gxps-fonts.h"
 #include "gxps-links.h"
 #include "gxps-images.h"
+#include "gxps-color.h"
 #include "gxps-private.h"
 #include "gxps-error.h"
 #include "gxps-debug.h"
@@ -852,55 +853,49 @@ hex (const gchar *spec,
 }
 
 static gboolean
-gxps_color_rgb_parse (const gchar *color,
-                      gdouble     *alpha,
-                      gdouble     *red,
-                      gdouble     *green,
-                      gdouble     *blue)
+gxps_color_s_rgb_parse (const gchar *color_str,
+                        GXPSColor   *color)
 {
-        gsize len = strlen (color);
+        gsize len = strlen (color_str);
         guint a = 255;
         guint r, g, b;
 
         switch (len) {
 	case 6:
-		if (!hex (color, 2, &r) ||
-		    !hex (color + 2, 2, &g) ||
-		    !hex (color + 4, 2, &b))
+		if (!hex (color_str, 2, &r) ||
+		    !hex (color_str + 2, 2, &g) ||
+		    !hex (color_str + 4, 2, &b))
 			return FALSE;
 		break;
 	case 8:
-		if (!hex (color, 2, &a) ||
-		    !hex (color + 2, 2, &r) ||
-		    !hex (color + 4, 2, &g) ||
-		    !hex (color + 6, 2, &b))
+		if (!hex (color_str, 2, &a) ||
+		    !hex (color_str + 2, 2, &r) ||
+		    !hex (color_str + 4, 2, &g) ||
+		    !hex (color_str + 6, 2, &b))
 			return FALSE;
 		break;
 	default:
 		return FALSE;
 	}
 
-	*alpha = a / 255.0;
-	*red = r / 255.0;
-	*green = g / 255.0;
-	*blue = b / 255.0;
+        color->alpha = a / 255.;
+        color->red = r / 255.;
+        color->green = g / 255.;
+        color->blue = b / 255.;
 
-	return TRUE;
+        return TRUE;
 }
 
 static gboolean
-gxps_color_scrgb_parse (const gchar *color,
-                        gdouble     *alpha,
-                        gdouble     *red,
-                        gdouble     *green,
-                        gdouble     *blue)
+gxps_color_sc_rgb_parse (const gchar *color_str,
+                         GXPSColor   *color)
 {
         gchar **tokens;
         gsize   len;
         gdouble c[4];
         guint   i, start;
 
-        tokens = g_strsplit (color, ",", 4);
+        tokens = g_strsplit (color_str, ",", 4);
         len = g_strv_length (tokens);
 
         switch (len) {
@@ -918,6 +913,7 @@ gxps_color_scrgb_parse (const gchar *color,
                 start = 0;
                 break;
         default:
+                g_strfreev (tokens);
                 return FALSE;
         }
 
@@ -931,52 +927,116 @@ gxps_color_scrgb_parse (const gchar *color,
 
         g_strfreev (tokens);
 
-        *alpha = CLAMP (c[0], 0., 1.);
-        *red = CLAMP (c[1], 0., 1.);
-        *green = CLAMP (c[2], 0., 1.);
-        *blue = CLAMP (c[3], 0., 1.);
+        color->alpha = CLAMP (c[0], 0., 1.);
+        color->red = CLAMP (c[1], 0., 1.);
+        color->green = CLAMP (c[2], 0., 1.);
+        color->blue = CLAMP (c[3], 0., 1.);
 
         return TRUE;
 }
 
 static gboolean
-gxps_color_parse (const gchar *color,
-		  gdouble     *alpha,
-		  gdouble     *red,
-		  gdouble     *green,
-		  gdouble     *blue)
+gxps_color_icc_parse (const gchar *color_str,
+                      GXPSArchive *zip,
+                      GXPSColor   *color)
 {
         const gchar *p;
+        gchar       *icc_profile_uri;
+        gchar      **tokens;
+        gsize        len;
+        gdouble      alpha;
+        gdouble      values[GXPS_COLOR_MAX_CHANNELS];
+        guint        i, j;
+        gboolean     retval;
 
-        p = strstr (color, "#");
-        if (!p) {
-                GXPS_DEBUG (g_debug ("Unsupported color %s", color));
+        p = strstr (color_str, " ");
+        if (!p)
+                return FALSE;
+
+        icc_profile_uri = g_strndup (color_str, strlen (color_str) - strlen (p));
+
+        tokens = g_strsplit (++p, ",", -1);
+        len = g_strv_length (tokens);
+        if (len < 2) {
+                g_strfreev (tokens);
+                g_free (icc_profile_uri);
+
                 return FALSE;
         }
 
-        if (p == color)
-                return gxps_color_rgb_parse (++p, alpha, red, green, blue);
+        if (!gxps_value_get_double (tokens[0], &alpha)) {
+                g_strfreev (tokens);
+                g_free (icc_profile_uri);
 
-        if (strncmp (color, "sc", 2) == 0 && p == color + 2)
-                return gxps_color_scrgb_parse (++p, alpha, red, green, blue);
+                return FALSE;
+        }
 
-        GXPS_DEBUG (g_debug ("Unsupported color %s", color));
+        for (i = 0, j = 1; i < GXPS_COLOR_MAX_CHANNELS && j < len; i++, j++) {
+                if (!gxps_value_get_double (tokens[j], &values[i])) {
+                        g_strfreev (tokens);
+                        g_free (icc_profile_uri);
+
+                        return FALSE;
+                }
+        }
+
+        g_strfreev (tokens);
+
+        color->alpha = CLAMP (alpha, 0., 1.);
+        retval = gxps_color_new_for_icc (zip, icc_profile_uri, values, i, color);
+        g_free (icc_profile_uri);
+
+        return retval;
+}
+
+static gboolean
+gxps_color_parse (const gchar *color_str,
+                  GXPSArchive *zip,
+                  GXPSColor   *color)
+{
+        const gchar *p;
+
+        p = strstr (color_str, "#");
+        if (!p) {
+                p = strstr (color_str, "ContextColor");
+                if (p == color_str) {
+                        p += strlen ("ContextColor");
+                        return gxps_color_icc_parse (++p, zip, color);
+                }
+                GXPS_DEBUG (g_debug ("Unsupported color %s", color_str));
+
+                return FALSE;
+        }
+
+        if (p == color_str)
+                return gxps_color_s_rgb_parse (++p, color);
+
+        if (strncmp (color_str, "sc", 2) == 0 && p == color_str + 2)
+                return gxps_color_sc_rgb_parse (++p, color);
+
+        GXPS_DEBUG (g_debug ("Unsupported color %s", color_str));
 
         return FALSE;
 }
 
 static cairo_pattern_t *
-gxps_create_solid_color_pattern_with_alpha (const gchar *color, gdouble alpha)
+gxps_create_solid_color_pattern_with_alpha (GXPSArchive *zip,
+                                            const gchar *color_str,
+                                            gdouble      alpha)
 {
 	cairo_pattern_t *pattern;
-	gdouble          a, r, g, b;
+        GXPSColor        color;
 
-	if (!gxps_color_parse (color, &a, &r, &g, &b))
+	if (!gxps_color_parse (color_str, zip, &color))
 		return NULL;
 
-	pattern = cairo_pattern_create_rgba (r, g, b, a * alpha);
+	pattern = cairo_pattern_create_rgba (color.red,
+                                             color.green,
+                                             color.blue,
+                                             color.alpha * alpha);
 	if (cairo_pattern_status (pattern)) {
 		cairo_pattern_destroy (pattern);
+
 		return NULL;
 	}
 
@@ -984,9 +1044,10 @@ gxps_create_solid_color_pattern_with_alpha (const gchar *color, gdouble alpha)
 }
 
 static cairo_pattern_t *
-gxps_create_solid_color_pattern (const gchar *color)
+gxps_create_solid_color_pattern (GXPSArchive *zip,
+                                 const gchar *color_str)
 {
-	return gxps_create_solid_color_pattern_with_alpha (color, 1.0);
+	return gxps_create_solid_color_pattern_with_alpha (zip, color_str, 1.0);
 }
 
 static gboolean
@@ -1376,13 +1437,15 @@ brush_gradient_start_element (GMarkupParseContext  *context,
 	if (strcmp (element_name, "LinearGradientBrush.GradientStops") == 0) {
 	} else if (strcmp (element_name, "RadialGradientBrush.GradientStops") == 0) {
 	} else if (strcmp (element_name, "GradientStop") == 0) {
-		gint    i;
-		gdouble a = -1, r, g, b;
-		gdouble offset = -1;
+		gint      i;
+                GXPSColor color;
+                gboolean  has_color = FALSE;
+		gdouble   offset = -1;
 
 		for (i = 0; names[i] != NULL; i++) {
 			if (strcmp (names[i], "Color") == 0) {
-				if (!gxps_color_parse (values[i], &a, &r, &g, &b)) {
+                                has_color = TRUE;
+				if (!gxps_color_parse (values[i], brush->ctx->page->priv->zip, &color)) {
 					gxps_parse_error (context,
 							  brush->ctx->page->priv->source,
 							  G_MARKUP_ERROR_INVALID_CONTENT,
@@ -1402,18 +1465,21 @@ brush_gradient_start_element (GMarkupParseContext  *context,
 			}
 		}
 
-		if (a == -1 || offset == -1) {
+		if (!has_color || offset == -1) {
 			gxps_parse_error (context,
 					  brush->ctx->page->priv->source,
 					  G_MARKUP_ERROR_MISSING_ATTRIBUTE,
 					  element_name,
-					  a == -1 ? "Color" : "Offset",
+					  !has_color ? "Color" : "Offset",
 					  NULL, error);
 			return;
 		}
 
-		a *= brush->opacity;
-                cairo_pattern_add_color_stop_rgba (brush->pattern, offset, r, g, b, a);
+                cairo_pattern_add_color_stop_rgba (brush->pattern, offset,
+                                                   color.red,
+                                                   color.green,
+                                                   color.blue,
+                                                   color.alpha * brush->opacity);
 	}
 }
 
@@ -1464,7 +1530,8 @@ brush_start_element (GMarkupParseContext  *context,
                         return;
                 }
 
-                brush->pattern = gxps_create_solid_color_pattern_with_alpha (color_str, brush->opacity);
+                brush->pattern = gxps_create_solid_color_pattern_with_alpha (brush->ctx->page->priv->zip,
+                                                                             color_str, brush->opacity);
                 GXPS_DEBUG (g_message ("set_fill_pattern (solid)"));
 		if (!brush->pattern) {
 			gxps_parse_error (context,
@@ -2929,7 +2996,8 @@ render_start_element (GMarkupParseContext  *context,
 				path->clip_data = g_strdup (values[i]);
 			} else if (strcmp (names[i], "Fill") == 0) {
 				GXPS_DEBUG (g_message ("set_fill_pattern (solid)"));
-				path->fill_pattern = gxps_create_solid_color_pattern (values[i]);
+				path->fill_pattern = gxps_create_solid_color_pattern (ctx->page->priv->zip,
+                                                                                      values[i]);
 				if (!path->fill_pattern) {
 					gxps_parse_error (context,
 							  ctx->page->priv->source,
@@ -2939,7 +3007,8 @@ render_start_element (GMarkupParseContext  *context,
 				}
 			} else if (strcmp (names[i], "Stroke") == 0) {
 				GXPS_DEBUG (g_message ("set_stroke_pattern (solid)"));
-				path->stroke_pattern = gxps_create_solid_color_pattern (values[i]);
+				path->stroke_pattern = gxps_create_solid_color_pattern (ctx->page->priv->zip,
+                                                                                        values[i]);
 				if (!path->stroke_pattern) {
 					gxps_parse_error (context,
 							  ctx->page->priv->source,
@@ -3145,7 +3214,8 @@ render_start_element (GMarkupParseContext  *context,
 		glyphs->opacity = opacity;
 		if (fill_color) {
 			GXPS_DEBUG (g_message ("set_fill_pattern (solid)"));
-			glyphs->fill_pattern = gxps_create_solid_color_pattern (fill_color);
+			glyphs->fill_pattern = gxps_create_solid_color_pattern (ctx->page->priv->zip,
+                                                                                fill_color);
 		}
 
 		if (glyphs->opacity != 1.0)

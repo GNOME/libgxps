@@ -2,6 +2,7 @@ lib_LTLIBRARIES = libgxps.la
 
 NOINST_H_FILES = \
 	gxps-archive.h		\
+	gxps-color.h		\
 	gxps-debug.h		\
 	gxps-fonts.h		\
 	gxps-images.h		\
@@ -23,6 +24,7 @@ libgxpsinclude_HEADERS = $(INST_H_FILES)
 
 libgxps_la_SOURCES = \
 	gxps-archive.c			\
+	gxps-color.c			\
 	gxps-debug.c			\
 	gxps-document.c			\
 	gxps-document-structure.c	\
@@ -47,6 +49,7 @@ libgxps_la_CPPFLAGS = \
 libgxps_la_CFLAGS = \
 	$(GXPS_CFLAGS)		\
 	$(GXPS_DEBUG_CFLAGS)	\
+	$(LCMS2_CFLAGS)		\
 	$(WARN_CFLAGS)		\
 	$(AM_CFLAGS)
 
@@ -58,6 +61,7 @@ libgxps_la_LDFLAGS = \
 
 libgxps_la_LIBADD = \
 	$(GXPS_LIBS)	\
+	$(LCMS2_LIBS)	\
 	$(LIBJPEG)	\
 	$(LIBTIFF)
 

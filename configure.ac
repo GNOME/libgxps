@@ -142,6 +142,24 @@ fi
 
 AC_SUBST(LIBTIFF)
 
+dnl libcms2
+AC_ARG_WITH(liblcms2,
+            [AC_HELP_STRING([--without-liblcms2],
+	                    [disable Little CMS 2])])
+if test x$with_liblcms2 != xno; then
+   PKG_CHECK_MODULES(LCMS2, lcms2, [enable_lcms2="yes"], [enable_lcms2="no"])
+   if test "x$enable_lcms2" = "xyes"; then
+     AC_DEFINE(HAVE_LIBLCMS2, [1], [Have Little CMS 2 library])
+   else
+     AC_MSG_ERROR([
+*** Checks for Little CMS 2 failed. You can build without it by passing
+*** --without-liblcms2 to configure])
+   fi
+fi
+
+AC_SUBST(LCMS2_CFLAGS)
+AC_SUBST(LCMS2_LIBS)
+
 AC_DEFINE(_FILE_OFFSET_BITS, 64, [Enable LFS])
 
 dnl Test
