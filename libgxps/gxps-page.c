@@ -2076,7 +2076,8 @@ path_geometry_start_element (GMarkupParseContext  *context,
 		matrix = gxps_matrix_new (path->ctx);
 		g_markup_parse_context_push (context, &matrix_parser, matrix);
 	} else if (strcmp (element_name, "PathFigure") == 0) {
-		gint i;
+		gint     i;
+                gboolean has_start_point = FALSE;
 
 		for (i = 0; names[i] != NULL; i++) {
 			if (strcmp (names[i], "StartPoint") == 0) {
@@ -2093,6 +2094,7 @@ path_geometry_start_element (GMarkupParseContext  *context,
 
 				GXPS_DEBUG (g_message ("move_to (%f, %f)", x, y));
 				cairo_move_to (path->ctx->cr, x, y);
+                                has_start_point = TRUE;
 			} else if (strcmp (names[i], "IsClosed") == 0) {
 				path->is_closed = gxps_boolean_parse (values[i]);
 			} else if (strcmp (names[i], "IsFilled") == 0) {
@@ -2100,9 +2102,20 @@ path_geometry_start_element (GMarkupParseContext  *context,
 
 			}
 		}
+
+                if (!has_start_point) {
+                        gxps_parse_error (context,
+                                          path->ctx->page->priv->source,
+                                          G_MARKUP_ERROR_MISSING_ATTRIBUTE,
+                                          "PathFigure", "StartPoint",
+                                          NULL, error);
+                        return;
+                }
 	} else if (strcmp (element_name, "PolyLineSegment") == 0) {
-		gint         i;
+		gint         i, j;
 		const gchar *points_str = NULL;
+                gdouble     *points = NULL;
+                guint        n_points;
 		gboolean     is_stroked = TRUE;
 
 		for (i = 0; names[i] != NULL; i++) {
@@ -2116,30 +2129,35 @@ path_geometry_start_element (GMarkupParseContext  *context,
 		if (!is_stroked)
 			return;
 
-		if (points_str) {
-			gdouble *points = NULL;
-			guint    n_points;
-			guint    j;
+                if (!points_str) {
+                        gxps_parse_error (context,
+                                          path->ctx->page->priv->source,
+                                          G_MARKUP_ERROR_MISSING_ATTRIBUTE,
+                                          "PolyLineSegment", "Points",
+                                          NULL, error);
+                        return;
+                }
 
-			if (!gxps_points_parse (points_str, &points, &n_points)) {
-				gxps_parse_error (context,
-						  path->ctx->page->priv->source,
-						  G_MARKUP_ERROR_INVALID_CONTENT,
-						  "PolyLineSegment", "Points",
-						  points_str, error);
-				return;
-			}
+                if (!gxps_points_parse (points_str, &points, &n_points)) {
+                        gxps_parse_error (context,
+                                          path->ctx->page->priv->source,
+                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                          "PolyLineSegment", "Points",
+                                          points_str, error);
+                        return;
+                }
 
-			for (j = 0; j < n_points * 2; j += 2) {
-				GXPS_DEBUG (g_message ("line_to (%f, %f)", points[j], points[j + 1]));
-				cairo_line_to (path->ctx->cr, points[j], points[j + 1]);
-			}
+                for (j = 0; j < n_points * 2; j += 2) {
+                        GXPS_DEBUG (g_message ("line_to (%f, %f)", points[j], points[j + 1]));
+                        cairo_line_to (path->ctx->cr, points[j], points[j + 1]);
+                }
 
-			g_free (points);
-		}
+                g_free (points);
 	} else if (strcmp (element_name, "PolyBezierSegment") == 0) {
-		gint         i;
+		gint         i, j;
 		const gchar *points_str = NULL;
+                gdouble     *points = NULL;
+                guint        n_points;
 		gboolean     is_stroked = TRUE;
 
 		for (i = 0; names[i] != NULL; i++) {
@@ -2154,33 +2172,36 @@ path_geometry_start_element (GMarkupParseContext  *context,
 		if (!is_stroked)
 			return;
 
-		if (points_str) {
-			gdouble *points = NULL;
-			guint    n_points;
-			guint    j;
+                if (!points_str) {
+                        gxps_parse_error (context,
+                                          path->ctx->page->priv->source,
+                                          G_MARKUP_ERROR_MISSING_ATTRIBUTE,
+                                          "PolyBezierSegment", "Points",
+                                          NULL, error);
+                        return;
+                }
 
-			if (!gxps_points_parse (points_str, &points, &n_points)) {
-				gxps_parse_error (context,
-						  path->ctx->page->priv->source,
-						  G_MARKUP_ERROR_INVALID_CONTENT,
-						  "PolyBezierSegment", "Points",
-						  points_str, error);
-				return;
-			}
+                if (!gxps_points_parse (points_str, &points, &n_points)) {
+                        gxps_parse_error (context,
+                                          path->ctx->page->priv->source,
+                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                          "PolyBezierSegment", "Points",
+                                          points_str, error);
+                        return;
+                }
 
-			for (j = 0; j < n_points * 2; j += 6) {
-				GXPS_DEBUG (g_message ("curve_to (%f, %f, %f, %f, %f, %f)",
-					      points[j], points[j + 1],
-					      points[j + 2], points[j + 3],
-					      points[j + 4], points[j + 5]));
-				cairo_curve_to (path->ctx->cr,
-						points[j], points[j + 1],
-						points[j + 2], points[j + 3],
-						points[j + 4], points[j + 5]);
-			}
+                for (j = 0; j < n_points * 2; j += 6) {
+                        GXPS_DEBUG (g_message ("curve_to (%f, %f, %f, %f, %f, %f)",
+                                               points[j], points[j + 1],
+                                               points[j + 2], points[j + 3],
+                                               points[j + 4], points[j + 5]));
+                        cairo_curve_to (path->ctx->cr,
+                                        points[j], points[j + 1],
+                                        points[j + 2], points[j + 3],
+                                        points[j + 4], points[j + 5]);
+                }
 
-			g_free (points);
-		}
+                g_free (points);
 	}
 }
 
