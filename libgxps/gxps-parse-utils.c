@@ -233,7 +233,7 @@ gxps_parse_error (GMarkupParseContext  *context,
 			g_set_error (error,
 				     G_MARKUP_ERROR, error_type,
 				     "%s:%d:%d invalid content in attribute '%s' of element '%s': %s",
-				     source, line, column, element_name, attribute_name, content);
+				     source, line, column, attribute_name, element_name, content);
 		} else {
 			g_set_error (error,
 				     G_MARKUP_ERROR, error_type,
