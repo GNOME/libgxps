@@ -568,6 +568,8 @@ path_data_parse (const gchar *data,
 		 GError     **error)
 {
 	PathDataToken token;
+        gdouble       control_point_x;
+        gdouble       control_point_y;
 
 	token.iter = (gchar *)data;
 	token.end = token.iter + strlen (data);
@@ -576,6 +578,8 @@ path_data_parse (const gchar *data,
                 return FALSE;
 	if (G_UNLIKELY (token.type != PD_TOKEN_COMMAND))
 		return TRUE;
+
+        control_point_x = control_point_y = 0;
 
 	do {
 		gchar    command = token.command;
@@ -605,6 +609,7 @@ path_data_parse (const gchar *data,
 				if (!path_data_iter_next (&token, error))
                                         return FALSE;
 			}
+                        control_point_x = control_point_y = 0;
 			break;
 			/* Line */
 		case 'l':
@@ -626,6 +631,7 @@ path_data_parse (const gchar *data,
 				if (!path_data_iter_next (&token, error))
                                         return FALSE;
 			}
+                        control_point_x = control_point_y = 0;
 			break;
 			/* Horizontal Line */
 		case 'h':
@@ -646,6 +652,7 @@ path_data_parse (const gchar *data,
 				if (!path_data_iter_next (&token, error))
                                         return FALSE;
 			}
+                        control_point_x = control_point_y = 0;
 			break;
 			/* Vertical Line */
 		case 'v':
@@ -666,6 +673,7 @@ path_data_parse (const gchar *data,
 				if (!path_data_iter_next (&token, error))
                                         return FALSE;
 			}
+                        control_point_x = control_point_y = 0;
 			break;
 			/* Cubic Bézier curve */
 		case 'c':
@@ -694,6 +702,9 @@ path_data_parse (const gchar *data,
 					cairo_rel_curve_to (cr, x1, y1, x2, y2, x3, y3);
 				else
 					cairo_curve_to (cr, x1, y1, x2, y2, x3, y3);
+
+                                control_point_x = x3 - x2;
+                                control_point_y = y3 - y2;
 
 				if (!path_data_iter_next (&token, error))
                                         return FALSE;
@@ -733,25 +744,37 @@ path_data_parse (const gchar *data,
 				if (!path_data_iter_next (&token, error))
                                         return FALSE;
 			}
+                        control_point_x = control_point_y = 0;
 			break;
 			/* Smooth Cubic Bézier curve */
 		case 's':
 			is_rel = TRUE;
 		case 'S':
 			while (token.type == PD_TOKEN_NUMBER) {
-				gdouble x1, y1, x2, y2;
+				gdouble x2, y2, x3, y3;
 
-				if (!path_data_get_point (&token, &x1, &y1, error))
+				if (!path_data_get_point (&token, &x2, &y2, error))
 					return FALSE;
 
 				if (!path_data_iter_next (&token, error))
                                         return FALSE;
-				if (!path_data_get_point (&token, &x2, &y2, error))
+				if (!path_data_get_point (&token, &x3, &y3, error))
 					return FALSE;
 
-				GXPS_DEBUG (g_message ("%s (%f, %f, %f, %f)", is_rel ? "rel_smooth_curve_to" : "smooth_curve_to",
-					      x1, y1, x2, y2));
-				GXPS_DEBUG (g_debug ("Unsupported command in path: %c", command));
+				GXPS_DEBUG (g_message ("%s (%f, %f, %f, %f, %f, %f)", is_rel ? "rel_smooth_curve_to" : "smooth_curve_to",
+                                                       control_point_x, control_point_y, x2, y2, x3, y3));
+
+                                if (is_rel) {
+                                        cairo_rel_curve_to (cr, control_point_x, control_point_y, x2, y2, x3, y3);
+                                } else {
+                                        gdouble x, y;
+
+                                        cairo_get_current_point (cr, &x, &y);
+                                        cairo_curve_to (cr, x + control_point_x, y + control_point_y, x2, y2, x3, y3);
+                                }
+
+                                control_point_x = x3 - x2;
+                                control_point_y = y3 - y2;
 
 				if (!path_data_iter_next (&token, error))
                                         return FALSE;
@@ -803,6 +826,7 @@ path_data_parse (const gchar *data,
 				if (!path_data_iter_next (&token, error))
                                         return FALSE;
 			}
+                        control_point_x = control_point_y = 0;
 			break;
 			/* Close */
 		case 'z':
@@ -810,6 +834,7 @@ path_data_parse (const gchar *data,
 		case 'Z':
 			cairo_close_path (cr);
 			GXPS_DEBUG (g_message ("close_path"));
+                        control_point_x = control_point_y = 0;
 			break;
 			/* Fill Rule */
 		case 'F': {
@@ -825,6 +850,7 @@ path_data_parse (const gchar *data,
 			if (!path_data_iter_next (&token, error))
                                 return FALSE;
 		}
+                        control_point_x = control_point_y = 0;
 			break;
 		default:
 			g_assert_not_reached ();
