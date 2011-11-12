@@ -2259,6 +2259,8 @@ path_geometry_start_element (GMarkupParseContext  *context,
                 }
 
                 g_free (points);
+        } else if (strcmp (element_name, "ArcSegment") == 0) {
+                GXPS_DEBUG (g_debug ("Unsupported PathGeometry: ArcSegment"));
 	}
 }
 
