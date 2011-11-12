@@ -2202,6 +2202,63 @@ path_geometry_start_element (GMarkupParseContext  *context,
                 }
 
                 g_free (points);
+        } else if (strcmp (element_name, "PolyQuadraticBezierSegment") == 0) {
+		gint         i, j;
+		const gchar *points_str = NULL;
+                gdouble     *points = NULL;
+                guint        n_points;
+		gboolean     is_stroked = TRUE;
+
+		for (i = 0; names[i] != NULL; i++) {
+			if (strcmp (names[i], "Points") == 0) {
+				points_str = values[i];
+
+			} else if (strcmp (names[i], "IsStroked") == 0) {
+				is_stroked = gxps_boolean_parse (values[i]);
+			}
+		}
+
+		if (!is_stroked)
+			return;
+
+                if (!points_str) {
+                        gxps_parse_error (context,
+                                          path->ctx->page->priv->source,
+                                          G_MARKUP_ERROR_MISSING_ATTRIBUTE,
+                                          "PolyQuadraticBezierSegment", "Points",
+                                          NULL, error);
+                        return;
+                }
+
+                if (!gxps_points_parse (points_str, &points, &n_points)) {
+                        gxps_parse_error (context,
+                                          path->ctx->page->priv->source,
+                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                          "PolyQuadraticBezierSegment", "Points",
+                                          points_str, error);
+                        return;
+                }
+
+                for (j = 0; j < n_points * 2; j += 4) {
+                        gdouble x1, y1, x2, y2;
+                        gdouble x, y;
+
+                        x1 = points[j];
+                        y1 = points[j + 1];
+                        x2 = points[j + 2];
+                        y2 = points[j + 3];
+
+                        GXPS_DEBUG (g_message ("quad_curve_to (%f, %f, %f, %f)", x1, y1, x2, y2));
+                        cairo_get_current_point (path->ctx->cr, &x, &y);
+                        cairo_curve_to (path->ctx->cr,
+                                        2.0 / 3.0 * x1 + 1.0 / 3.0 * x,
+                                        2.0 / 3.0 * y1 + 1.0 / 3.0 * y,
+                                        2.0 / 3.0 * x1 + 1.0 / 3.0 * x2,
+                                        2.0 / 3.0 * y1 + 1.0 / 3.0 * y2,
+                                        x2, y2);
+                }
+
+                g_free (points);
 	}
 }
 
