@@ -190,6 +190,13 @@ static GMarkupParser render_parser = {
 	NULL
 };
 
+void
+gxps_page_render_parser_push (GMarkupParseContext *context,
+                              GXPSRenderContext   *ctx)
+{
+        g_markup_parse_context_push (context, &render_parser, ctx);
+}
+
 typedef struct {
 	GXPSRenderContext *ctx;
 

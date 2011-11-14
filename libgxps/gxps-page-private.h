@@ -57,6 +57,9 @@ struct _GXPSRenderContext {
         GXPSBrushVisual *visual;
 };
 
+void gxps_page_render_parser_push (GMarkupParseContext *context,
+                                   GXPSRenderContext   *ctx);
+
 G_END_DECLS
 
 #endif /* __GXPS_PAGE_PRIVATE_H__ */
