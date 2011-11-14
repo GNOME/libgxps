@@ -1064,37 +1064,6 @@ gxps_box_parse (const gchar       *box,
 }
 
 static gboolean
-gxps_point_parse (const gchar *point,
-		  gdouble     *x,
-		  gdouble     *y)
-{
-	gchar *p;
-
-	p = g_strrstr (point, ",");
-	if (!p)
-		return FALSE;
-
-	if (x) {
-		gchar *str;
-
-		str = g_strndup (point, p - point);
-                if (!gxps_value_get_double (str, x)) {
-                        g_free (str);
-
-                        return FALSE;
-                }
-		g_free (str);
-	}
-
-	if (y) {
-                if (!gxps_value_get_double (++p, y))
-                        return FALSE;
-	}
-
-	return TRUE;
-}
-
-static gboolean
 gxps_points_parse (const gchar *points,
 		   gdouble    **coords,
 		   guint       *n_points)

@@ -302,6 +302,37 @@ gxps_value_get_double_positive (const gchar *value,
         return *double_value >= 1;
 }
 
+gboolean
+gxps_point_parse (const gchar *point,
+                  gdouble     *x,
+                  gdouble     *y)
+{
+        gchar *p;
+
+        p = g_strrstr (point, ",");
+        if (!p)
+                return FALSE;
+
+        if (x) {
+                gchar *str;
+
+                str = g_strndup (point, p - point);
+                if (!gxps_value_get_double (str, x)) {
+                        g_free (str);
+
+                        return FALSE;
+                }
+                g_free (str);
+        }
+
+        if (y) {
+                if (!gxps_value_get_double (++p, y))
+                        return FALSE;
+        }
+
+        return TRUE;
+}
+
 gchar *
 gxps_resolve_relative_path (const gchar *source,
 			    const gchar *target)
