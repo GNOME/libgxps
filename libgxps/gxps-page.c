@@ -72,7 +72,7 @@ gxps_page_error_quark (void)
 }
 
 /* Images */
-static cairo_surface_t *
+cairo_surface_t *
 gxps_page_get_image (GXPSPage    *page,
 		     const gchar *image_uri,
 		     GError     **error)
