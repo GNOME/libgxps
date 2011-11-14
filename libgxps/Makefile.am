@@ -2,6 +2,7 @@ lib_LTLIBRARIES = libgxps.la
 
 NOINST_H_FILES = \
 	gxps-archive.h		\
+	gxps-brush.h		\
 	gxps-color.h		\
 	gxps-debug.h		\
 	gxps-fonts.h		\
@@ -26,6 +27,7 @@ libgxpsinclude_HEADERS = $(INST_H_FILES)
 
 libgxps_la_SOURCES = \
 	gxps-archive.c			\
+	gxps-brush.c			\
 	gxps-color.c			\
 	gxps-debug.c			\
 	gxps-document.c			\
