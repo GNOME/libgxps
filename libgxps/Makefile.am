@@ -6,6 +6,8 @@ NOINST_H_FILES = \
 	gxps-debug.h		\
 	gxps-fonts.h		\
 	gxps-images.h		\
+	gxps-matrix.h		\
+	gxps-page-private.h	\
 	gxps-parse-utils.h	\
 	gxps-private.h
 
@@ -32,6 +34,7 @@ libgxps_la_SOURCES = \
 	gxps-file.c			\
 	gxps-fonts.c			\
 	gxps-links.c			\
+	gxps-matrix.c			\
 	gxps-images.c			\
 	gxps-page.c			\
 	gxps-parse-utils.c		\

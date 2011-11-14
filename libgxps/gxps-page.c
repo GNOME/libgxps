@@ -22,8 +22,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "gxps-page.h"
-#include "gxps-archive.h"
+#include "gxps-page-private.h"
+#include "gxps-matrix.h"
 #include "gxps-fonts.h"
 #include "gxps-links.h"
 #include "gxps-images.h"
@@ -48,26 +48,6 @@ enum {
 	PROP_0,
 	PROP_ARCHIVE,
 	PROP_SOURCE
-};
-
-struct _GXPSPagePrivate {
-	GXPSArchive *zip;
-	gchar       *source;
-
-	gboolean     initialized;
-	GError      *init_error;
-
-	gdouble      width;
-	gdouble      height;
-	gchar       *lang;
-	gchar       *name;
-
-	/* Images */
-	GHashTable  *image_cache;
-
-	/* Anchors */
-	gboolean     has_anchors;
-	GHashTable  *anchors;
 };
 
 static void render_start_element (GMarkupParseContext  *context,
@@ -206,109 +186,6 @@ gxps_page_parse_fixed_page (GXPSPage *page,
 static GMarkupParser render_parser = {
 	render_start_element,
 	render_end_element,
-	NULL,
-	NULL
-};
-typedef struct _GXPSBrushVisual GXPSBrushVisual;
-typedef struct {
-	GXPSPage        *page;
-	cairo_t         *cr;
-	GXPSBrushVisual *visual;
-} GXPSRenderContext;
-
-typedef struct {
-	GXPSRenderContext *ctx;
-	cairo_matrix_t     matrix;
-} GXPSMatrix;
-
-static GXPSMatrix *
-gxps_matrix_new (GXPSRenderContext *ctx)
-{
-	GXPSMatrix *matrix;
-
-	matrix = g_slice_new0 (GXPSMatrix);
-	matrix->ctx = ctx;
-	cairo_matrix_init_identity (&matrix->matrix);
-
-	return matrix;
-}
-
-static void
-gxps_matrix_free (GXPSMatrix *matrix)
-{
-	if (G_UNLIKELY (!matrix))
-		return;
-
-	g_slice_free (GXPSMatrix, matrix);
-}
-
-static gboolean
-gxps_matrix_parse (const gchar    *data,
-		   cairo_matrix_t *matrix)
-{
-	gchar **items;
-        gdouble mm[6];
-        guint   i;
-
-	items = g_strsplit (data, ",", 6);
-	if (g_strv_length (items) != 6) {
-		g_strfreev (items);
-
-		return FALSE;
-	}
-
-        for (i = 0; i < 6; i++) {
-                if (!gxps_value_get_double (items[i], &mm[i])) {
-                        g_strfreev (items);
-                        return FALSE;
-                }
-        }
-
-        g_strfreev (items);
-
-	cairo_matrix_init (matrix, mm[0], mm[1], mm[2], mm[3], mm[4], mm[5]);
-
-	return TRUE;
-}
-
-static void
-matrix_start_element (GMarkupParseContext  *context,
-		      const gchar          *element_name,
-		      const gchar         **names,
-		      const gchar         **values,
-		      gpointer              user_data,
-		      GError              **error)
-{
-	GXPSMatrix *matrix = (GXPSMatrix *)user_data;
-
-	if (strcmp (element_name, "MatrixTransform") == 0) {
-		gint i;
-
-		for (i = 0; names[i] != NULL; i++) {
-			if (strcmp (names[i], "Matrix") == 0) {
-				if (!gxps_matrix_parse (values[i], &matrix->matrix)) {
-					gxps_parse_error (context,
-							  matrix->ctx->page->priv->source,
-							  G_MARKUP_ERROR_INVALID_CONTENT,
-							  "MatrixTransform", "Matrix",
-							  values[i], error);
-					return;
-				}
-			} else if (strcmp (names[i], "X:Key") == 0) {
-				/* TODO */
-			}
-		}
-	} else {
-		gxps_parse_error (context,
-				  matrix->ctx->page->priv->source,
-				  G_MARKUP_ERROR_UNKNOWN_ELEMENT,
-				  element_name, NULL, NULL, error);
-	}
-}
-
-static GMarkupParser matrix_parser = {
-	matrix_start_element,
-	NULL,
 	NULL,
 	NULL
 };
@@ -1373,7 +1250,7 @@ brush_image_start_element (GMarkupParseContext  *context,
 		GXPSMatrix *matrix;
 
 		matrix = gxps_matrix_new (image->brush->ctx);
-		g_markup_parse_context_push (context, &matrix_parser, matrix);
+                gxps_matrix_parser_push (context, matrix);
 	} else {
 		gxps_parse_error (context,
 				  image->brush->ctx->page->priv->source,
@@ -2002,7 +1879,7 @@ canvas_start_element (GMarkupParseContext  *context,
 		GXPSMatrix *matrix;
 
 		matrix = gxps_matrix_new (canvas->ctx);
-		g_markup_parse_context_push (context, &matrix_parser, matrix);
+		gxps_matrix_parser_push (context, matrix);
 	} else if (strcmp (element_name, "Canvas.OpacityMask") == 0) {
 		GXPSBrush *brush;
 
@@ -2074,7 +1951,7 @@ path_geometry_start_element (GMarkupParseContext  *context,
 		GXPSMatrix *matrix;
 
 		matrix = gxps_matrix_new (path->ctx);
-		g_markup_parse_context_push (context, &matrix_parser, matrix);
+		gxps_matrix_parser_push (context, matrix);
 	} else if (strcmp (element_name, "PathFigure") == 0) {
 		gint     i;
                 gboolean has_start_point = FALSE;
@@ -2381,7 +2258,7 @@ path_start_element (GMarkupParseContext  *context,
 		GXPSMatrix *matrix;
 
 		matrix = gxps_matrix_new (path->ctx);
-		g_markup_parse_context_push (context, &matrix_parser, matrix);
+		gxps_matrix_parser_push (context, matrix);
 	} else {
 		GXPS_DEBUG (g_debug ("Unsupported path child %s", element_name));
 	}
@@ -2999,7 +2876,7 @@ glyphs_start_element (GMarkupParseContext  *context,
 		GXPSMatrix *matrix;
 
 		matrix = gxps_matrix_new (glyphs->ctx);
-		g_markup_parse_context_push (context, &matrix_parser, matrix);
+		gxps_matrix_parser_push (context, matrix);
 	} else if (strcmp (element_name, "Glyphs.Clip") == 0) {
 	} else if (strcmp (element_name, "Glyphs.Fill") == 0) {
 		GXPSBrush *brush;
