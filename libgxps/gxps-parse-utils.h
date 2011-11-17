@@ -40,6 +40,8 @@ gboolean gxps_value_get_double          (const gchar          *value,
                                          gdouble              *double_value);
 gboolean gxps_value_get_double_positive (const gchar          *value,
                                          gdouble              *double_value);
+gboolean gxps_value_get_boolean         (const gchar          *value,
+                                         gboolean             *boolean_value);
 gboolean gxps_point_parse               (const gchar          *point,
                                          gdouble              *x,
                                          gdouble              *y);

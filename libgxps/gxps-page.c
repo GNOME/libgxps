@@ -746,12 +746,6 @@ path_data_parse (const gchar *data,
 }
 
 static gboolean
-gxps_boolean_parse (const gchar *value)
-{
-	return (strcmp (value, "true") == 0);
-}
-
-static gboolean
 gxps_dash_array_parse (const gchar *dash,
 		       gdouble    **dashes_out,
 		       guint       *num_dashes_out)
@@ -1006,10 +1000,29 @@ path_geometry_start_element (GMarkupParseContext  *context,
 				cairo_move_to (path->ctx->cr, x, y);
                                 has_start_point = TRUE;
 			} else if (strcmp (names[i], "IsClosed") == 0) {
-				path->is_closed = gxps_boolean_parse (values[i]);
-			} else if (strcmp (names[i], "IsFilled") == 0) {
-				path->is_filled = gxps_boolean_parse (values[i]);
+                                gboolean is_closed;
 
+                                if (!gxps_value_get_boolean (values[i], &is_closed)) {
+                                        gxps_parse_error (context,
+                                                          path->ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "PathFigure", "IsClosed",
+                                                          values[i], error);
+                                        return;
+                                }
+                                path->is_closed = is_closed;
+			} else if (strcmp (names[i], "IsFilled") == 0) {
+                                gboolean is_filled;
+
+                                if (!gxps_value_get_boolean (values[i], &is_filled)) {
+                                        gxps_parse_error (context,
+                                                          path->ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "PathFigure", "IsFilled",
+                                                          values[i], error);
+                                        return;
+                                }
+                                path->is_filled = is_filled;
 			}
 		}
 
@@ -1032,7 +1045,14 @@ path_geometry_start_element (GMarkupParseContext  *context,
 			if (strcmp (names[i], "Points") == 0) {
 				points_str = values[i];
 			} else if (strcmp (names[i], "IsStroked") == 0) {
-				is_stroked = gxps_boolean_parse (values[i]);
+                                if (!gxps_value_get_boolean (values[i], &is_stroked)) {
+                                        gxps_parse_error (context,
+                                                          path->ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "PolyLineSegment", "IsStroked",
+                                                          points_str, error);
+                                        return;
+                                }
 			}
 		}
 
@@ -1075,7 +1095,14 @@ path_geometry_start_element (GMarkupParseContext  *context,
 				points_str = values[i];
 
 			} else if (strcmp (names[i], "IsStroked") == 0) {
-				is_stroked = gxps_boolean_parse (values[i]);
+                                if (!gxps_value_get_boolean (values[i], &is_stroked)) {
+                                        gxps_parse_error (context,
+                                                          path->ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "PolyBezierSegment", "IsStroked",
+                                                          points_str, error);
+                                        return;
+                                }
 			}
 		}
 
@@ -1124,7 +1151,14 @@ path_geometry_start_element (GMarkupParseContext  *context,
 				points_str = values[i];
 
 			} else if (strcmp (names[i], "IsStroked") == 0) {
-				is_stroked = gxps_boolean_parse (values[i]);
+                                if (!gxps_value_get_boolean (values[i], &is_stroked)) {
+                                        gxps_parse_error (context,
+                                                          path->ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "PolyQuadraticBezierSegment", "IsStroked",
+                                                          points_str, error);
+                                        return;
+                                }
 			}
 		}
 
@@ -2174,7 +2208,15 @@ render_start_element (GMarkupParseContext  *context,
                                         return;
                                 }
                         } else if (strcmp (names[i], "IsSideways") == 0) {
-                                is_sideways = gxps_boolean_parse (values[i]);
+                                if (!gxps_value_get_boolean (values[i], &is_sideways)) {
+                                        gxps_parse_error (context,
+                                                          ctx->page->priv->source,
+                                                          G_MARKUP_ERROR_INVALID_CONTENT,
+                                                          "Glyphs", "IsSideways",
+                                                          values[i], error);
+                                        g_free (font_uri);
+                                        return;
+                                }
 			} else if (strcmp (names[i], "Opacity") == 0) {
                                 if (!gxps_value_get_double (values[i], &opacity)) {
                                         gxps_parse_error (context,

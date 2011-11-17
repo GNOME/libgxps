@@ -293,6 +293,24 @@ gxps_value_get_double (const gchar *value,
 }
 
 gboolean
+gxps_value_get_boolean (const gchar *value,
+                        gboolean    *boolean_value)
+{
+        if (!value)
+                return FALSE;
+
+        if (strcmp (value, "true") == 0) {
+                *boolean_value = TRUE;
+                return TRUE;
+        } else if (strcmp (value, "false") == 0) {
+                *boolean_value = FALSE;
+                return TRUE;
+        }
+
+        return FALSE;
+}
+
+gboolean
 gxps_value_get_double_positive (const gchar *value,
                                 gdouble     *double_value)
 {
