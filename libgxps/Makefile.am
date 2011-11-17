@@ -10,6 +10,7 @@ NOINST_H_FILES = \
 	gxps-matrix.h		\
 	gxps-page-private.h	\
 	gxps-parse-utils.h	\
+	gxps-path.h		\
 	gxps-private.h
 
 INST_H_FILES = \
@@ -40,6 +41,7 @@ libgxps_la_SOURCES = \
 	gxps-images.c			\
 	gxps-page.c			\
 	gxps-parse-utils.c		\
+	gxps-path.c			\
 	$(NOINST_H_FILES)		\
 	$(INST_H_FILES)
 
