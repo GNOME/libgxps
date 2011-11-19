@@ -32,7 +32,6 @@ Rendering
    + Opacity
    + Opacity Masks
 - Visual Brush
-- Smooth Cubic Bézier curve
 - Elliptical Arc
 - Radial gradients when center != origin
 - Tile modes (FlipX, FlipY, FlipXY)
