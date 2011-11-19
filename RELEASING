@@ -24,6 +24,9 @@ Here are the steps to follow to create a new libgxps release:
                 find libgxps -name 'gxps*.h' ! -name '*-private.h' \
                 ! -name 'gxps-archive.h' ! -name 'gxps-debug.h' \
                 ! -name 'gxps-fonts.h' ! -name 'gxps-images.h' \
+                ! -name 'gxps-brush.h' ! -name 'gxps-color.h' \
+                ! -name 'gxps-path.h' ! -name 'gxps-glyphs.h' \
+                ! -name 'gxps-matrix.h' \
                 ! -name 'gxps-parse-utils.h' | xargs git log -p X.Y.Z.. --
 
 3) Increment gxps_{minor|micro}_version and LT_{CURRENT|REVISION|AGE}
