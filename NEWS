@@ -1,3 +1,64 @@
+libgxps 0.2.0 (19 November 2011)
+================================
+
+API changes:
+
+    - This release contains a small API break. Even though all of the
+      XPS documents we have for testing use integer numbers for the
+      page size, the XPS Specification says that page size is a double
+      value. Functions gxps_page_get_size() and
+      gxps_document_get_page_size() now return page width and page
+      height as gdouble values instead of guint. (Carlos Garcia Campos)
+
+New features:
+
+    - Add support for PolyQuadraticBezierSegment figures (Carlos
+      Garcia Campos)
+    - Add support for Smooth Cubic Bézier curve (Carlos Garcia Campos)
+    - Initial implementation of ICC based colors. Only CMYK colors are
+      supported for now (Carlos Garcia Campos)
+    - Support Opacity for SolidColorBrush elements (#663472, Jason
+      Crain)
+    - Add support for scRGB color syntax (Carlos Garcia Campos)
+    - Implement Quadratic Bézier curve (Carlos Garcia Campos)
+    - Support OpacityMask for Glyphs elements (#663476, Jason Crain)
+    - Support OpacityMask for Canvas elements (#663475, Jason Crain)
+    - Support opacity for ImageBrush elements (#663471, Jason Crain)
+    - Support opacity for Glyphs elements (#662654, Jason Crain)
+    - Support opacity for Canvas elements (#662653, Jason Crain)
+    - Support opacity for Path elements (#662652, Jason Crain)
+    - Support opacity for LinearGradientBrush and RadialGradientBrush
+      elements (#662655, Jason Crain)
+
+Bug fixes:
+
+    - Fix parser error messages for invalid content (#663899, Jason
+      Crain)
+
+Tools:
+
+    - Add xpstojpeg tool for converting XPS documents to JPEG (Carlos
+      Garcia Campos)
+    - Add xpstosvg tool for converting XPS documents to SVG (Carlos
+      Garcia Campos)
+    - Add xpstops tool for converting XPS documents to PostScript
+      (Carlos Garcia Campos)
+    - Add xpstopdf tool for converting XPS documents to PDF (Carlos
+      Garcia Campos)
+    - Add xpstopng tool for converting XPS documents to PNG (Carlos
+      Garcia Campos)
+
+Documentation:
+
+    - Add man pages for tools (Carlos Garcia Campos)
+    - Clarify that page sizes returned by gxps_document_get_page_size()
+      might be different than actual page sizes (Carlos Garcia Campos)
+    - Add libgxps.types file so that object hierarchy is included in
+      generated HTML doc (Carlos Garcia Campos)
+    - Add documentation for return value of gxps_document_get_page()
+      (Carlos Garcia Campos)
+
+
 libgxps 0.1.0 (12 October 2011)
 ===============================
 
