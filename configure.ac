@@ -213,6 +213,14 @@ AC_SUBST(CAIRO_SVG_LIBS)
 dnl gtk-doc
 GTK_DOC_CHECK([1.14],[--flavour no-tmpl])
 
+AC_ARG_ENABLE(man,
+              [AC_HELP_STRING([--enable-man],
+                              [generate tools man pages [default=no]])],
+                              enable_man=yes, enable_man=no)
+
+AC_PATH_PROG([XSLTPROC], [xsltproc])
+AM_CONDITIONAL(ENABLE_MAN, test x$enable_man != xno)
+
 dnl GObject instrospection
 GOBJECT_INTROSPECTION_CHECK([0.10.1])
 
@@ -240,6 +248,7 @@ test/Makefile
 docs/Makefile
 docs/reference/Makefile
 docs/reference/version.xml
+docs/tools/Makefile
 ])
 
 AC_OUTPUT

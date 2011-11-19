@@ -1,0 +1,187 @@
+<refentry id="xpstojpeg" lang="en">
+
+  <refmeta>
+    <refentrytitle>xpstojpeg</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="manual">XPS Tools</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>xpstojpeg</refname>
+    <refpurpose>XPS to JPEG converter</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>xpstojpeg</command>
+      <arg choice="opt" rep="repeat"><replaceable>OPTION</replaceable></arg>
+      <arg choice="plain">FILE</arg>
+      <arg choice="opt"><replaceable>OUTPUT FILE</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      <command>xpstojpeg</command> converts XPS documents to JPEG format.
+      <command>xpstojpeg</command> reads the XPS file, <replaceable>FILE</replaceable>,
+      and writes a JPEG file per page with the page number and file type appended to
+      <replaceable>OUTPUT FILE</replaceable>. If <replaceable>OUTPUT FILE</replaceable>
+      is not specified "page" will be used.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Options</title>
+    <variablelist>
+
+      <varlistentry>
+        <term><option>-?</option>, <option>--help</option></term>
+        <listitem>
+          <para>
+            Show help options.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-d</option> <replaceable>DOCUMENT</replaceable>, <option>--document</option>=<replaceable>DOCUMENT</replaceable></term>
+        <listitem>
+          <para>
+            The document inside the XPS file to convert. By default, the
+            first document of the XPS file is used.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-f</option> <replaceable>PAGE</replaceable>, <option>--first</option>=<replaceable>PAGE</replaceable></term>
+        <listitem>
+          <para>
+            The first page to convert.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-l</option> <replaceable>PAGE</replaceable>, <option>--last</option>=<replaceable>PAGE</replaceable></term>
+        <listitem>
+          <para>
+            The last page to convert.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-o</option>, <option>--odd</option></term>
+        <listitem>
+          <para>
+            Convert only odd pages.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-e</option>, <option>--even</option></term>
+        <listitem>
+          <para>
+            Convert only even pages.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-r</option> <replaceable>RESOLUTION</replaceable>, <option>--resolution</option>=<replaceable>RESOLUTION</replaceable></term>
+        <listitem>
+          <para>
+            Horizontal and vertical resolution in PPI (Pixels Per Inch). The default is 150 PPI.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--rx</option>=<replaceable>RESOLUTION</replaceable></term>
+        <listitem>
+          <para>
+            Horizontal resolution in PPI (Pixels Per Inch). The default is 150 PPI.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--ry</option>=<replaceable>RESOLUTION</replaceable></term>
+        <listitem>
+          <para>
+            Vertical resolution in PPI (Pixels Per Inch). The default is 150 PPI.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-x</option> <replaceable>X</replaceable>, <option>--crop-x</option>=<replaceable>X</replaceable></term>
+        <listitem>
+          <para>
+            The x-coordinate of the crop area top left corner.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-y</option> <replaceable>Y</replaceable>, <option>--crop-y</option>=<replaceable>Y</replaceable></term>
+        <listitem>
+          <para>
+            The y-coordinate of the crop area top left corner.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-w</option> <replaceable>WIDTH</replaceable>, <option>--crop-width</option>=<replaceable>WIDTH</replaceable></term>
+        <listitem>
+          <para>
+            The width of crop area.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-h</option> <replaceable>HEIGHT</replaceable>, <option>--crop-height</option>=<replaceable>HEIGHT</replaceable></term>
+        <listitem>
+          <para>
+            The height of crop area.
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Bugs</title>
+    <para>
+      Please send bug reports to
+      <ulink url="https://bugzilla.gnome.org/enter_bug.cgi?product=libgxps">https://bugzilla.gnome.org/enter_bug.cgi?product=libgxps</ulink>.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>See also</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>xpstopng</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
+
+      <citerefentry>
+        <refentrytitle>xpstopdf</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
+
+      <citerefentry>
+        <refentrytitle>xpstops</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
+
+      <citerefentry>
+        <refentrytitle>xpstosvg</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+</refentry>

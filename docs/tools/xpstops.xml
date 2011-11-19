@@ -1,0 +1,285 @@
+<refentry id="xpstops" lang="en">
+
+  <refmeta>
+    <refentrytitle>xpstops</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="manual">XPS Tools</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>xpstops</refname>
+    <refpurpose>XPS to PostScript converter</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv>
+    <cmdsynopsis>
+      <command>xpstops</command>
+      <arg choice="opt" rep="repeat"><replaceable>OPTION</replaceable></arg>
+      <arg choice="plain">FILE</arg>
+      <arg choice="opt"><replaceable>OUTPUT FILE</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>Description</title>
+    <para>
+      <command>xpstops</command> converts XPS documents to PostScript format.
+      <command>xpstops</command> reads the XPS file, <replaceable>FILE</replaceable>,
+      and writes a PostScript file, <replaceable>OUTPUT FILE</replaceable>. If
+      <replaceable>OUTPUT FILE</replaceable> is not specified the output
+      filename will be derived from the <replaceable>OUTPUT FILE</replaceable>
+      filename.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>Options</title>
+    <variablelist>
+
+      <varlistentry>
+        <term><option>-?</option>, <option>--help</option></term>
+        <listitem>
+          <para>
+            Show help options.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-d</option> <replaceable>DOCUMENT</replaceable>, <option>--document</option>=<replaceable>DOCUMENT</replaceable></term>
+        <listitem>
+          <para>
+            The document inside the XPS file to convert. By default, the
+            first document of the XPS file is used.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-f</option> <replaceable>PAGE</replaceable>, <option>--first</option>=<replaceable>PAGE</replaceable></term>
+        <listitem>
+          <para>
+            The first page to convert.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-l</option> <replaceable>PAGE</replaceable>, <option>--last</option>=<replaceable>PAGE</replaceable></term>
+        <listitem>
+          <para>
+            The last page to convert.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-o</option>, <option>--odd</option></term>
+        <listitem>
+          <para>
+            Convert only odd pages.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-e</option>, <option>--even</option></term>
+        <listitem>
+          <para>
+            Convert only even pages.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-r</option> <replaceable>RESOLUTION</replaceable>, <option>--resolution</option>=<replaceable>RESOLUTION</replaceable></term>
+        <listitem>
+          <para>
+            Horizontal and vertical resolution in PPI (Pixels Per Inch). The default is 150 PPI.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--rx</option>=<replaceable>RESOLUTION</replaceable></term>
+        <listitem>
+          <para>
+            Horizontal resolution in PPI (Pixels Per Inch). The default is 150 PPI.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--ry</option>=<replaceable>RESOLUTION</replaceable></term>
+        <listitem>
+          <para>
+            Vertical resolution in PPI (Pixels Per Inch). The default is 150 PPI.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-x</option> <replaceable>X</replaceable>, <option>--crop-x</option>=<replaceable>X</replaceable></term>
+        <listitem>
+          <para>
+            The x-coordinate of the crop area top left corner.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-y</option> <replaceable>Y</replaceable>, <option>--crop-y</option>=<replaceable>Y</replaceable></term>
+        <listitem>
+          <para>
+            The y-coordinate of the crop area top left corner.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-w</option> <replaceable>WIDTH</replaceable>, <option>--crop-width</option>=<replaceable>WIDTH</replaceable></term>
+        <listitem>
+          <para>
+            The width of crop area.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-h</option> <replaceable>HEIGHT</replaceable>, <option>--crop-height</option>=<replaceable>HEIGHT</replaceable></term>
+        <listitem>
+          <para>
+            The height of crop area.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--level2</option></term>
+        <listitem>
+          <para>
+            Generate Level 2 PostScript. Level 2 supports color images and image compression.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--level3</option></term>
+        <listitem>
+          <para>
+            Generate Level 3 PostScript. This enables all Level 2 features plus shading patterns
+            and masked images. This is the default setting.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--eps</option></term>
+        <listitem>
+          <para>
+            Generate an Encapsulated PostScript (EPS) file.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--paper</option>=<replaceable>PAPER</replaceable></term>
+        <listitem>
+          <para>
+            Set the paper size to one of "A0", "A1", "A2", "A3", "A4", "A5",
+            "B4", "B5", "Letter", "Tabloid",  "Ledger", "Legal", "Statement",
+            "Executive",  "Folio", "Quarto", "10x14".
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--duplex</option></term>
+        <listitem>
+          <para>
+            Adds the %%IncludeFeature: *Duplex DuplexNoTumble DSC comment to the PostScript file.
+            This tells the print manager to enable duplexing.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--paper-width</option>=<replaceable>WIDTH</replaceable></term>
+        <listitem>
+          <para>
+            The paper width.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--paper-height</option>=<replaceable>HEIGHT</replaceable></term>
+        <listitem>
+          <para>
+            The paper height.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--expand</option></term>
+        <listitem>
+          <para>
+            Expand pages smaller than the paper to fill the paper.
+            By default, pages are not scaled.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--no-shrink</option></term>
+        <listitem>
+          <para>
+            Don't scale pages which are larger than the paper.
+            By default, pages larger than the paper are shrunk to fit.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>--no-center</option></term>
+        <listitem>
+          <para>
+            Don't center on the paper pages smaller than the paper (after any scaling).
+            By default, pages smaller than the paper are aligned to the lower-left corner.
+          </para>
+        </listitem>
+      </varlistentry>
+
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>Bugs</title>
+    <para>
+      Please send bug reports to
+      <ulink url="https://bugzilla.gnome.org/enter_bug.cgi?product=libgxps">https://bugzilla.gnome.org/enter_bug.cgi?product=libgxps</ulink>.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>See also</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>xpstojpeg</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
+
+      <citerefentry>
+        <refentrytitle>xpstopng</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
+
+      <citerefentry>
+        <refentrytitle>xpstopdf</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
+
+      <citerefentry>
+        <refentrytitle>xpstosvg</refentrytitle><manvolnum>1</manvolnum>
+      </citerefentry>
+    </para>
+  </refsect1>
+</refentry>
