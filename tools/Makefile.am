@@ -54,6 +54,7 @@ xpstopng_CFLAGS = \
 
 xpstopng_LDADD = \
 	libgxpstools.la		\
+	$(LIBM)                 \
 	$(LIBPNG_LIBS)
 endif # HAVE_LIBPNG
 
@@ -77,6 +78,7 @@ xpstojpeg_CFLAGS = \
 
 xpstojpeg_LDADD = \
 	libgxpstools.la		\
+	$(LIBM)                 \
 	$(LIBJPEG)
 endif # HAVE_LIBJPEG
 
@@ -99,6 +101,7 @@ xpstopdf_CFLAGS = \
 
 xpstopdf_LDADD = \
 	libgxpstools.la		\
+	$(LIBM)                 \
 	$(CAIRO_PDF_LIBS)
 endif # HAVE_CAIRO_PDF
 
@@ -121,6 +124,7 @@ xpstops_CFLAGS = \
 
 xpstops_LDADD = \
 	libgxpstools.la		\
+	$(LIBM)                 \
 	$(CAIRO_PS_LIBS)
 endif # HAVE_CAIRO_PS
 
@@ -143,5 +147,6 @@ xpstosvg_CFLAGS = \
 
 xpstosvg_LDADD = \
 	libgxpstools.la		\
+	$(LIBM)                 \
 	$(CAIRO_SVG_LIBS)
 endif # HAVE_CAIRO_SVG
