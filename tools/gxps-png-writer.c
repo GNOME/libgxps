@@ -23,6 +23,11 @@
 #include <png.h>
 #include <stdint.h>
 
+/* starting with libpng15, png.h no longer #includes zlib.h */
+#ifndef Z_BEST_COMPRESSION
+#define Z_BEST_COMPRESSION 9
+#endif
+
 struct _GXPSPngWriter {
 	GObject parent;
 
