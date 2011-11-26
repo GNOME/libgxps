@@ -737,6 +737,32 @@ render_end_element (GMarkupParseContext  *context,
 			return;
 		}
 
+		if (path->stroke_pattern) {
+			cairo_set_line_width (ctx->cr, path->line_width);
+			if (path->dash && path->dash_len > 0)
+				cairo_set_dash (ctx->cr, path->dash, path->dash_len, path->dash_offset);
+			/* FIXME: square cap doesn't work with dashed lines */
+//					cairo_set_line_cap (ctx->cr, path->line_cap);
+			cairo_set_line_join (ctx->cr, path->line_join);
+			cairo_set_miter_limit (ctx->cr, path->miter_limit);
+		}
+
+		if (path->opacity_mask) {
+			gdouble x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+			if (path->stroke_pattern)
+				cairo_stroke_extents (ctx->cr, &x1, &y1, &x2, &y2);
+			else if (path->fill_pattern)
+				cairo_fill_extents (ctx->cr, &x1, &y1, &x2, &y2);
+
+			cairo_path_t *cairo_path = cairo_copy_path (ctx->cr);
+			cairo_new_path (ctx->cr);
+			cairo_rectangle (ctx->cr, x1, y1, x2 - x1, y2 - y1);
+			cairo_clip (ctx->cr);
+			cairo_push_group (ctx->cr);
+			cairo_append_path (ctx->cr, cairo_path);
+			cairo_path_destroy (cairo_path);
+		}
+
 		if (path->fill_pattern) {
 			GXPS_DEBUG (g_message ("fill"));
 
@@ -750,14 +776,12 @@ render_end_element (GMarkupParseContext  *context,
 		if (path->stroke_pattern) {
 			GXPS_DEBUG (g_message ("stroke"));
 			cairo_set_source (ctx->cr, path->stroke_pattern);
-			cairo_set_line_width (ctx->cr, path->line_width);
-			if (path->dash && path->dash_len > 0)
-				cairo_set_dash (ctx->cr, path->dash, path->dash_len, path->dash_offset);
-			/* FIXME: square cap doesn't work with dashed lines */
-//					cairo_set_line_cap (ctx->cr, path->line_cap);
-			cairo_set_line_join (ctx->cr, path->line_join);
-			cairo_set_miter_limit (ctx->cr, path->miter_limit);
 			cairo_stroke (ctx->cr);
+		}
+
+		if (path->opacity_mask) {
+			cairo_pop_group_to_source (ctx->cr);
+			cairo_mask (ctx->cr, path->opacity_mask);
 		}
 
 		if (path->opacity != 1.0) {

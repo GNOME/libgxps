@@ -74,6 +74,7 @@ gxps_path_free (GXPSPath *path)
         g_free (path->clip_data);
         cairo_pattern_destroy (path->fill_pattern);
         cairo_pattern_destroy (path->stroke_pattern);
+        cairo_pattern_destroy (path->opacity_mask);
         g_free (path->dash);
 
         g_slice_free (GXPSPath, path);
@@ -866,6 +867,30 @@ path_geometry_end_element (GMarkupParseContext  *context,
 			cairo_close_path (path->ctx->cr);
 		}
 
+		if (path->stroke_pattern) {
+			cairo_set_line_width (path->ctx->cr, path->line_width);
+			if (path->dash && path->dash_len > 0)
+				cairo_set_dash (path->ctx->cr, path->dash, path->dash_len, path->dash_offset);
+			cairo_set_line_join (path->ctx->cr, path->line_join);
+			cairo_set_miter_limit (path->ctx->cr, path->miter_limit);
+		}
+
+		if (path->opacity_mask) {
+			gdouble x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+			if (path->stroke_pattern)
+				cairo_stroke_extents (path->ctx->cr, &x1, &y1, &x2, &y2);
+			else if (path->fill_pattern)
+				cairo_fill_extents (path->ctx->cr, &x1, &y1, &x2, &y2);
+
+			cairo_path_t *cairo_path = cairo_copy_path (path->ctx->cr);
+			cairo_new_path (path->ctx->cr);
+			cairo_rectangle (path->ctx->cr, x1, y1, x2 - x1, y2 - y1);
+			cairo_clip (path->ctx->cr);
+			cairo_push_group (path->ctx->cr);
+			cairo_append_path (path->ctx->cr, cairo_path);
+			cairo_path_destroy (cairo_path);
+		}
+
 		if (path->is_filled && path->fill_pattern) {
 			GXPS_DEBUG (g_message ("fill"));
 			cairo_set_source (path->ctx->cr, path->fill_pattern);
@@ -878,12 +903,12 @@ path_geometry_end_element (GMarkupParseContext  *context,
 		if (path->stroke_pattern) {
 			GXPS_DEBUG (g_message ("stroke"));
 			cairo_set_source (path->ctx->cr, path->stroke_pattern);
-			cairo_set_line_width (path->ctx->cr, path->line_width);
-			if (path->dash && path->dash_len > 0)
-				cairo_set_dash (path->ctx->cr, path->dash, path->dash_len, path->dash_offset);
-			cairo_set_line_join (path->ctx->cr, path->line_join);
-			cairo_set_miter_limit (path->ctx->cr, path->miter_limit);
 			cairo_stroke (path->ctx->cr);
+		}
+
+		if (path->opacity_mask) {
+			cairo_pop_group_to_source (path->ctx->cr);
+			cairo_mask (path->ctx->cr, path->opacity_mask);
 		}
 	}
 }
@@ -969,6 +994,11 @@ path_start_element (GMarkupParseContext  *context,
 
 		matrix = gxps_matrix_new (path->ctx);
 		gxps_matrix_parser_push (context, matrix);
+	} else if (strcmp (element_name, "Path.OpacityMask") == 0) {
+		GXPSBrush *brush;
+
+		brush = gxps_brush_new (path->ctx);
+		gxps_brush_parser_push (context, brush);
 	} else {
 		GXPS_DEBUG (g_debug ("Unsupported path child %s", element_name));
 	}
@@ -1009,6 +1039,13 @@ path_end_element (GMarkupParseContext  *context,
 		cairo_transform (path->ctx->cr, &matrix->matrix);
 
 		gxps_matrix_free (matrix);
+	} else if (strcmp (element_name, "Path.OpacityMask") == 0) {
+		GXPSBrush *brush;
+
+		brush = g_markup_parse_context_pop (context);
+		if (!path->opacity_mask)
+			path->opacity_mask = cairo_pattern_reference (brush->pattern);
+		gxps_brush_free (brush);
 	} else {
 
 	}

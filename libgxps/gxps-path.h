@@ -43,6 +43,7 @@ struct _GXPSPath {
         cairo_line_join_t  line_join;
         gdouble            miter_limit;
         gdouble            opacity;
+        cairo_pattern_t   *opacity_mask;
 
         gboolean           is_stroked : 1;
         gboolean           is_filled  : 1;
