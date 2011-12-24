@@ -112,11 +112,21 @@ matrix_start_element (GMarkupParseContext  *context,
         }
 }
 
+static void
+matrix_error (GMarkupParseContext *context,
+              GError              *error,
+              gpointer             user_data)
+{
+	GXPSMatrix *matrix = (GXPSMatrix *)user_data;
+	gxps_matrix_free (matrix);
+}
+
 static GMarkupParser matrix_parser = {
         matrix_start_element,
         NULL,
         NULL,
-        NULL
+        NULL,
+        matrix_error
 };
 
 void
