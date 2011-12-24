@@ -357,11 +357,21 @@ canvas_end_element (GMarkupParseContext  *context,
 	}
 }
 
+static void
+canvas_error (GMarkupParseContext *context,
+              GError              *error,
+              gpointer             user_data)
+{
+	GXPSCanvas *canvas = (GXPSCanvas *)user_data;
+	gxps_canvas_free (canvas);
+}
+
 static GMarkupParser canvas_parser = {
 	canvas_start_element,
 	canvas_end_element,
 	NULL,
-	NULL
+	NULL,
+	canvas_error
 };
 
 static void
