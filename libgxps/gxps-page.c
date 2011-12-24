@@ -394,6 +394,7 @@ render_start_element (GMarkupParseContext  *context,
 							  ctx->page->priv->source,
 							  G_MARKUP_ERROR_INVALID_CONTENT,
 							  "Path", "RenderTransform", values[i], error);
+					gxps_path_free (path);
 					return;
 				}
 				GXPS_DEBUG (g_message ("transform (%f, %f, %f, %f) [%f, %f]",
@@ -410,6 +411,7 @@ render_start_element (GMarkupParseContext  *context,
 							  ctx->page->priv->source,
 							  G_MARKUP_ERROR_INVALID_CONTENT,
 							  "Path", "Fill", values[i], error);
+					gxps_path_free (path);
 					return;
 				}
 			} else if (strcmp (names[i], "Stroke") == 0) {
@@ -419,6 +421,7 @@ render_start_element (GMarkupParseContext  *context,
 							  ctx->page->priv->source,
 							  G_MARKUP_ERROR_INVALID_CONTENT,
 							  "Path", "Stroke", values[i], error);
+					gxps_path_free (path);
 					return;
 				}
 			} else if (strcmp (names[i], "StrokeThickness") == 0) {
@@ -427,6 +430,7 @@ render_start_element (GMarkupParseContext  *context,
                                                           ctx->page->priv->source,
                                                           G_MARKUP_ERROR_INVALID_CONTENT,
                                                           "Path", "StrokeThickness", values[i], error);
+                                        gxps_path_free (path);
                                         return;
                                 }
 				GXPS_DEBUG (g_message ("set_line_width (%f)", path->line_width));
@@ -436,6 +440,7 @@ render_start_element (GMarkupParseContext  *context,
 							  ctx->page->priv->source,
 							  G_MARKUP_ERROR_INVALID_CONTENT,
 							  "Path", "StrokeDashArray", values[i], error);
+					gxps_path_free (path);
 					return;
 				}
 				GXPS_DEBUG (g_message ("set_dash"));
@@ -445,6 +450,7 @@ render_start_element (GMarkupParseContext  *context,
                                                           ctx->page->priv->source,
                                                           G_MARKUP_ERROR_INVALID_CONTENT,
                                                           "Path", "StrokeDashOffset", values[i], error);
+                                        gxps_path_free (path);
                                         return;
                                 }
 				GXPS_DEBUG (g_message ("set_dash_offset (%f)", path->dash_offset));
@@ -460,6 +466,7 @@ render_start_element (GMarkupParseContext  *context,
                                                           ctx->page->priv->source,
                                                           G_MARKUP_ERROR_INVALID_CONTENT,
                                                           "Path", "StrokeMiterLimit", values[i], error);
+                                        gxps_path_free (path);
                                         return;
                                 }
 				GXPS_DEBUG (g_message ("set_miter_limit (%f)", path->miter_limit));
@@ -469,6 +476,7 @@ render_start_element (GMarkupParseContext  *context,
                                                           ctx->page->priv->source,
                                                           G_MARKUP_ERROR_INVALID_CONTENT,
                                                           "Path", "Opacity", values[i], error);
+                                        gxps_path_free (path);
                                         return;
                                 }
 				GXPS_DEBUG (g_message ("set_opacity (%f)", path->opacity));
