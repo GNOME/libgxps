@@ -630,11 +630,21 @@ glyphs_end_element (GMarkupParseContext  *context,
         }
 }
 
+static void
+glyphs_error (GMarkupParseContext *context,
+              GError              *error,
+              gpointer             user_data)
+{
+	GXPSGlyphs *glyphs = (GXPSGlyphs *)user_data;
+	gxps_glyphs_free (glyphs);
+}
+
 static GMarkupParser glyphs_parser = {
         glyphs_start_element,
         glyphs_end_element,
         NULL,
-        NULL
+        NULL,
+        glyphs_error
 };
 
 void
