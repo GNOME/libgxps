@@ -1042,11 +1042,21 @@ brush_end_element (GMarkupParseContext  *context,
         }
 }
 
+static void
+brush_error (GMarkupParseContext *context,
+	     GError              *error,
+	     gpointer             user_data)
+{
+	GXPSBrush *brush = (GXPSBrush *)user_data;
+	gxps_brush_free (brush);
+}
+
 static GMarkupParser brush_parser = {
         brush_start_element,
         brush_end_element,
         NULL,
-        NULL
+        NULL,
+        brush_error
 };
 
 void
