@@ -386,11 +386,21 @@ brush_image_end_element (GMarkupParseContext  *context,
         }
 }
 
+static void
+brush_image_error (GMarkupParseContext *context,
+		   GError              *error,
+		   gpointer             user_data)
+{
+	GXPSBrushImage *image = (GXPSBrushImage *)user_data;
+	gxps_brush_image_free (image);
+}
+
 static GMarkupParser brush_image_parser = {
         brush_image_start_element,
         brush_image_end_element,
         NULL,
-        NULL
+        NULL,
+        brush_image_error
 };
 
 static GXPSBrushVisual *
