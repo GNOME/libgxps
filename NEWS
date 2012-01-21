@@ -1,3 +1,24 @@
+libgxps 0.2.1 (21 January 2012)
+===============================
+
+API changes:
+
+    - Add GXPS_VERSION_STRING macro with the library version as a
+      string (Carlos Garcia Campos)
+
+New features:
+
+    - Support OpacityMask for Path elements (#663477, Jason Crain)
+
+Bug fixes:
+
+    - Fix MAJOR/MINOR/MICRO version macros (Carlos Garcia Campos)
+    - Fix FSF address in COPYING file (Carlos Garcia Campos)
+    - Fix building with libpng15 (#664666, Alexandre Rostovtsev)
+    - Fix tools build by linking to libm (#664439, Dominique
+      Leuenberger)
+
+
 libgxps 0.2.0 (19 November 2011)
 ================================
 
