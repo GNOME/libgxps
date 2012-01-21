@@ -58,6 +58,13 @@
 #define GXPS_MICRO_VERSION(@GXPS_MICRO_VERSION@)
 
 /**
+ * GXPS_VERSION_STRING:
+ *
+ * The version number of the GXPS library as a string
+ */
+#define GXPS_VERSION_STRING "@PACKAGE_VERSION@"
+
+/**
  * GXPS_CHECK_VERSION:
  * @major: major version (e.g. 0 for version 0.1.2)
  * @minor: minor version (e.g. 1 for version 0.1.2)
