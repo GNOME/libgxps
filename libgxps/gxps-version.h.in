@@ -39,7 +39,7 @@
  * The major version number of the GXPS header files (e.g. in GXPS version
  * 0.1.2 this is 0.)
  */
-#define GXPS_MAJOR_VERSION(@GXPS_MAJOR_VERSION@)
+#define GXPS_MAJOR_VERSION (@GXPS_MAJOR_VERSION@)
 
 /**
  * GXPS_MINOR_VERSION:
@@ -47,7 +47,7 @@
  * The major version number of the GXPS header files (e.g. in GXPS version
  * 0.1.2 this is 1.)
  */
-#define GXPS_MINOR_VERSION(@GXPS_MINOR_VERSION@)
+#define GXPS_MINOR_VERSION (@GXPS_MINOR_VERSION@)
 
 /**
  * GXPS_MICRO_VERSION:
@@ -55,7 +55,7 @@
  * The micro version number of the GXPS header files (e.g. in GXPS version
  * 0.1.2 this is 2.)
  */
-#define GXPS_MICRO_VERSION(@GXPS_MICRO_VERSION@)
+#define GXPS_MICRO_VERSION (@GXPS_MICRO_VERSION@)
 
 /**
  * GXPS_VERSION_STRING:
