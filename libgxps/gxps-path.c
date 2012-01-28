@@ -1051,11 +1051,21 @@ path_end_element (GMarkupParseContext  *context,
 	}
 }
 
+static void
+path_error (GMarkupParseContext *context,
+	    GError              *error,
+	    gpointer             user_data)
+{
+	GXPSPath *path = (GXPSPath *)user_data;
+	gxps_path_free (path);
+}
+
 static GMarkupParser path_parser = {
         path_start_element,
         path_end_element,
         NULL,
-        NULL
+        NULL,
+        path_error
 };
 
 void
