@@ -91,12 +91,13 @@ gxps_jpeg_writer_image_writer_init (GXPSImageWriter *image_writer,
 
         jpeg_writer->cinfo.image_width = width;
         jpeg_writer->cinfo.image_height = height;
+        jpeg_writer->cinfo.input_components = 3; /* color components per pixel */
+        jpeg_writer->cinfo.in_color_space = JCS_RGB; /* colorspace of input image */
+        jpeg_set_defaults (&jpeg_writer->cinfo);
+
         jpeg_writer->cinfo.density_unit = 1; /* dots per inch */
         jpeg_writer->cinfo.X_density = x_resolution;
         jpeg_writer->cinfo.Y_density = y_resolution;
-        jpeg_writer->cinfo.in_color_space = JCS_RGB; /* colorspace of input image */
-        jpeg_writer->cinfo.input_components = 3; /* color components per pixel */
-        jpeg_set_defaults (&jpeg_writer->cinfo);
 
         jpeg_start_compress (&jpeg_writer->cinfo, TRUE);
 
