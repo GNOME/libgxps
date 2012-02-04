@@ -61,6 +61,8 @@
  * GXPS_VERSION_STRING:
  *
  * The version number of the GXPS library as a string
+ *
+ * Since: 0.2.1
  */
 #define GXPS_VERSION_STRING "@PACKAGE_VERSION@"
 
