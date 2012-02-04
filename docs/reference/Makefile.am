@@ -47,7 +47,19 @@ CFILE_GLOB=$(top_srcdir)/libgxps/*.c
 
 # Header files to ignore when scanning.
 # e.g. IGNORE_HFILES=gtkdebug.h gtkintl.h
-IGNORE_HFILES=
+IGNORE_HFILES=			\
+	gxps-archive.h		\
+	gxps-brush.h		\
+	gxps-color.h		\
+	gxps-debug.h		\
+	gxps-fonts.h		\
+	gxps-glyphs.h		\
+	gxps-images.h		\
+	gxps-matrix.h		\
+	gxps-page-private.h	\
+	gxps-parse-utils.h	\
+	gxps-path.h		\
+	gxps-private.h
 
 # Images to copy into HTML directory.
 # e.g. HTML_IMAGES=$(top_srcdir)/gtk/stock-icons/stock_about_24.png
