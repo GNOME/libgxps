@@ -20,6 +20,7 @@ GXPS_IS_FILE_CLASS
 GXPS_FILE_GET_CLASS
 
 <SUBSECTION Private>
+GXPSFilePrivate
 gxps_file_get_type
 gxps_file_error_quark
 </SECTION>
