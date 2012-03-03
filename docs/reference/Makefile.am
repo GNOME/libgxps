@@ -80,6 +80,8 @@ expand_content_files=
 # e.g. INCLUDES=-I$(top_srcdir) -I$(top_builddir) $(GTK_DEBUG_FLAGS)
 # e.g. GTKDOC_LIBS=$(top_builddir)/gtk/$(gtktargetlib)
 INCLUDES=				\
+	-I$(top_srcdir)			\
+	-I$(top_builddir)		\
 	-I$(top_srcdir)/libgxps		\
 	-I$(top_builddir)/libgxps	\
 	$(GXPS_CFLAGS)
