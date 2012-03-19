@@ -4,7 +4,7 @@
 
 m4_define([gxps_major_version],[0])
 m4_define([gxps_minor_version],[2])
-m4_define([gxps_micro_version],[1])
+m4_define([gxps_micro_version],[2])
 m4_define([gxps_extra_version],[])
 m4_define([gxps_version],[gxps_major_version.gxps_minor_version.gxps_micro_version()gxps_extra_version])
 
@@ -19,7 +19,7 @@ m4_define([gxps_version],[gxps_major_version.gxps_minor_version.gxps_micro_versi
 
 # Libtool version
 m4_define([gxps_lt_current],[3])
-m4_define([gxps_lt_revision],[0])
+m4_define([gxps_lt_revision],[1])
 m4_define([gxps_lt_age],[1])
 m4_define([gxps_lt_version_info],[gxps_lt_current:gxps_lt_revision:gxps_lt_age])
 m4_define([gxps_lt_current_minus_age],[m4_eval(gxps_lt_current - gxps_lt_age)])

@@ -1,3 +1,29 @@
+libgxps 0.2.2 (19 March 2012)
+=============================
+
+Bug fixes:
+
+    - Fix COPYING file that used lgl2 instead of lgpl2.1 (#671271,
+      Carlos Garcia Campos)
+    - Fix the build with --enable-gtk-doc (#671274, Michael Biebl)
+    - Fix several memory leaks when parsing fails (#668937, #668940,
+      #668941, #668969, #668968, #668966, #668965, Jason Crain)
+
+Tools:
+
+    - Set image parameters after jpeg_set_defaults(), so the
+      resolution does not get overwritten by the defaults (Adrian
+      Johnson)
+
+Documentation:
+
+    - Ignore private headers when generating API doc (Carlos Garcia
+      Campos)
+    - Add index of new symbols in 0.2.1 (Carlos Garcia Campos)
+    - Add Since: tag to GXPS_VERSION_STRING api docs (Carlos Garcia
+      Campos)
+
+
 libgxps 0.2.1 (21 January 2012)
 ===============================
 
