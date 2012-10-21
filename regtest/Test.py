@@ -22,11 +22,13 @@ import subprocess
 import shutil
 import errno
 from Config import Config
+from Printer import get_printer
 
 class Test:
 
     def __init__(self):
         self._xpstopng = os.path.join(Config().tools_dir, 'xpstopng')
+        self.printer = get_printer()
 
     def __should_have_checksum(self, entry):
         return entry not in ('md5', 'crashed', 'failed', 'stderr');
@@ -64,7 +66,7 @@ class Test:
 
             if not basename in tests:
                 retval = False
-                print("%s found in md5 ref file but missing in output dir %s" % (basename, out_path))
+                self.printer.print_default("%s found in md5 ref file but missing in output dir %s" % (basename, out_path))
                 continue
 
             result_path = os.path.join(out_path, basename)
@@ -80,22 +82,22 @@ class Test:
                 if remove_results:
                     os.remove(result_path)
             else:
-                print("Differences found in %s" % (basename))
+                self.printer.print_default("Differences found in %s" % (basename))
                 if create_diffs:
                     if not os.path.exists(ref_path):
-                        print("Reference file %s not found, skipping diff for %s" % (ref_path, result_path))
+                        self.printer.print_default("Reference file %s not found, skipping diff for %s" % (ref_path, result_path))
                     else:
                         self._create_diff(ref_path, result_path)
 
                 if update_refs:
                     if os.path.exists(ref_path):
-                        print("Updating image reference %s" % (ref_path))
+                        self.printer.print_default("Updating image reference %s" % (ref_path))
                         shutil.copyfile(result_path, ref_path)
                 retval = False
         md5_file.close()
 
         if update_refs and not retval:
-            print("Updating md5 reference %s" % (md5_path))
+            self.printer.print_default("Updating md5 reference %s" % (md5_path))
             f = open(md5_path + '.tmp', 'wb')
             f.writelines(result_md5)
             f.close()

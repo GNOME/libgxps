@@ -19,6 +19,7 @@
 from Test import Test
 from Config import Config
 from Utils import get_document_paths_from_dir, get_skipped_tests
+from Printer import get_printer
 import sys
 import os
 import errno
@@ -32,6 +33,7 @@ class TestRun:
         self._skipped = get_skipped_tests(docsdir)
         self._test = Test()
         self.config = Config()
+        self.printer = get_printer()
 
         # Results
         self._n_tests = 0
@@ -55,12 +57,11 @@ class TestRun:
         ref_is_crashed = self._test.is_crashed(refs_path)
         ref_is_failed = self._test.is_failed(refs_path)
         if not ref_has_md5 and not ref_is_crashed and not ref_is_failed:
-            print("Reference files not found, skipping '%s'" % (doc_path))
+            self.printer.print_default("Reference files not found, skipping '%s'" % (doc_path))
             return
 
         self._n_tests += 1
-        sys.stdout.write("Testing '%s' (%d/%d): " % (doc_path, n_doc, total_docs))
-        sys.stdout.flush()
+        self.printer.print_test_start("Testing '%s' (%d/%d): " % (doc_path, n_doc, total_docs))
         test_has_md5 = self._test.create_refs(doc_path, test_path)
 
         if self._test.has_stderr(test_path):
@@ -69,46 +70,46 @@ class TestRun:
         if ref_has_md5 and test_has_md5:
             if self._test.compare_checksums(refs_path, test_path, not self.config.keep_results, self.config.create_diffs, self.config.update_refs):
                 # FIXME: remove dir if it's empty?
-                print("PASS")
+                self.printer.print_test_result("PASS")
                 self._n_passed += 1
             else:
-                print("FAIL")
+                self.printer.print_test_result_ln("FAIL")
                 self._failed.append(doc_path)
             return
         elif test_has_md5:
             if ref_is_crashed:
-                print("DOES NOT CRASH")
+                self.printer.print_test_result_ln("DOES NOT CRASH")
             elif ref_is_failed:
-                print("DOES NOT FAIL")
+                self.printer.print_test_result_ln("DOES NOT FAIL")
 
             return
 
         test_is_crashed = self._test.is_crashed(test_path)
         if ref_is_crashed and test_is_crashed:
-            print("PASS (Expected crash)")
+            self.printer.print_test_result("PASS (Expected crash)")
             self._n_passed += 1
             return
 
         test_is_failed = self._test.is_failed(test_path)
         if ref_is_failed and test_is_failed:
             # FIXME: compare status errors
-            print("PASS (Expected fail with status error %d)" % (test_is_failed))
+            self.printer.print_test_result("PASS (Expected fail with status error %d)" % (test_is_failed))
             self._n_passed += 1
             return
 
         if test_is_crashed:
-            print("CRASH")
+            self.printer.print_test_result_ln("CRASH")
             self._crashed.append(doc_path)
             return
 
         if test_is_failed:
-            print("FAIL (status error %d)" % (test_is_failed))
+            self.printer.print_test_result_ln("FAIL (status error %d)" % (test_is_failed))
             self._failed_status_error(doc_path)
             return
 
     def run_test(self, filename, n_doc = 1, total_docs = 1):
         if filename in self._skipped:
-            print("Skipping test '%s' (%d/%d)" % (os.path.join(self._docsdir, filename), n_doc, total_docs))
+            self.printer.print_default("Skipping test '%s' (%d/%d)" % (os.path.join(self._docsdir, filename), n_doc, total_docs))
             return
 
         out_path = os.path.join(self._outdir, filename)
@@ -123,7 +124,7 @@ class TestRun:
         refs_path = os.path.join(self._refsdir, filename)
 
         if not os.path.isdir(refs_path):
-            print("Reference dir not found for %s, skipping (%d/%d)" % (doc_path, n_doc, total_docs))
+            self.printer.print_default("Reference dir not found for %s, skipping (%d/%d)" % (doc_path, n_doc, total_docs))
             return
 
         self.test(refs_path, doc_path, out_path, n_doc, total_docs)
@@ -137,16 +138,16 @@ class TestRun:
 
     def summary(self):
         if not self._n_tests:
-            print("No tests run")
+            self.printer.printout_ln("No tests run")
             return
 
-        print("Total %d tests" % (self._n_tests))
-        print("%d tests passed (%.2f%%)" % (self._n_passed, (self._n_passed * 100.) / self._n_tests))
+        self.printer.printout_ln("Total %d tests" % (self._n_tests))
+        self.printer.printout_ln("%d tests passed (%.2f%%)" % (self._n_passed, (self._n_passed * 100.) / self._n_tests))
         def report_tests(test_list, test_type):
             n_tests = len(test_list)
             if not n_tests:
                 return
-            print("%d tests %s (%.2f%%): %s" % (n_tests, test_type, (n_tests * 100.) / self._n_tests, ", ".join(test_list)))
+            self.printer.printout_ln("%d tests %s (%.2f%%): %s" % (n_tests, test_type, (n_tests * 100.) / self._n_tests, ", ".join(test_list)))
         report_tests(self._failed, "failed")
         report_tests(self._crashed, "crashed")
         report_tests(self._failed_status_error, "failed to run")

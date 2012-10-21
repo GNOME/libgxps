@@ -48,6 +48,9 @@ def main(args):
     parser.add_argument('--help-command', metavar = 'COMMAND',
                         action = HelpAction,
                         help = 'Show help for a given command')
+    parser.add_argument('-v', '--verbose',
+                        action = 'store_true', dest = 'verbose', default = False,
+                        help = 'Run in verbose mode')
     parser.add_argument('--tools-dir',
                         action = 'store', dest = 'tools_dir', default = os.path.abspath("../tools"),
                         help = 'Directory of gxps tools used for the tests')
