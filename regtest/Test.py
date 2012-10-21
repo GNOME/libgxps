@@ -135,6 +135,9 @@ class Test:
     def has_stderr(self, test_path):
         return os.path.exists(os.path.join(test_path, 'stderr'))
 
+    def has_diff(self, test_result):
+        return os.path.exists(test_result + '.diff.png')
+
     def __create_stderr_file(self, stderr, out_path):
         if not stderr:
             return
@@ -197,7 +200,7 @@ class Test:
         ref = Image.open(ref_path)
         result = Image.open(result_path)
         diff = ImageChops.difference(ref, result)
-        diff.save(result_path + '.diff', 'png')
+        diff.save(result_path + '.diff.png', 'png')
 
     def create_refs(self, doc_path, refs_path):
         out_path = os.path.join(refs_path, 'page')
