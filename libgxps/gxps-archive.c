@@ -317,6 +317,8 @@ typedef struct _GXPSArchiveInputStream {
 	GInputStream          parent;
 
 	ZipArchive           *zip;
+        gboolean              is_interleaved;
+        guint                 piece;
 	struct archive_entry *entry;
 } GXPSArchiveInputStream;
 
@@ -336,21 +338,32 @@ gxps_archive_open (GXPSArchive *archive,
 		   const gchar *path)
 {
 	GXPSArchiveInputStream *stream;
+        gchar                  *first_piece_path = NULL;
 
 	if (path && path[0] == '/')
 		path++;
 
-	if (!archive_has_entry (archive, path))
-            return NULL;
+	if (!archive_has_entry (archive, path)) {
+                first_piece_path = g_build_filename (path, "[0].piece", NULL);
+                if (!archive_has_entry (archive, first_piece_path)) {
+                        g_free (first_piece_path);
+
+                        return NULL;
+                }
+                path = first_piece_path;
+        }
 
 	stream = (GXPSArchiveInputStream *)g_object_new (GXPS_TYPE_ARCHIVE_INPUT_STREAM, NULL);
-
 	stream->zip = gxps_zip_archive_create (archive->filename);
+        stream->is_interleaved = first_piece_path != NULL;
+
         while (gxps_zip_archive_iter_next (stream->zip, &stream->entry)) {
                 if (g_ascii_strcasecmp (path, archive_entry_pathname (stream->entry)) == 0)
                         break;
                 archive_read_data_skip (stream->zip->archive);
         }
+
+        g_free (first_piece_path);
 
 	return G_INPUT_STREAM (stream);
 }
@@ -422,6 +435,44 @@ gxps_archive_read_entry (GXPSArchive *archive,
 	return retval;
 }
 
+static gboolean
+gxps_archive_input_stream_is_last_piece (GXPSArchiveInputStream *stream)
+{
+        return g_str_has_suffix (archive_entry_pathname (stream->entry), ".last.piece");
+}
+
+static void
+gxps_archive_input_stream_next_piece (GXPSArchiveInputStream *stream)
+{
+        gchar *dirname;
+        gchar *prefix;
+        gint   result;
+
+        if (!stream->is_interleaved)
+                return;
+
+        dirname = g_path_get_dirname (archive_entry_pathname (stream->entry));
+        if (!dirname)
+                return;
+
+        stream->piece++;
+        prefix = g_strdup_printf ("%s/[%u]", dirname, stream->piece);
+        g_free (dirname);
+
+        while (gxps_zip_archive_iter_next (stream->zip, &stream->entry)) {
+                if (g_str_has_prefix (archive_entry_pathname (stream->entry), prefix)) {
+                        const gchar *suffix = archive_entry_pathname (stream->entry) + strlen (prefix);
+
+                        if (g_ascii_strcasecmp (suffix, ".piece") == 0 ||
+                            g_ascii_strcasecmp (suffix, ".last.piece") == 0)
+                                break;
+                }
+                archive_read_data_skip (stream->zip->archive);
+        }
+
+        g_free (prefix);
+}
+
 static gssize
 gxps_archive_input_stream_read (GInputStream  *stream,
 				void          *buffer,
@@ -430,10 +481,19 @@ gxps_archive_input_stream_read (GInputStream  *stream,
 				GError       **error)
 {
 	GXPSArchiveInputStream *istream = GXPS_ARCHIVE_INPUT_STREAM (stream);
+        gssize                  bytes_read;
 
 	if (g_cancellable_set_error_if_cancelled (cancellable, error))
 		return -1;
-	return archive_read_data (istream->zip->archive, buffer, count);
+
+        bytes_read = archive_read_data (istream->zip->archive, buffer, count);
+        if (bytes_read == 0 && istream->is_interleaved && !gxps_archive_input_stream_is_last_piece (istream)) {
+                /* Read next piece */
+                gxps_archive_input_stream_next_piece (istream);
+                bytes_read = gxps_archive_input_stream_read (stream, buffer, count, cancellable, error);
+        }
+
+	return bytes_read;
 }
 
 static gssize
