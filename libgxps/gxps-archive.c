@@ -147,6 +147,26 @@ gxps_zip_archive_create (GFile *filename)
 	return zip;
 }
 
+static gboolean
+gxps_zip_archive_iter_next (ZipArchive            *zip,
+                            struct archive_entry **entry)
+{
+        int result;
+
+        result = archive_read_next_header (zip->archive, entry);
+        if (result >= ARCHIVE_WARN && result <= ARCHIVE_OK) {
+                if (result < ARCHIVE_OK) {
+                        g_warning ("Error: %s\n", archive_error_string (zip->archive));
+                        archive_set_error (zip->archive, ARCHIVE_OK, "No error");
+                        archive_clear_error (zip->archive);
+                }
+
+                return TRUE;
+        }
+
+        return result != ARCHIVE_FATAL && result != ARCHIVE_EOF;
+}
+
 static void
 gxps_zip_archive_destroy (ZipArchive *zip)
 {
@@ -225,7 +245,6 @@ gxps_archive_initable_init (GInitable     *initable,
 	GXPSArchive          *archive;
 	ZipArchive           *zip;
 	struct archive_entry *entry;
-	gint                  result;
 
 	archive = GXPS_ARCHIVE (initable);
 
@@ -248,20 +267,12 @@ gxps_archive_initable_init (GInitable     *initable,
 		return FALSE;
 	}
 
-	do {
-		result = archive_read_next_header (zip->archive, &entry);
-		if (result >= ARCHIVE_WARN && result <= ARCHIVE_OK) {
-			if (result < ARCHIVE_OK) {
-				g_print ("Error: %s\n", archive_error_string (zip->archive));
-				archive_set_error (zip->archive, ARCHIVE_OK, "No error");
-				archive_clear_error (zip->archive);
-			}
-			/* FIXME: We can ignore directories here */
-			archive->entries = g_list_prepend (archive->entries,
-							   g_strdup (archive_entry_pathname (entry)));
-			archive_read_data_skip (zip->archive);
-		}
-	} while (result != ARCHIVE_FATAL && result != ARCHIVE_EOF);
+        while (gxps_zip_archive_iter_next (zip, &entry)) {
+                /* FIXME: We can ignore directories here */
+                archive->entries = g_list_prepend (archive->entries,
+                                                   g_strdup (archive_entry_pathname (entry)));
+                archive_read_data_skip (zip->archive);
+        }
 
 	gxps_zip_archive_destroy (zip);
 
@@ -325,7 +336,6 @@ gxps_archive_open (GXPSArchive *archive,
 		   const gchar *path)
 {
 	GXPSArchiveInputStream *stream;
-	gint                    result;
 
 	if (path && path[0] == '/')
 		path++;
@@ -336,19 +346,11 @@ gxps_archive_open (GXPSArchive *archive,
 	stream = (GXPSArchiveInputStream *)g_object_new (GXPS_TYPE_ARCHIVE_INPUT_STREAM, NULL);
 
 	stream->zip = gxps_zip_archive_create (archive->filename);
-	do {
-		result = archive_read_next_header (stream->zip->archive, &stream->entry);
-		if (result >= ARCHIVE_WARN && result <= ARCHIVE_OK) {
-			if (result < ARCHIVE_OK) {
-				g_print ("Error: %s\n", archive_error_string (stream->zip->archive));
-				archive_set_error (stream->zip->archive, ARCHIVE_OK, "No error");
-				archive_clear_error (stream->zip->archive);
-			}
-			if (g_ascii_strcasecmp (path, archive_entry_pathname (stream->entry)) == 0)
-				break;
-			archive_read_data_skip (stream->zip->archive);
-		}
-	} while (result != ARCHIVE_FATAL && result != ARCHIVE_EOF);
+        while (gxps_zip_archive_iter_next (stream->zip, &stream->entry)) {
+                if (g_ascii_strcasecmp (path, archive_entry_pathname (stream->entry)) == 0)
+                        break;
+                archive_read_data_skip (stream->zip->archive);
+        }
 
 	return G_INPUT_STREAM (stream);
 }
