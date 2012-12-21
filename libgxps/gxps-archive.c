@@ -284,6 +284,13 @@ gxps_archive_new (GFile   *filename,
 			       NULL);
 }
 
+static inline gboolean
+archive_has_entry (GXPSArchive *archive,
+                   const gchar *path)
+{
+        return g_list_find_custom (archive->entries, path, (GCompareFunc)g_ascii_strcasecmp) != NULL;
+}
+
 gboolean
 gxps_archive_has_entry (GXPSArchive *archive,
 			const gchar *path)
@@ -291,7 +298,7 @@ gxps_archive_has_entry (GXPSArchive *archive,
 	if (path && path[0] == '/')
 		path++;
 
-	return g_list_find_custom (archive->entries, path, (GCompareFunc)g_ascii_strcasecmp) != NULL;
+	return archive_has_entry (archive, path);
 }
 
 /* GXPSArchiveInputStream */
@@ -323,8 +330,8 @@ gxps_archive_open (GXPSArchive *archive,
 	if (path && path[0] == '/')
 		path++;
 
-	if (!g_list_find_custom (archive->entries, path, (GCompareFunc)g_ascii_strcasecmp))
-		return NULL;
+	if (!archive_has_entry (archive, path))
+            return NULL;
 
 	stream = (GXPSArchiveInputStream *)g_object_new (GXPS_TYPE_ARCHIVE_INPUT_STREAM, NULL);
 
