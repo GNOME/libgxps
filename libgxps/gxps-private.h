@@ -27,6 +27,7 @@
 #include "gxps-parse-utils.h"
 #include "gxps-links.h"
 #include "gxps-document-structure.h"
+#include "gxps-core-properties.h"
 
 G_BEGIN_DECLS
 
@@ -43,6 +44,9 @@ GXPSLinkTarget        *_gxps_link_target_new        (GXPSArchive       *zip,
 						     const gchar       *uri);
 GXPSDocumentStructure *_gxps_document_structure_new (GXPSArchive       *zip,
 						     const gchar       *source);
+GXPSCoreProperties    *_gxps_core_properties_new    (GXPSArchive       *zip,
+                                                     const gchar       *source,
+                                                     GError           **error);
 
 G_END_DECLS
 

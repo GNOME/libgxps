@@ -473,3 +473,28 @@ gxps_file_get_document_for_link_target (GXPSFile       *xps,
 	return -1;
 }
 
+/**
+ * gxps_file_get_core_properties:
+ * @xps: a #GXPSFile
+ * @error: #GError for error reporting, or %NULL to ignore
+ *
+ * Create a #GXPSCoreProperties object containing the metadata
+ * of @xpsm, or %NULL in case of error or if the #GXPSFile
+ * doesn't contain core properties.
+ *
+ * Returns: (transfer full): a new #GXPSCoreProperties or %NULL.
+ *    Free the returned object with g_object_unref().
+ */
+GXPSCoreProperties *
+gxps_file_get_core_properties (GXPSFile *xps,
+                               GError  **error)
+{
+        g_return_val_if_fail (GXPS_IS_FILE (xps), NULL);
+
+        if (!xps->priv->core_props)
+                return NULL;
+
+        return _gxps_core_properties_new (xps->priv->zip,
+                                          xps->priv->core_props,
+                                          error);
+}

@@ -10,6 +10,7 @@ gxps_file_new
 gxps_file_get_n_documents
 gxps_file_get_document
 gxps_file_get_document_for_link_target
+gxps_file_get_core_properties
 
 <SUBSECTION Standard>
 GXPS_TYPE_FILE
@@ -126,6 +127,40 @@ GXPS_DOCUMENT_STRUCTURE_GET_CLASS
 <SUBSECTION Private>
 GXPSDocumentStructurePrivate
 gxps_document_structure_get_type
+</SECTION>
+
+<SECTION>
+<FILE>gxps-core-properties</FILE>
+<TITLE>GXPSCoreProperties</TITLE>
+GXPSCoreProperties
+gxps_core_properties_get_title
+gxps_core_properties_get_creator
+gxps_core_properties_get_description
+gxps_core_properties_get_subject
+gxps_core_properties_get_keywords
+gxps_core_properties_get_version
+gxps_core_properties_get_revision
+gxps_core_properties_get_identifier
+gxps_core_properties_get_language
+gxps_core_properties_get_category
+gxps_core_properties_get_content_status
+gxps_core_properties_get_content_type
+gxps_core_properties_get_created
+gxps_core_properties_get_last_modified_by
+gxps_core_properties_get_modified
+gxps_core_properties_get_last_printed
+
+<SUBSECTION Standard>
+GXPS_TYPE_CORE_PROPERTIES
+GXPS_CORE_PROPERTIES
+GXPS_IS_CORE_PROPERTIES
+GXPS_CORE_PROPERTIES_CLASS
+GXPS_IS_CORE_PROPERTIES_CLASS
+GXPS_CORE_PROPERTIES_GET_CLASS
+
+<SUBSECTION Private>
+GXPSCorePropertiesPrivate
+gxps_core_properties_get_type
 </SECTION>
 
 <SECTION>

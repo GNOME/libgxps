@@ -6,3 +6,4 @@ gxps_page_get_type
 gxps_link_target_get_type
 gxps_link_get_type
 gxps_document_structure_get_type
+gxps_core_properties_get_type
