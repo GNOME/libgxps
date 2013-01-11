@@ -127,9 +127,7 @@ glyphs_indices_iter_next (GlyphsIndicesToken *token,
                 gchar *str;
 
                 start = token->iter;
-                token->iter++;
-                while (token->iter != token->end && (g_ascii_isdigit (*token->iter) || *token->iter == '.'))
-                        token->iter++;
+                gxps_parse_skip_number (&token->iter, token->end);
                 str = g_strndup (start, token->iter - start);
                 if (!gxps_value_get_double (str, &token->number)) {
                         g_set_error (error,

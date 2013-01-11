@@ -45,6 +45,8 @@ gboolean gxps_value_get_boolean         (const gchar          *value,
 gboolean gxps_point_parse               (const gchar          *point,
                                          gdouble              *x,
                                          gdouble              *y);
+void     gxps_parse_skip_number         (gchar               **iter,
+                                         const gchar          *end);
 gchar   *gxps_resolve_relative_path     (const gchar          *source,
                                          const gchar          *target);
 

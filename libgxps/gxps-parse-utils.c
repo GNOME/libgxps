@@ -351,6 +351,45 @@ gxps_point_parse (const gchar *point,
         return TRUE;
 }
 
+void
+gxps_parse_skip_number (gchar      **iter,
+                        const gchar *end)
+{
+        gchar *p = *iter;
+
+        p++;
+        while (p != end && g_ascii_isdigit (*p))
+                p++;
+        if (p == end) {
+                *iter = p;
+                return;
+        }
+
+        if (*p == '.')
+                p++;
+
+        while (p != end && g_ascii_isdigit (*p))
+                p++;
+        if (p == end) {
+                *iter = p;
+                return;
+        }
+
+        if (*p == 'e' || *p == 'E')
+                p++;
+        if (p == end) {
+                *iter = p;
+                return;
+        }
+
+        if (*p == '+' || *p == '-')
+                p++;
+
+        while (p != end && g_ascii_isdigit (*p))
+                p++;
+        *iter = p;
+}
+
 gchar *
 gxps_resolve_relative_path (const gchar *source,
 			    const gchar *target)
