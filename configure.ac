@@ -82,6 +82,8 @@ AC_SUBST(GLIB_REQUIRED)
 AC_SUBST(CAIRO_REQUIRED)
 AC_SUBST(LIBARCHIVE_REQUIRED)
 
+AC_CHECK_FUNC(localtime_r, AC_DEFINE(HAVE_LOCALTIME_R, 1, [Defines if localtime_r is available on your system]))
+
 dnl libjpeg
 AC_ARG_WITH(libjpeg,
             [AC_HELP_STRING([--without-libjpeg],

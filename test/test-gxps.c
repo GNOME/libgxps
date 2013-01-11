@@ -72,6 +72,126 @@ page_changed_callback (GtkSpinButton *button,
 	g_object_unref (xps_page);
 }
 
+static gchar *
+format_date (time_t utime)
+{
+        time_t time = (time_t) utime;
+        char s[256];
+        const char *fmt_hack = "%c";
+        size_t len;
+#ifdef HAVE_LOCALTIME_R
+        struct tm t;
+        if (time == 0 || !localtime_r (&time, &t))
+                return NULL;
+        len = strftime (s, sizeof (s), fmt_hack, &t);
+#else
+        struct tm *t;
+        if (time == 0 || !(t = localtime (&time)) )
+                return NULL;
+        len = strftime (s, sizeof (s), fmt_hack, t);
+#endif
+
+        if (len == 0 || s[0] == '\0')
+                return NULL;
+
+        return g_locale_to_utf8 (s, -1, NULL, NULL, NULL);
+}
+
+
+static void
+append_row_to_table (GtkWidget   *table,
+                     const gchar *key,
+                     const gchar *value)
+{
+        GtkWidget *key_label;
+        GtkWidget *value_label;
+
+        if (!value)
+                return;
+
+        key_label = gtk_label_new (NULL);
+        g_object_set (G_OBJECT (key_label), "xalign", 0.0, NULL);
+        gtk_label_set_markup (GTK_LABEL (key_label), key);
+        gtk_container_add (GTK_CONTAINER (table), key_label);
+        gtk_widget_show (key_label);
+
+        value_label = gtk_label_new (value);
+        g_object_set (G_OBJECT (value_label),
+                      "xalign", 0.0,
+                      "selectable", TRUE,
+                      "ellipsize", PANGO_ELLIPSIZE_END,
+                      "hexpand", TRUE,
+                      NULL);
+        gtk_grid_attach_next_to (GTK_GRID (table),
+                                 value_label,
+                                 key_label,
+                                 GTK_POS_RIGHT,
+                                 1, 1);
+        gtk_widget_show (value_label);
+}
+
+static void
+properties_button_clicked (GtkWidget *button, GXPSFile *xps)
+{
+        GtkWidget          *dialog;
+        GtkWidget          *table;
+        GXPSCoreProperties *core_props;
+        gchar              *date;
+        GError             *error = NULL;
+
+        core_props = gxps_file_get_core_properties (xps, &error);
+        if (!core_props) {
+                if (error)  {
+                        g_printerr ("Error getting core properties: %s\n", error->message);
+                        g_error_free (error);
+                }
+                return;
+        }
+
+        dialog = gtk_dialog_new_with_buttons ("Document Properties",
+                                              GTK_WINDOW (gtk_widget_get_toplevel (button)),
+                                              GTK_DIALOG_DESTROY_WITH_PARENT,
+                                              GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+                                              NULL);
+        g_signal_connect (dialog, "response", G_CALLBACK (gtk_widget_destroy), NULL);
+
+        table = gtk_grid_new ();
+        gtk_container_set_border_width (GTK_CONTAINER (table), 5);
+        gtk_orientable_set_orientation (GTK_ORIENTABLE (table), GTK_ORIENTATION_VERTICAL);
+        gtk_grid_set_column_spacing (GTK_GRID (table), 6);
+        gtk_grid_set_row_spacing (GTK_GRID (table), 6);
+
+        append_row_to_table (table, "<b>Title:</b>", gxps_core_properties_get_title (core_props));
+        append_row_to_table (table, "<b>Creator:</b>", gxps_core_properties_get_creator (core_props));
+        append_row_to_table (table, "<b>Description:</b>", gxps_core_properties_get_description (core_props));
+        append_row_to_table (table, "<b>Subject:</b>", gxps_core_properties_get_subject (core_props));
+        append_row_to_table (table, "<b>Keywords:</b>", gxps_core_properties_get_keywords (core_props));
+        append_row_to_table (table, "<b>Version:</b>", gxps_core_properties_get_version (core_props));
+        append_row_to_table (table, "<b>Revision:</b>", gxps_core_properties_get_revision (core_props));
+        append_row_to_table (table, "<b>Identifier:</b>", gxps_core_properties_get_identifier (core_props));
+        append_row_to_table (table, "<b>Language:</b>", gxps_core_properties_get_language (core_props));
+        append_row_to_table (table, "<b>Category:</b>", gxps_core_properties_get_category (core_props));
+        append_row_to_table (table, "<b>Content Status:</b>", gxps_core_properties_get_content_status (core_props));
+        append_row_to_table (table, "<b>Content Type:</b>", gxps_core_properties_get_content_type (core_props));
+        date = format_date (gxps_core_properties_get_created (core_props));
+        append_row_to_table (table, "<b>Created:</b>", date);
+        g_free (date);
+        append_row_to_table (table, "<b>Last Modified By:</b>", gxps_core_properties_get_last_modified_by (core_props));
+        date = format_date (gxps_core_properties_get_modified (core_props));
+        append_row_to_table (table, "<b>Modified:</b>", date);
+        g_free (date);
+        date = format_date (gxps_core_properties_get_last_printed (core_props));
+        append_row_to_table (table, "<b>Las Printed:</b>", date);
+        g_free (date);
+
+        gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), table);
+        gtk_widget_show (table);
+
+        gtk_widget_show (dialog);
+
+        g_object_unref (core_props);
+}
+
 gint main (gint argc, gchar **argv)
 {
 	GFile     *file;
@@ -79,6 +199,7 @@ gint main (gint argc, gchar **argv)
 	GXPSView  *view;
 	GtkWidget *win;
 	GtkWidget *hbox, *vbox, *sw;
+        GtkWidget *button;
 	guint      page = 0;
 	GError    *error = NULL;
 
@@ -130,6 +251,15 @@ gint main (gint argc, gchar **argv)
 			  view);
 	gtk_box_pack_end (GTK_BOX (hbox), view->spin_button, FALSE, TRUE, 0);
 	gtk_widget_show (view->spin_button);
+
+        button = gtk_button_new ();
+        g_signal_connect (button, "clicked",
+                          G_CALLBACK (properties_button_clicked),
+                          xps);
+        gtk_button_set_image (GTK_BUTTON (button),
+                              gtk_image_new_from_stock (GTK_STOCK_PROPERTIES, GTK_ICON_SIZE_SMALL_TOOLBAR));
+        gtk_box_pack_end (GTK_BOX (hbox), button, FALSE, FALSE, 0);
+        gtk_widget_show (button);
 
 	gtk_box_pack_start (GTK_BOX (vbox), hbox, FALSE, FALSE, 0);
 	gtk_widget_show (hbox);
