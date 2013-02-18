@@ -22,6 +22,7 @@
 #include "gxps-png-writer.h"
 #include <png.h>
 #include <stdint.h>
+#include <string.h>
 
 /* starting with libpng15, png.h no longer #includes zlib.h */
 #ifndef Z_BEST_COMPRESSION
