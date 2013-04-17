@@ -59,11 +59,6 @@ typedef struct {
 	GError           *error;
 } ZipArchive;
 
-struct _GXPSArchiveEntry {
-	ZipArchive           *zip;
-	struct archive_entry *entry;
-};
-
 static int
 _archive_open (struct archive *archive,
 	       void           *data)

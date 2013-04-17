@@ -35,7 +35,6 @@ G_BEGIN_DECLS
 
 typedef struct _GXPSArchive      GXPSArchive;
 typedef struct _GXPSArchiveClass GXPSArchiveClass;
-typedef struct _GXPSArchiveEntry GXPSArchiveEntry;
 
 GType             gxps_archive_get_type       (void) G_GNUC_CONST;
 GXPSArchive      *gxps_archive_new            (GFile            *filename,
