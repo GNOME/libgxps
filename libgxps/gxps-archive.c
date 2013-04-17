@@ -441,7 +441,6 @@ gxps_archive_input_stream_next_piece (GXPSArchiveInputStream *stream)
 {
         gchar *dirname;
         gchar *prefix;
-        gint   result;
 
         if (!stream->is_interleaved)
                 return;
