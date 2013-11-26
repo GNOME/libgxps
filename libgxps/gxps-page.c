@@ -218,8 +218,13 @@ gxps_dash_array_parse (const gchar *dash,
 		return FALSE;
 
 	num_dashes = g_strv_length (items);
-	dashes = g_malloc (num_dashes * sizeof (gdouble));
+        if (num_dashes % 2 != 0) {
+                g_strfreev (items);
 
+                return FALSE;
+        }
+
+	dashes = g_malloc (num_dashes * sizeof (gdouble));
 	for (i = 0; i < num_dashes; i++) {
                 if (!gxps_value_get_double (items[i], &dashes[i])) {
                         g_free (dashes);
