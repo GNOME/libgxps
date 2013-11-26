@@ -226,7 +226,7 @@ gxps_dash_array_parse (const gchar *dash,
 
 	dashes = g_malloc (num_dashes * sizeof (gdouble));
 	for (i = 0; i < num_dashes; i++) {
-                if (!gxps_value_get_double (items[i], &dashes[i])) {
+                if (!gxps_value_get_double_non_negative (items[i], &dashes[i])) {
                         g_free (dashes);
                         g_strfreev (items);
 
