@@ -206,11 +206,14 @@ gxps_dash_array_parse (const gchar *dash,
 		       guint       *num_dashes_out)
 {
 	gchar  **items;
+        gchar   *stripped_dash;
 	guint    i;
         gdouble *dashes;
         guint    num_dashes;
 
-	items = g_strsplit (dash, " ", -1);
+        stripped_dash = g_strstrip (g_strdup (dash));
+	items = g_strsplit (stripped_dash, " ", -1);
+        g_free (stripped_dash);
 	if (!items)
 		return FALSE;
 
