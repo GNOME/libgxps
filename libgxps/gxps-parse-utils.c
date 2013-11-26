@@ -321,6 +321,16 @@ gxps_value_get_double_positive (const gchar *value,
 }
 
 gboolean
+gxps_value_get_double_non_negative (const gchar *value,
+                                    gdouble     *double_value)
+{
+        if (!gxps_value_get_double (value, double_value))
+                return FALSE;
+
+        return *double_value >= 0;
+}
+
+gboolean
 gxps_point_parse (const gchar *point,
                   gdouble     *x,
                   gdouble     *y)
