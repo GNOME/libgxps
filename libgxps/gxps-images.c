@@ -263,6 +263,12 @@ gxps_images_create_from_jpeg (GXPSArchive *zip,
 					p[2] = line[0];
 					p[3] = 0xff;
 					break;
+                                case JCS_GRAYSCALE:
+                                        p[0] = line[0];
+                                        p[1] = line[0];
+                                        p[2] = line[0];
+                                        p[3] = 0xff;
+                                        break;
 				default:
 					GXPS_DEBUG (g_message ("Unsupported jpeg color space %s",
                                                                _jpeg_color_space_name (cinfo.out_color_space)));
@@ -272,10 +278,6 @@ gxps_images_create_from_jpeg (GXPSArchive *zip,
 					g_object_unref (stream);
 					return NULL;
 				}
-				p[0] = line[2];
-				p[1] = line[1];
-				p[2] = line[0];
-				p[3] = 0xff;
 				line += cinfo.out_color_components;
 				p += 4;
 			}
