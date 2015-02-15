@@ -213,7 +213,7 @@ class Test:
 
     def _create_diff(self, ref_path, result_path):
         try:
-            import Image, ImageChops
+            from PIL import Image, ImageChops
         except ImportError:
             raise NotImplementedError
 
