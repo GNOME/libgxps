@@ -19,6 +19,7 @@
 
 #include <config.h>
 
+#include <math.h>
 #include <string.h>
 
 #include "gxps-brush.h"
@@ -56,6 +57,13 @@ gxps_brush_new (GXPSRenderContext *ctx)
         brush->opacity = 1.0;
 
         return brush;
+}
+
+static gdouble
+gxps_transform_hypot (const cairo_matrix_t *matrix, double dx, double dy)
+{
+	cairo_matrix_transform_distance (matrix, &dx, &dy);
+	return hypot (dx, dy);
 }
 
 void
@@ -859,6 +867,7 @@ brush_start_element (GMarkupParseContext  *context,
                 cairo_rectangle_t viewport, viewbox;
                 cairo_matrix_t matrix;
                 cairo_extend_t extend = CAIRO_EXTEND_NONE;
+                double width, height;
                 gint i;
 
                 cairo_matrix_init_identity (&matrix);
@@ -911,15 +920,21 @@ brush_start_element (GMarkupParseContext  *context,
 
                 /* TODO: check required values */
 
-                /* Clip to viewport so that push group
-                 * will create a surface with the viport size
-                 */
+                width = gxps_transform_hypot (&matrix, viewport.width, 0);
+                height = gxps_transform_hypot (&matrix, 0, viewport.height);
+
                 cairo_save (brush->ctx->cr);
-                cairo_rectangle (brush->ctx->cr, viewbox.x, viewbox.y, viewbox.width, viewbox.height);
+                cairo_rectangle (brush->ctx->cr, 0, 0, width, height);
                 cairo_clip (brush->ctx->cr);
                 cairo_push_group (brush->ctx->cr);
+                cairo_translate (brush->ctx->cr, -viewbox.x, -viewbox.y);
+                cairo_scale (brush->ctx->cr, width / viewbox.width, height / viewbox.height);
                 visual = gxps_brush_visual_new (brush, &viewport, &viewbox);
                 visual->extend = extend;
+                cairo_matrix_init (&visual->matrix, viewport.width / width, 0, 0,
+                                   viewport.height / height, viewport.x, viewport.y);
+                cairo_matrix_multiply (&visual->matrix, &visual->matrix, &matrix);
+                cairo_matrix_invert (&visual->matrix);
                 sub_ctx = g_slice_new0 (GXPSRenderContext);
                 sub_ctx->page = brush->ctx->page;
                 sub_ctx->cr = brush->ctx->cr;
@@ -1004,8 +1019,7 @@ brush_end_element (GMarkupParseContext  *context,
         } else if (strcmp (element_name, "VisualBrush") == 0) {
                 GXPSRenderContext *sub_ctx;
                 GXPSBrushVisual   *visual;
-                cairo_matrix_t     matrix, port_matrix;
-                gdouble            x_scale, y_scale;
+                cairo_matrix_t     matrix;
 
                 sub_ctx = g_markup_parse_context_pop (context);
                 visual = sub_ctx->visual;
@@ -1016,20 +1030,8 @@ brush_end_element (GMarkupParseContext  *context,
                 /* Undo the clip */
                 cairo_restore (brush->ctx->cr);
                 cairo_pattern_set_extend (visual->brush->pattern, visual->extend);
-                cairo_matrix_init (&port_matrix,
-                                   visual->viewport.width,
-                                   0, 0,
-                                   visual->viewport.height,
-                                   visual->viewport.x,
-                                   visual->viewport.y);
-                cairo_matrix_multiply (&port_matrix, &port_matrix, &visual->matrix);
-
-                x_scale = visual->viewbox.width / port_matrix.xx;
-                y_scale = visual->viewbox.height / port_matrix.yy;
-                cairo_matrix_init (&matrix, x_scale, 0, 0, y_scale,
-                                   -port_matrix.x0 * x_scale,
-                                   -port_matrix.y0 * y_scale);
-
+                cairo_pattern_get_matrix (visual->brush->pattern, &matrix);
+                cairo_matrix_multiply (&matrix, &visual->matrix, &matrix);
                 cairo_pattern_set_matrix (visual->brush->pattern, &matrix);
                 if (cairo_pattern_status (visual->brush->pattern)) {
                         GXPS_DEBUG (g_debug ("%s", cairo_status_to_string (cairo_pattern_status (visual->brush->pattern))));
