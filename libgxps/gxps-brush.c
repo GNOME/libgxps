@@ -961,7 +961,6 @@ brush_end_element (GMarkupParseContext  *context,
 
                         image->brush->pattern = cairo_pattern_create_for_surface (surface);
                         cairo_pattern_set_extend (image->brush->pattern, image->extend);
-                        cairo_surface_destroy (surface);
 
                         cairo_matrix_init (&port_matrix,
                                            image->viewport.width,
@@ -971,8 +970,8 @@ brush_end_element (GMarkupParseContext  *context,
                                            image->viewport.y);
                         cairo_matrix_multiply (&port_matrix, &port_matrix, &image->matrix);
 
-                        x_scale = image->viewbox.width / port_matrix.xx;
-                        y_scale = image->viewbox.height / port_matrix.yy;
+                        x_scale = cairo_image_surface_get_width (surface) / port_matrix.xx;
+                        y_scale = cairo_image_surface_get_height (surface) / port_matrix.yy;
                         cairo_matrix_init (&matrix, x_scale, 0, 0, y_scale,
                                            -port_matrix.x0 * x_scale,
                                            -port_matrix.y0 * y_scale);
@@ -991,6 +990,7 @@ brush_end_element (GMarkupParseContext  *context,
                                 cairo_pattern_destroy (image->brush->pattern);
                                 image->brush->pattern = NULL;
                         }
+                        cairo_surface_destroy (surface);
                 } else if (err) {
                         GXPS_DEBUG (g_debug ("%s", err->message));
                         g_error_free (err);
