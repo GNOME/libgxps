@@ -45,6 +45,8 @@ class TestRun:
         self._failed = []
         self._crashed = []
         self._failed_status_error = []
+        self._did_not_crash = []
+        self._did_not_fail_status_error = []
         self._stderr = []
         self._new = []
 
@@ -96,8 +98,10 @@ class TestRun:
             if test_has_md5:
                 if ref_is_crashed:
                     self.printer.print_test_result_ln(doc_path, self._n_tests, self._total_tests, "DOES NOT CRASH")
+                    self._did_not_crash.append(doc_path)
                 elif ref_is_failed:
                     self.printer.print_test_result_ln(doc_path, self._n_tests, self._total_tests, "DOES NOT FAIL")
+                    self._did_not_fail_status_error.append(doc_path)
 
                 return
 
@@ -194,6 +198,8 @@ class TestRun:
             report_tests(self._crashed, "crashed")
             report_tests(self._failed_status_error, "failed to run")
             report_tests(self._stderr, "have stderr output")
+            report_tests(self._did_not_crash, "expected to crash, but didn't crash")
+            report_tests(self._did_not_fail_status_error, "expected to fail to run, but didn't fail")
         else:
             self.printer.printout_ln("No tests run")
 
