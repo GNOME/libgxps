@@ -23,6 +23,8 @@ from Printer import get_printer
 import sys
 import os
 import errno
+from Queue import Queue
+from threading import Thread, RLock
 
 class TestRun:
 
@@ -43,6 +45,9 @@ class TestRun:
         self._failed_status_error = []
         self._stderr = []
 
+        self._queue = Queue()
+        self._lock = RLock()
+
         try:
             os.makedirs(self._outdir);
         except OSError as e:
@@ -60,21 +65,26 @@ class TestRun:
             self.printer.print_default("Reference files not found, skipping '%s'" % (doc_path))
             return
 
-        self._n_tests += 1
+        with self._lock:
+            self._n_tests += 1
+
         self.printer.print_test_start("Testing '%s' (%d/%d): " % (doc_path, n_doc, total_docs))
         test_has_md5 = self._test.create_refs(doc_path, test_path)
 
         if self._test.has_stderr(test_path):
-            self._stderr.append(doc_path)
+            with self._lock:
+                self._stderr.append(doc_path)
 
         if ref_has_md5 and test_has_md5:
             if self._test.compare_checksums(refs_path, test_path, not self.config.keep_results, self.config.create_diffs, self.config.update_refs):
                 # FIXME: remove dir if it's empty?
                 self.printer.print_test_result("PASS")
-                self._n_passed += 1
+                with self._lock:
+                    self._n_passed += 1
             else:
                 self.printer.print_test_result_ln("FAIL")
-                self._failed.append(doc_path)
+                with self._lock:
+                    self._failed.append(doc_path)
             return
         elif test_has_md5:
             if ref_is_crashed:
@@ -87,24 +97,28 @@ class TestRun:
         test_is_crashed = self._test.is_crashed(test_path)
         if ref_is_crashed and test_is_crashed:
             self.printer.print_test_result("PASS (Expected crash)")
-            self._n_passed += 1
+            with self._lock:
+                self._n_passed += 1
             return
 
         test_is_failed = self._test.is_failed(test_path)
         if ref_is_failed and test_is_failed:
             # FIXME: compare status errors
             self.printer.print_test_result("PASS (Expected fail with status error %d)" % (test_is_failed))
-            self._n_passed += 1
+            with self._lock:
+                self._n_passed += 1
             return
 
         if test_is_crashed:
             self.printer.print_test_result_ln("CRASH")
-            self._crashed.append(doc_path)
+            with self._lock:
+                self._crashed.append(doc_path)
             return
 
         if test_is_failed:
             self.printer.print_test_result_ln("FAIL (status error %d)" % (test_is_failed))
-            self._failed_status_error(doc_path)
+            with self._lock:
+                self._failed_status_error(doc_path)
             return
 
     def run_test(self, filename, n_doc = 1, total_docs = 1):
@@ -129,12 +143,28 @@ class TestRun:
 
         self.test(refs_path, doc_path, out_path, n_doc, total_docs)
 
+    def _worker_thread(self):
+        while True:
+            doc, n_doc, total_docs = self._queue.get()
+            self.run_test(doc, n_doc, total_docs)
+            self._queue.task_done()
+
     def run_tests(self):
         docs, total_docs = get_document_paths_from_dir(self._docsdir)
+
+        self.printer.printout_ln('Process %d is spawning %d worker threads...' % (os.getpid(), self.config.threads))
+
+        for n_thread in range(self.config.threads):
+            thread = Thread(target=self._worker_thread)
+            thread.daemon = True
+            thread.start()
+
         n_doc = 0
         for doc in docs:
             n_doc += 1
-            self.run_test(doc, n_doc, total_docs)
+            self._queue.put((doc, n_doc, total_docs))
+
+        self._queue.join()
 
     def summary(self):
         if not self._n_tests:

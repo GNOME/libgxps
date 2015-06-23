@@ -18,6 +18,7 @@
 
 import sys
 from Config import Config
+from threading import RLock
 
 class Printer:
 
@@ -31,6 +32,8 @@ class Printer:
         self._stream = sys.stdout
         self._rewrite = self._stream.isatty() and not self._verbose
         self._current_line = None
+
+        self._lock = RLock()
 
         Printer.__single = self
 
@@ -52,27 +55,31 @@ class Printer:
         self._stream.flush()
 
     def printout(self, msg):
-        self._erase_current_line()
-        self._print(msg)
-        self._current_line = msg[msg.rfind('\n') + 1:]
+        with self._lock:
+            self._erase_current_line()
+            self._print(msg)
+            self._current_line = msg[msg.rfind('\n') + 1:]
 
     def printout_update(self, msg):
-        if self._rewrite and self._current_line is not None:
-            msg = self._current_line + msg
-        elif not self._rewrite:
-            msg = self._ensure_new_line(msg)
-        self.printout(msg)
+        with self._lock:
+            if self._rewrite and self._current_line is not None:
+                msg = self._current_line + msg
+            elif not self._rewrite:
+                msg = self._ensure_new_line(msg)
+            self.printout(msg)
 
     def printout_ln(self, msg):
-        if self._current_line is not None:
-            self._current_line = None
-            msg = '\n' + msg
+        with self._lock:
+            if self._current_line is not None:
+                self._current_line = None
+                msg = '\n' + msg
 
-        self._print(self._ensure_new_line(msg))
+            self._print(self._ensure_new_line(msg))
 
     def printerr(self, msg):
-        self.stderr.write(self._ensure_new_line(msg))
-        self.stderr.flush()
+        with self._lock:
+            self.stderr.write(self._ensure_new_line(msg))
+            self.stderr.flush()
 
     def print_test_start(self, msg):
         self.printout(msg)
