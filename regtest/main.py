@@ -39,6 +39,8 @@ class HelpAction(argparse.Action):
         sys.exit(0)
 
 def main(args):
+    n_cpus = cpu_count()
+
     parser = argparse.ArgumentParser(
         description = 'libgxps regression tests',
         prog = 'gxps-regtest',
@@ -59,8 +61,8 @@ def main(args):
                         action = 'store', dest = 'skipped_file',
                         help = 'File containing tests to skip')
     parser.add_argument('-t', '--threads',
-                        action = 'store', dest = 'threads', type = int, default = 1,
-                        help = 'Number of worker threads')
+                        action = 'store', dest = 'threads', type = int, default = n_cpus,
+                        help = 'Number of worker threads (Default: %d)' % n_cpus)
 
     ns, args = parser.parse_known_args(args)
     if not args:
@@ -69,7 +71,7 @@ def main(args):
 
     config = Config(vars(ns))
     if config.threads <= 0:
-        config.threads = cpu_count() - config.threads
+        config.threads = n_cpus - config.threads
 
     try:
         commands.run(args)
