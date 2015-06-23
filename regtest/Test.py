@@ -45,7 +45,7 @@ class Test:
         path = os.path.join(refs_path, 'md5')
         md5_file = open(path, 'w')
 
-        for entry in os.listdir(refs_path):
+        for entry in sorted(os.listdir(refs_path)):
             if not self.__should_have_checksum(entry):
                 continue
 
