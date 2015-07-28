@@ -25,6 +25,7 @@
 
 #include "gxps-page.h"
 #include "gxps-archive.h"
+#include "gxps-images.h"
 
 G_BEGIN_DECLS
 
@@ -57,11 +58,11 @@ struct _GXPSRenderContext {
         GXPSBrushVisual *visual;
 };
 
-cairo_surface_t *gxps_page_get_image          (GXPSPage            *page,
-                                               const gchar         *image_uri,
-                                               GError             **error);
-void             gxps_page_render_parser_push (GMarkupParseContext *context,
-                                               GXPSRenderContext   *ctx);
+GXPSImage *gxps_page_get_image          (GXPSPage            *page,
+                                         const gchar         *image_uri,
+                                         GError             **error);
+void       gxps_page_render_parser_push (GMarkupParseContext *context,
+                                         GXPSRenderContext   *ctx);
 
 G_END_DECLS
 

@@ -185,6 +185,9 @@ dnl libpng
 PKG_CHECK_MODULES(LIBPNG, libpng, [have_libpng="yes"], [have_libpng="no"])
 
 AM_CONDITIONAL(HAVE_LIBPNG, test x$have_libpng = xyes)
+if test x$have_libpng = xyes; then
+   AC_DEFINE(HAVE_LIBPNG, [1], [Have PNG library])
+fi
 
 AC_SUBST(LIBPNG_CFLAGS)
 AC_SUBST(LIBPNG_LIBS)

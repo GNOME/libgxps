@@ -25,9 +25,18 @@
 
 G_BEGIN_DECLS
 
-cairo_surface_t *gxps_images_get_image (GXPSArchive *zip,
-					const gchar *image_uri,
-					GError     **error);
+typedef struct _GXPSImage GXPSImage;
+
+struct _GXPSImage {
+	cairo_surface_t *surface;
+	double           res_x;
+	double           res_y;
+};
+
+GXPSImage *gxps_images_get_image (GXPSArchive  *zip,
+                                  const gchar  *image_uri,
+                                  GError      **error);
+void       gxps_image_free       (GXPSImage    *image);
 
 G_END_DECLS
 

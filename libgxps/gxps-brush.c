@@ -947,55 +947,60 @@ brush_end_element (GMarkupParseContext  *context,
         } else if (strcmp (element_name, "RadialGradientBrush") == 0) {
                 g_markup_parse_context_pop (context);
         } else if (strcmp (element_name, "ImageBrush") == 0) {
-                GXPSBrushImage  *image;
-                cairo_surface_t *surface;
+                GXPSBrushImage  *brush_image;
+                GXPSImage       *image;
                 GError          *err = NULL;
 
-                image = g_markup_parse_context_pop (context);
+                brush_image = g_markup_parse_context_pop (context);
 
                 GXPS_DEBUG (g_message ("set_fill_pattern (image)"));
-                surface = gxps_page_get_image (brush->ctx->page, image->image_uri, &err);
-                if (surface) {
-                        cairo_matrix_t matrix, port_matrix;
-                        gdouble        x_scale, y_scale;
+                image = gxps_page_get_image (brush->ctx->page, brush_image->image_uri, &err);
+                if (image) {
+                        cairo_matrix_t   matrix;
+                        gdouble          x_scale, y_scale;
+                        cairo_surface_t *clip_surface;
 
-                        image->brush->pattern = cairo_pattern_create_for_surface (surface);
-                        cairo_pattern_set_extend (image->brush->pattern, image->extend);
+                        /* viewbox units is 1/96 inch, convert to pixels */
+                        brush_image->viewbox.x *= image->res_x / 96;
+                        brush_image->viewbox.y *= image->res_y / 96;
+                        brush_image->viewbox.width *= image->res_x / 96;
+                        brush_image->viewbox.height *= image->res_y / 96;
 
-                        cairo_matrix_init (&port_matrix,
-                                           image->viewport.width,
-                                           0, 0,
-                                           image->viewport.height,
-                                           image->viewport.x,
-                                           image->viewport.y);
-                        cairo_matrix_multiply (&port_matrix, &port_matrix, &image->matrix);
+                        clip_surface = cairo_surface_create_for_rectangle (image->surface,
+                                                                           brush_image->viewbox.x,
+                                                                           brush_image->viewbox.y,
+                                                                           brush_image->viewbox.width,
+                                                                           brush_image->viewbox.height);
+                        brush_image->brush->pattern = cairo_pattern_create_for_surface (clip_surface);
+                        cairo_pattern_set_extend (brush_image->brush->pattern, brush_image->extend);
 
-                        x_scale = cairo_image_surface_get_width (surface) / port_matrix.xx;
-                        y_scale = cairo_image_surface_get_height (surface) / port_matrix.yy;
+                        x_scale = brush_image->viewport.width / brush_image->viewbox.width;
+                        y_scale = brush_image->viewport.height / brush_image->viewbox.height;
                         cairo_matrix_init (&matrix, x_scale, 0, 0, y_scale,
-                                           -port_matrix.x0 * x_scale,
-                                           -port_matrix.y0 * y_scale);
-                        cairo_pattern_set_matrix (image->brush->pattern, &matrix);
+                                           brush_image->viewport.x, brush_image->viewport.y);
+                        cairo_matrix_multiply (&matrix, &matrix, &brush_image->matrix);
+                        cairo_matrix_invert (&matrix);
+                        cairo_pattern_set_matrix (brush_image->brush->pattern, &matrix);
 
                         if (brush->opacity != 1.0) {
                                 cairo_push_group (brush->ctx->cr);
-                                cairo_set_source (brush->ctx->cr, image->brush->pattern);
-                                cairo_pattern_destroy (image->brush->pattern);
+                                cairo_set_source (brush->ctx->cr, brush_image->brush->pattern);
+                                cairo_pattern_destroy (brush_image->brush->pattern);
                                 cairo_paint_with_alpha (brush->ctx->cr, brush->opacity);
-                                image->brush->pattern = cairo_pop_group (brush->ctx->cr);
+                                brush_image->brush->pattern = cairo_pop_group (brush->ctx->cr);
                         }
 
-                        if (cairo_pattern_status (image->brush->pattern)) {
-                                GXPS_DEBUG (g_debug ("%s", cairo_status_to_string (cairo_pattern_status (image->brush->pattern))));
-                                cairo_pattern_destroy (image->brush->pattern);
-                                image->brush->pattern = NULL;
+                        if (cairo_pattern_status (brush_image->brush->pattern)) {
+                                GXPS_DEBUG (g_debug ("%s", cairo_status_to_string (cairo_pattern_status (brush_image->brush->pattern))));
+                                cairo_pattern_destroy (brush_image->brush->pattern);
+                                brush_image->brush->pattern = NULL;
                         }
-                        cairo_surface_destroy (surface);
+                        cairo_surface_destroy (clip_surface);
                 } else if (err) {
                         GXPS_DEBUG (g_debug ("%s", err->message));
                         g_error_free (err);
                 }
-                gxps_brush_image_free (image);
+                gxps_brush_image_free (brush_image);
         } else if (strcmp (element_name, "VisualBrush") == 0) {
                 GXPSRenderContext *sub_ctx;
                 GXPSBrushVisual   *visual;

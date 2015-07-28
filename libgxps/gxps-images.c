@@ -23,6 +23,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifdef HAVE_LIBPNG
+#include <png.h>
+#endif
+
 #ifdef HAVE_LIBJPEG
 #include <jpeglib.h>
 #include <setjmp.h>
@@ -36,27 +40,144 @@
 #include "gxps-error.h"
 #include "gxps-debug.h"
 
+#define METERS_PER_INCH 0.0254
+#define CENTIMETERS_PER_INCH 2.54
+
 /* PNG */
-static cairo_status_t
-_read_png (GInputStream *stream,
-	   guchar       *data,
-	   guint         len)
+#ifdef HAVE_LIBPNG
+
+static const cairo_user_data_key_t image_data_cairo_key;
+
+static void
+_read_png (png_structp png_ptr,
+	   png_bytep data,
+	   png_size_t len)
 {
-	gssize bytes_read;
+	GInputStream *stream;
 
-	bytes_read = g_input_stream_read (stream, data, len, NULL, NULL);
-
-	return (bytes_read > 0 && bytes_read == len) ?
-		CAIRO_STATUS_SUCCESS : CAIRO_STATUS_READ_ERROR;
+	stream = png_get_io_ptr (png_ptr);
+	g_input_stream_read (stream, data, len, NULL, NULL);
 }
 
-static cairo_surface_t *
+static void
+png_error_callback (png_structp png_ptr,
+		    png_const_charp error_msg)
+{
+	char **msg;
+
+	msg = png_get_error_ptr (png_ptr);
+	*msg = g_strdup (error_msg);
+	longjmp (png_jmpbuf (png_ptr), 1);
+}
+
+static void
+png_warning_callback (png_structp png,
+		      png_const_charp error_msg)
+{
+}
+
+/* From cairo's cairo-png.c <http://cairographics.org> */
+static inline int
+multiply_alpha (int alpha, int color)
+{
+	int temp = (alpha * color) + 0x80;
+
+	return ((temp + (temp >> 8)) >> 8);
+}
+
+/* Premultiplies data and converts RGBA bytes => native endian
+ * From cairo's cairo-png.c <http://cairographics.org> */
+static void
+premultiply_data (png_structp   png,
+                  png_row_infop row_info,
+                  png_bytep     data)
+{
+	unsigned int i;
+
+	for (i = 0; i < row_info->rowbytes; i += 4) {
+		uint8_t *base  = &data[i];
+		uint8_t  alpha = base[3];
+		uint32_t p;
+
+		if (alpha == 0) {
+			p = 0;
+		} else {
+			uint8_t red   = base[0];
+			uint8_t green = base[1];
+			uint8_t blue  = base[2];
+
+			if (alpha != 0xff) {
+				red   = multiply_alpha (alpha, red);
+				green = multiply_alpha (alpha, green);
+				blue  = multiply_alpha (alpha, blue);
+			}
+			p = (alpha << 24) | (red << 16) | (green << 8) | (blue << 0);
+		}
+		memcpy (base, &p, sizeof (uint32_t));
+	}
+}
+
+/* Converts RGBx bytes to native endian xRGB
+ * From cairo's cairo-png.c <http://cairographics.org> */
+static void
+convert_bytes_to_data (png_structp png, png_row_infop row_info, png_bytep data)
+{
+	unsigned int i;
+
+	for (i = 0; i < row_info->rowbytes; i += 4) {
+		uint8_t *base  = &data[i];
+		uint8_t  red   = base[0];
+		uint8_t  green = base[1];
+		uint8_t  blue  = base[2];
+		uint32_t pixel;
+
+		pixel = (0xff << 24) | (red << 16) | (green << 8) | (blue << 0);
+		memcpy (base, &pixel, sizeof (uint32_t));
+	}
+}
+
+static void
+fill_png_error (GError      **error,
+		const gchar  *image_uri,
+		const gchar  *msg)
+{
+	if (msg) {
+		g_set_error (error,
+			     GXPS_ERROR,
+			     GXPS_ERROR_IMAGE,
+			     "Error loading PNG image %s: %s",
+			     image_uri, msg);
+	} else {
+		g_set_error (error,
+			     GXPS_ERROR,
+			     GXPS_ERROR_IMAGE,
+			     "Error loading PNG image %s",
+			     image_uri);
+	}
+}
+
+#endif	/* HAVE_LIBPNG */
+
+/* Adapted from cairo's read_png in cairo-png.c
+ * http://cairographics.org/ */
+static GXPSImage *
 gxps_images_create_from_png (GXPSArchive *zip,
 			     const gchar *image_uri,
 			     GError     **error)
 {
-	GInputStream    *stream;
-	cairo_surface_t *surface;
+#ifdef HAVE_LIBPNG
+	GInputStream  *stream;
+	GXPSImage     *image = NULL;
+	char          *png_err_msg = NULL;
+	png_struct    *png;
+	png_info      *info;
+	png_byte      *data = NULL;
+	png_byte     **row_pointers = NULL;
+	png_uint_32    png_width, png_height;
+	int            depth, color_type, interlace, stride;
+	unsigned int   i;
+	cairo_format_t format;
+	cairo_status_t status;
 
 	stream = gxps_archive_open (zip, image_uri);
 	if (!stream) {
@@ -68,21 +189,154 @@ gxps_images_create_from_png (GXPSArchive *zip,
 		return NULL;
 	}
 
-	surface = cairo_image_surface_create_from_png_stream ((cairo_read_func_t)_read_png, stream);
-	g_object_unref (stream);
-	if (cairo_surface_status (surface)) {
-		g_set_error (error,
-			     GXPS_ERROR,
-			     GXPS_ERROR_IMAGE,
-			     "Error loading PNG image %s: %s",
-			     image_uri,
-			     cairo_status_to_string (cairo_surface_status (surface)));
-		cairo_surface_destroy (surface);
-
+	png = png_create_read_struct (PNG_LIBPNG_VER_STRING,
+				      &png_err_msg,
+				      png_error_callback,
+				      png_warning_callback);
+	if (png == NULL) {
+		fill_png_error (error, image_uri, NULL);
+		g_object_unref (stream);
 		return NULL;
 	}
 
-	return surface;
+	info = png_create_info_struct (png);
+	if (info == NULL) {
+		fill_png_error (error, image_uri, NULL);
+		g_object_unref (stream);
+		png_destroy_read_struct (&png, NULL, NULL);
+		return NULL;
+	}
+
+	png_set_read_fn (png, stream, _read_png);
+
+	if (setjmp (png_jmpbuf (png))) {
+		fill_png_error (error, image_uri, png_err_msg);
+		g_free (png_err_msg);
+		g_object_unref (stream);
+		png_destroy_read_struct (&png, &info, NULL);
+		gxps_image_free (image);
+		g_free (row_pointers);
+		g_free (data);
+		return NULL;
+	}
+
+	png_read_info (png, info);
+
+	png_get_IHDR (png, info,
+		      &png_width, &png_height, &depth,
+		      &color_type, &interlace, NULL, NULL);
+
+	/* convert palette/gray image to rgb */
+	if (color_type == PNG_COLOR_TYPE_PALETTE)
+		png_set_palette_to_rgb (png);
+
+	/* expand gray bit depth if needed */
+	if (color_type == PNG_COLOR_TYPE_GRAY)
+		png_set_expand_gray_1_2_4_to_8 (png);
+
+	/* transform transparency to alpha */
+	if (png_get_valid (png, info, PNG_INFO_tRNS))
+		png_set_tRNS_to_alpha (png);
+
+	if (depth == 16)
+		png_set_strip_16 (png);
+
+	if (depth < 8)
+		png_set_packing (png);
+
+	/* convert grayscale to RGB */
+	if (color_type == PNG_COLOR_TYPE_GRAY ||
+	    color_type == PNG_COLOR_TYPE_GRAY_ALPHA)
+		png_set_gray_to_rgb (png);
+
+	if (interlace != PNG_INTERLACE_NONE)
+		png_set_interlace_handling (png);
+
+	png_set_filler (png, 0xff, PNG_FILLER_AFTER);
+
+	/* recheck header after setting EXPAND options */
+	png_read_update_info (png, info);
+	png_get_IHDR (png, info,
+		      &png_width, &png_height, &depth,
+		      &color_type, &interlace, NULL, NULL);
+	if (depth != 8 ||
+	    !(color_type == PNG_COLOR_TYPE_RGB ||
+              color_type == PNG_COLOR_TYPE_RGB_ALPHA)) {
+		fill_png_error (error, image_uri, NULL);
+		g_object_unref (stream);
+		png_destroy_read_struct (&png, &info, NULL);
+		return NULL;
+	}
+
+	switch (color_type) {
+	default:
+		g_assert_not_reached();
+		/* fall-through just in case ;-) */
+
+	case PNG_COLOR_TYPE_RGB_ALPHA:
+		format = CAIRO_FORMAT_ARGB32;
+		png_set_read_user_transform_fn (png, premultiply_data);
+		break;
+
+	case PNG_COLOR_TYPE_RGB:
+		format = CAIRO_FORMAT_RGB24;
+		png_set_read_user_transform_fn (png, convert_bytes_to_data);
+		break;
+	}
+
+	stride = cairo_format_stride_for_width (format, png_width);
+	if (stride < 0) {
+		fill_png_error (error, image_uri, NULL);
+		g_object_unref (stream);
+		png_destroy_read_struct (&png, &info, NULL);
+		return NULL;
+	}
+
+	image = g_slice_new0 (GXPSImage);
+	image->res_x = png_get_x_pixels_per_meter (png, info) * METERS_PER_INCH;
+	if (image->res_x == 0)
+		image->res_x = 96;
+	image->res_y = png_get_y_pixels_per_meter (png, info) * METERS_PER_INCH;
+	if (image->res_y == 0)
+		image->res_y = 96;
+
+	data = g_malloc (png_height * stride);
+	row_pointers = g_new (png_byte *, png_height);
+
+	for (i = 0; i < png_height; i++)
+		row_pointers[i] = &data[i * stride];
+
+	png_read_image (png, row_pointers);
+	png_read_end (png, info);
+	png_destroy_read_struct (&png, &info, NULL);
+	g_object_unref (stream);
+	g_free (row_pointers);
+
+	image->surface = cairo_image_surface_create_for_data (data, format,
+							      png_width, png_height,
+							      stride);
+	if (cairo_surface_status (image->surface)) {
+		fill_png_error (error, image_uri, NULL);
+		gxps_image_free (image);
+		g_free (data);
+		return NULL;
+	}
+
+	status = cairo_surface_set_user_data (image->surface,
+					      &image_data_cairo_key,
+					      data,
+					      (cairo_destroy_func_t) g_free);
+	if (status) {
+		fill_png_error (error, image_uri, NULL);
+		gxps_image_free (image);
+		g_free (data);
+		return NULL;
+	}
+
+	return image;
+#else
+    return NULL;
+#endif  /* HAVE_LIBPNG */
 }
 
 /* JPEG */
@@ -164,7 +418,7 @@ _jpeg_error_exit (j_common_ptr error)
 }
 #endif /* HAVE_LIBJPEG */
 
-static cairo_surface_t *
+static GXPSImage *
 gxps_images_create_from_jpeg (GXPSArchive *zip,
 			      const gchar *image_uri,
 			      GError     **error)
@@ -174,7 +428,7 @@ gxps_images_create_from_jpeg (GXPSArchive *zip,
 	struct jpeg_error_mgr         error_mgr;
 	struct jpeg_decompress_struct cinfo;
 	struct _jpeg_src_mgr          src;
-	cairo_surface_t              *surface;
+	GXPSImage                    *image;
 	guchar                       *data;
 	gint                          stride;
 	JSAMPARRAY                    lines;
@@ -225,25 +479,28 @@ gxps_images_create_from_jpeg (GXPSArchive *zip,
 	cinfo.do_fancy_upsampling = FALSE;
 	jpeg_start_decompress (&cinfo);
 
-	surface = cairo_image_surface_create (CAIRO_FORMAT_RGB24,
-					      cinfo.output_width,
-					      cinfo.output_height);
-	if (cairo_surface_status (surface)) {
+	image = g_slice_new (GXPSImage);
+	image->surface = cairo_image_surface_create (CAIRO_FORMAT_RGB24,
+						     cinfo.output_width,
+						     cinfo.output_height);
+	image->res_x = 96;
+	image->res_y = 96;
+	if (cairo_surface_status (image->surface)) {
 		g_set_error (error,
 			     GXPS_ERROR,
 			     GXPS_ERROR_IMAGE,
 			     "Error loading JPEG image %s: %s",
 			     image_uri,
-			     cairo_status_to_string (cairo_surface_status (surface)));
+			     cairo_status_to_string (cairo_surface_status (image->surface)));
 		jpeg_destroy_decompress (&cinfo);
-		cairo_surface_destroy (surface);
+		gxps_image_free (image);
 		g_object_unref (stream);
 
 		return NULL;
 	}
 
-	data = cairo_image_surface_get_data (surface);
-	stride = cairo_image_surface_get_stride (surface);
+	data = cairo_image_surface_get_data (image->surface);
+	stride = cairo_image_surface_get_stride (image->surface);
 	jpeg_stride = cinfo.output_width * cinfo.out_color_components;
 	lines = cinfo.mem->alloc_sarray((j_common_ptr) &cinfo, JPOOL_IMAGE, jpeg_stride, 4);
 
@@ -273,7 +530,7 @@ gxps_images_create_from_jpeg (GXPSArchive *zip,
 					GXPS_DEBUG (g_message ("Unsupported jpeg color space %s",
                                                                _jpeg_color_space_name (cinfo.out_color_space)));
 
-					cairo_surface_destroy (surface);
+					gxps_image_free (image);
 					jpeg_destroy_decompress (&cinfo);
 					g_object_unref (stream);
 					return NULL;
@@ -286,25 +543,33 @@ gxps_images_create_from_jpeg (GXPSArchive *zip,
 		}
 	}
 
+	if (cinfo.density_unit == 1) { /* dots/inch */
+		image->res_x = cinfo.X_density;
+		image->res_y = cinfo.Y_density;
+	} else if (cinfo.density_unit == 2) { /* dots/cm */
+		image->res_x = cinfo.X_density * CENTIMETERS_PER_INCH;
+		image->res_y = cinfo.Y_density * CENTIMETERS_PER_INCH;
+	}
+
 	jpeg_finish_decompress (&cinfo);
 	jpeg_destroy_decompress (&cinfo);
 	g_object_unref (stream);
 
-	cairo_surface_mark_dirty (surface);
+	cairo_surface_mark_dirty (image->surface);
 
-	if (cairo_surface_status (surface)) {
+	if (cairo_surface_status (image->surface)) {
 		g_set_error (error,
 			     GXPS_ERROR,
 			     GXPS_ERROR_IMAGE,
 			     "Error loading JPEG image %s: %s",
 			     image_uri,
-			     cairo_status_to_string (cairo_surface_status (surface)));
-		cairo_surface_destroy (surface);
+			     cairo_status_to_string (cairo_surface_status (image->surface)));
+		gxps_image_free (image);
 
 		return NULL;
 	}
 
-	return surface;
+	return image;
 #else
 	return NULL;
 #endif /* HAVE_LIBJPEG */
@@ -457,19 +722,21 @@ _tiff_unmap_file (thandle_t handle,
 }
 #endif /* #ifdef HAVE_LIBTIFF */
 
-static cairo_surface_t *
+static GXPSImage *
 gxps_images_create_from_tiff (GXPSArchive *zip,
 			      const gchar *image_uri,
 			      GError     **error)
 {
 #ifdef HAVE_LIBTIFF
-	TIFF            *tiff;
-	TiffBuffer       buffer;
-	cairo_surface_t *surface;
-	gint             width, height;
-	gint             stride;
-	guchar          *data;
-	guchar          *p;
+	TIFF       *tiff;
+	TiffBuffer  buffer;
+	GXPSImage  *image;
+	gint        width, height;
+	guint16     res_unit;
+	float       res_x, res_y;
+	gint        stride;
+	guchar     *data;
+	guchar     *p;
 
 	if (!gxps_archive_read_entry (zip, image_uri,
 				      &buffer.buffer,
@@ -529,28 +796,49 @@ gxps_images_create_from_tiff (GXPSArchive *zip,
 		return NULL;
 	}
 
-	surface = cairo_image_surface_create (CAIRO_FORMAT_RGB24,
-					      width, height);
-	if (cairo_surface_status (surface)) {
+	image = g_slice_new (GXPSImage);
+	image->surface = cairo_image_surface_create (CAIRO_FORMAT_RGB24,
+						     width, height);
+	image->res_x = 96;
+	image->res_y = 96;
+
+	if (!TIFFGetField (tiff, TIFFTAG_RESOLUTIONUNIT, &res_unit))
+		res_unit = 0;
+	if (TIFFGetField (tiff, TIFFTAG_XRESOLUTION, &res_x)) {
+		if (res_unit == 2) { /* inches */
+			image->res_x = res_x;
+		} else if (res_unit == 3) { /* centimeters */
+			image->res_x = res_x * CENTIMETERS_PER_INCH;
+		}
+	}
+	if (TIFFGetField (tiff, TIFFTAG_YRESOLUTION, &res_y)) {
+		if (res_unit == 2) { /* inches */
+			image->res_y = res_y;
+		} else if (res_unit == 3) { /* centimeters */
+			image->res_y = res_y * CENTIMETERS_PER_INCH;
+		}
+	}
+
+	if (cairo_surface_status (image->surface)) {
 		g_set_error (error,
 			     GXPS_ERROR,
 			     GXPS_ERROR_IMAGE,
 			     "Error loading TIFF image %s: %s",
 			     image_uri,
-			     cairo_status_to_string (cairo_surface_status (surface)));
-		cairo_surface_destroy (surface);
+			     cairo_status_to_string (cairo_surface_status (image->surface)));
+		gxps_image_free (image);
 		TIFFClose (tiff);
 		_tiff_pop_handlers ();
 		g_free (buffer.buffer);
 		return NULL;
 	}
 
-	data = cairo_image_surface_get_data (surface);
+	data = cairo_image_surface_get_data (image->surface);
 	if (!TIFFReadRGBAImageOriented (tiff, width, height,
 					(uint32 *)data,
 					ORIENTATION_TOPLEFT, 1) || _tiff_error) {
 		fill_tiff_error (error, image_uri);
-		cairo_surface_destroy (surface);
+		gxps_image_free (image);
 		TIFFClose (tiff);
 		_tiff_pop_handlers ();
 		g_free (buffer.buffer);
@@ -561,7 +849,7 @@ gxps_images_create_from_tiff (GXPSArchive *zip,
 	_tiff_pop_handlers ();
 	g_free (buffer.buffer);
 
-	stride = cairo_image_surface_get_stride (surface);
+	stride = cairo_image_surface_get_stride (image->surface);
 	p = data;
 	while (p < data + (height * stride)) {
 		guint32 *pixel = (guint32 *)p;
@@ -575,9 +863,9 @@ gxps_images_create_from_tiff (GXPSArchive *zip,
 		p += 4;
 	}
 
-	cairo_surface_mark_dirty (surface);
+	cairo_surface_mark_dirty (image->surface);
 
-	return surface;
+	return image;
 #else
 	return NULL;
 #endif /* #ifdef HAVE_LIBTIFF */
@@ -603,43 +891,55 @@ gxps_images_guess_content_type (GXPSArchive *zip,
 	return mime_type;
 }
 
-cairo_surface_t *
+GXPSImage *
 gxps_images_get_image (GXPSArchive *zip,
 		       const gchar *image_uri,
 		       GError     **error)
 {
-	cairo_surface_t *surface = NULL;
+	GXPSImage *image = NULL;
 
 	/* First try with extensions,
 	 * as it's recommended by the spec
 	 * (2.1.5 Image Parts)
 	 */
 	if (g_str_has_suffix (image_uri, ".png")) {
-		surface = gxps_images_create_from_png (zip, image_uri, error);
+		image = gxps_images_create_from_png (zip, image_uri, error);
 	} else if (g_str_has_suffix (image_uri, ".jpg")) {
-		surface = gxps_images_create_from_jpeg (zip, image_uri, error);
+		image = gxps_images_create_from_jpeg (zip, image_uri, error);
 	} else if (g_str_has_suffix (image_uri, ".tif")) {
-		surface = gxps_images_create_from_tiff (zip, image_uri, error);
+		image = gxps_images_create_from_tiff (zip, image_uri, error);
 	} else if (g_str_has_suffix (image_uri, "wdp")) {
 		GXPS_DEBUG (g_message ("Unsupported image format windows media photo"));
 		return NULL;
 	}
 
-	if (!surface) {
+	if (!image) {
 		gchar *mime_type;
 
 		mime_type = gxps_images_guess_content_type (zip, image_uri);
 		if (g_strcmp0 (mime_type, "image/png") == 0) {
-			surface = gxps_images_create_from_png (zip, image_uri, error);
+			image = gxps_images_create_from_png (zip, image_uri, error);
 		} else if (g_strcmp0 (mime_type, "image/jpeg") == 0) {
-			surface = gxps_images_create_from_jpeg (zip, image_uri, error);
+			image = gxps_images_create_from_jpeg (zip, image_uri, error);
 		} else if (g_strcmp0 (mime_type, "image/tiff") == 0) {
-			surface = gxps_images_create_from_tiff (zip, image_uri, error);
+			image = gxps_images_create_from_tiff (zip, image_uri, error);
 		} else {
 			GXPS_DEBUG (g_message ("Unsupported image format: %s", mime_type));
 		}
 		g_free (mime_type);
 	}
 
-	return surface;
+	return image;
+}
+
+void
+gxps_image_free (GXPSImage *image)
+{
+	if (G_UNLIKELY (!image))
+		return;
+
+	if (G_LIKELY (image->surface))
+		cairo_surface_destroy (image->surface);
+
+	g_slice_free (GXPSImage, image);
 }

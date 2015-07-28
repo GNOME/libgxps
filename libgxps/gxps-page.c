@@ -75,35 +75,35 @@ gxps_page_error_quark (void)
 }
 
 /* Images */
-cairo_surface_t *
+GXPSImage *
 gxps_page_get_image (GXPSPage    *page,
 		     const gchar *image_uri,
 		     GError     **error)
 {
-	cairo_surface_t *surface;
+	GXPSImage *image;
 
 	if (page->priv->image_cache) {
-		surface = g_hash_table_lookup (page->priv->image_cache,
-					       image_uri);
-		if (surface)
-			return cairo_surface_reference (surface);
+		image = g_hash_table_lookup (page->priv->image_cache,
+					     image_uri);
+		if (image)
+			return image;
 	}
 
-	surface = gxps_images_get_image (page->priv->zip, image_uri, error);
-	if (!surface)
+	image = gxps_images_get_image (page->priv->zip, image_uri, error);
+	if (!image)
 		return NULL;
 
 	if (!page->priv->image_cache) {
 		page->priv->image_cache = g_hash_table_new_full (g_str_hash,
 								 g_str_equal,
 								 (GDestroyNotify)g_free,
-								 (GDestroyNotify)cairo_surface_destroy);
+								 (GDestroyNotify)gxps_image_free);
 	}
 
 	g_hash_table_insert (page->priv->image_cache,
 			     g_strdup (image_uri),
-			     cairo_surface_reference (surface));
-	return surface;
+			     image);
+	return image;
 }
 
 /* FixedPage parser */
