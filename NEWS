@@ -1,3 +1,36 @@
+libgxps 0.2.3 (13 August 2015)
+==============================
+
+API changes:
+
+    - Add API to get Core Propoerties of a XPS file (Carlos Garcia
+      Campos)
+
+New features:
+
+    - Support ImageBrush Viewbox and rotation/shearing matrices
+      (#751357, Jason Crain)
+    - Add support for JPEG images with GRAYSCALE color space (#744120,
+      Carlos Garcia Campos)
+    - Add support for interleaved zip archives (Carlos Garcia Campos)
+
+Bug fixes:
+
+    - Fix transformation for VisualBrush elements (#742630, Jason
+      Crain)
+    - Fix parsing of dash array with negative values (#715023, Lukas
+      Lueg, Carlos Garcia Campos)
+    - Make gxps_dash_array_parse fail for an odd number of dashes
+      (#715023, Lukas Lueg, Carlos Garcia Campos)
+    - Fix parsing of dash array when it has trailing or leading
+      whitespaces (#715023, Lukas Lueg)
+    - Fix the build with libpng16 (Petr Gajdos)
+    - Fix parsing of real numbers containing e[+-]number (Carlos
+      Garcia Campos)
+    - Fix a crash in documents containing nested FixedDocument
+      (#685741, Carlos Garcia Campos)
+
+
 libgxps 0.2.2 (19 March 2012)
 =============================
 
