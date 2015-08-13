@@ -61,6 +61,7 @@ libgxps_la_CFLAGS = \
 	$(GXPS_CFLAGS)		\
 	$(GXPS_DEBUG_CFLAGS)	\
 	$(LCMS2_CFLAGS)		\
+	$(LIBPNG_CFLAGS)	\
 	$(WARN_CFLAGS)		\
 	$(AM_CFLAGS)
 
@@ -73,6 +74,7 @@ libgxps_la_LDFLAGS = \
 libgxps_la_LIBADD = \
 	$(GXPS_LIBS)	\
 	$(LCMS2_LIBS)	\
+	$(LIBPNG_LIBS)	\
 	$(LIBJPEG)	\
 	$(LIBTIFF)
 
