@@ -34,6 +34,8 @@
  * #GXPSCoreProperties represents the metadata of a #GXPSFile.
  * #GXPSCoreProperties objects can not be created directly, they
  * are retrieved from a #GXPSFile with gxps_file_get_core_properties().
+ *
+ * Since: 0.2.3
  */
 
 enum {
@@ -590,6 +592,8 @@ _gxps_core_properties_new (GXPSArchive *zip,
  * Get the title.
  *
  * Returns: a string containing the title or %NULL
+ *
+ * Since: 0.2.3
  */
 const gchar *
 gxps_core_properties_get_title (GXPSCoreProperties *core_props)
@@ -606,6 +610,8 @@ gxps_core_properties_get_title (GXPSCoreProperties *core_props)
  * Get the creator.
  *
  * Returns: a string containing the creator or %NULL
+ *
+ * Since: 0.2.3
  */
 const gchar *
 gxps_core_properties_get_creator (GXPSCoreProperties *core_props)
@@ -622,6 +628,8 @@ gxps_core_properties_get_creator (GXPSCoreProperties *core_props)
  * Get the description.
  *
  * Returns: a string containing the description or %NULL
+ *
+ * Since: 0.2.3
  */
 const gchar *
 gxps_core_properties_get_description (GXPSCoreProperties *core_props)
@@ -638,6 +646,8 @@ gxps_core_properties_get_description (GXPSCoreProperties *core_props)
  * Get the subject.
  *
  * Returns: a string containing the subject or %NULL
+ *
+ * Since: 0.2.3
  */
 const gchar *
 gxps_core_properties_get_subject (GXPSCoreProperties *core_props)
@@ -654,6 +664,8 @@ gxps_core_properties_get_subject (GXPSCoreProperties *core_props)
  * Get the keywords.
  *
  * Returns: a string containing the keywords or %NULL
+ *
+ * Since: 0.2.3
  */
 const gchar *
 gxps_core_properties_get_keywords (GXPSCoreProperties *core_props)
@@ -670,6 +682,8 @@ gxps_core_properties_get_keywords (GXPSCoreProperties *core_props)
  * Get the version number.
  *
  * Returns: a string containing the version number or %NULL
+ *
+ * Since: 0.2.3
  */
 const gchar *
 gxps_core_properties_get_version (GXPSCoreProperties *core_props)
@@ -686,6 +700,8 @@ gxps_core_properties_get_version (GXPSCoreProperties *core_props)
  * Get the revision number.
  *
  * Returns: a string containing the revision number or %NULL
+ *
+ * Since: 0.2.3
  */
 const gchar *
 gxps_core_properties_get_revision (GXPSCoreProperties *core_props)
@@ -702,6 +718,8 @@ gxps_core_properties_get_revision (GXPSCoreProperties *core_props)
  * Get the unique identifier.
  *
  * Returns: a string containing the identifier or %NULL
+ *
+ * Since: 0.2.3
  */
 const gchar *
 gxps_core_properties_get_identifier (GXPSCoreProperties *core_props)
@@ -718,6 +736,8 @@ gxps_core_properties_get_identifier (GXPSCoreProperties *core_props)
  * Get the language.
  *
  * Returns: a string containing the language or %NULL
+ *
+ * Since: 0.2.3
  */
 const gchar *
 gxps_core_properties_get_language (GXPSCoreProperties *core_props)
@@ -734,6 +754,8 @@ gxps_core_properties_get_language (GXPSCoreProperties *core_props)
  * Get the category.
  *
  * Returns: a string containing the category or %NULL
+ *
+ * Since: 0.2.3
  */
 const gchar *
 gxps_core_properties_get_category (GXPSCoreProperties *core_props)
@@ -750,6 +772,8 @@ gxps_core_properties_get_category (GXPSCoreProperties *core_props)
  * Get the status of the content (e.g. Draft, Reviewed, Final)
  *
  * Returns: a string containing the status of the content or %NULL
+ *
+ * Since: 0.2.3
  */
 const gchar *
 gxps_core_properties_get_content_status (GXPSCoreProperties *core_props)
@@ -766,8 +790,9 @@ gxps_core_properties_get_content_status (GXPSCoreProperties *core_props)
  * Get the type of content represented, generally defined by a
  * specific use and intended audience. This is not the MIME-Type.
  *
- *
  * Returns: a string containing the type of content or %NULL
+ *
+ * Since: 0.2.3
  */
 const gchar *
 gxps_core_properties_get_content_type (GXPSCoreProperties *core_props)
@@ -784,6 +809,8 @@ gxps_core_properties_get_content_type (GXPSCoreProperties *core_props)
  * Get the creating date.
  *
  * Returns: the creating date as a <type>time_t</type> or -1.
+ *
+ * Since: 0.2.3
  */
 time_t
 gxps_core_properties_get_created (GXPSCoreProperties *core_props)
@@ -801,6 +828,8 @@ gxps_core_properties_get_created (GXPSCoreProperties *core_props)
  *
  * Returns: a string containing the user who performed the
  *    last modification or %NULL
+ *
+ * Since: 0.2.3
  */
 const gchar *
 gxps_core_properties_get_last_modified_by (GXPSCoreProperties *core_props)
@@ -817,6 +846,8 @@ gxps_core_properties_get_last_modified_by (GXPSCoreProperties *core_props)
  * Get the last modification date.
  *
  * Returns: the modification date as a <type>time_t</type> or -1.
+ *
+ * Since: 0.2.3
  */
 time_t
 gxps_core_properties_get_modified (GXPSCoreProperties *core_props)
@@ -833,6 +864,8 @@ gxps_core_properties_get_modified (GXPSCoreProperties *core_props)
  * Get the date of the last printing.
  *
  * Returns: the date of the last printing as a <type>time_t</type> or -1.
+ *
+ * Since: 0.2.3
  */
 time_t
 gxps_core_properties_get_last_printed (GXPSCoreProperties *core_props)
