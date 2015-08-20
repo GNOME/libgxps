@@ -76,6 +76,7 @@ libgxps_la_LIBADD = \
 	$(LCMS2_LIBS)	\
 	$(LIBPNG_LIBS)	\
 	$(LIBJPEG)	\
+	$(LIBM)         \
 	$(LIBTIFF)
 
 EXTRA_DIST = \
