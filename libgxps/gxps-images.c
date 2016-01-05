@@ -608,6 +608,7 @@ fill_tiff_error (GError     **error,
 	}
 }
 
+G_GNUC_PRINTF (2, 0)
 static void
 _tiff_error_handler (const char *mod,
 		     const char *fmt,
