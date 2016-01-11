@@ -20,11 +20,14 @@
 #include <config.h>
 
 #include <glib.h>
+#include <locale.h>
 #include G_STRINGIFY(CONVERTER_HEADER)
 
 gint main (gint argc, gchar **argv)
 {
         GXPSConverter *converter;
+
+        setlocale (LC_ALL, "");
 
         g_type_init ();
 
