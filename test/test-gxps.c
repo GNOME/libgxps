@@ -88,7 +88,10 @@ format_date (time_t utime)
         struct tm *t;
         if (time == 0 || !(t = localtime (&time)) )
                 return NULL;
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wformat-nonliteral"
         len = strftime (s, sizeof (s), fmt_hack, t);
+#pragma GCC diagnostic pop
 #endif
 
         if (len == 0 || s[0] == '\0')
