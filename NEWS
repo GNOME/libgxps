@@ -1,3 +1,18 @@
+libgxps 0.2.4 (20 June 2016)
+============================
+
+Bug fixes:
+
+    - Fix the build with GCC >= 6 (Michael Catanzaro)
+    - Fix non-literal format string warning for clang (#760177,
+      Ting-Wei Lan)
+
+Tools:
+
+    - Correctly show translated messages for command line tools on
+      some locales (#760437, Ting-Wei Lan)
+
+
 libgxps 0.2.3.2 (4 September 2015)
 ==================================
 
