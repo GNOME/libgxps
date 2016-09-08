@@ -25,6 +25,7 @@
 
 G_BEGIN_DECLS
 
+GXPS_AVAILABLE_IN_ALL
 cairo_font_face_t *gxps_fonts_get_font (GXPSArchive *zip,
 					const gchar *font_uri,
 					GError     **error);

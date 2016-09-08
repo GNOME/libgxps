@@ -27,6 +27,7 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 #include <cairo.h>
+#include "gxps-version.h"
 
 G_BEGIN_DECLS
 
@@ -81,17 +82,23 @@ struct _GXPSPageClass {
 	GObjectClass parent_class;
 };
 
+GXPS_AVAILABLE_IN_ALL
 GType    gxps_page_get_type               (void) G_GNUC_CONST;
+GXPS_AVAILABLE_IN_ALL
 GQuark   gxps_page_error_quark            (void) G_GNUC_CONST;
 
+GXPS_AVAILABLE_IN_ALL
 void     gxps_page_get_size               (GXPSPage          *page,
 					   gdouble           *width,
 					   gdouble           *height);
+GXPS_AVAILABLE_IN_ALL
 gboolean gxps_page_render                 (GXPSPage          *page,
 					   cairo_t           *cr,
 					   GError           **error);
+GXPS_AVAILABLE_IN_ALL
 GList   *gxps_page_get_links              (GXPSPage          *page,
 					   GError           **error);
+GXPS_AVAILABLE_IN_ALL
 gboolean gxps_page_get_anchor_destination (GXPSPage          *page,
 					   const gchar       *anchor,
 					   cairo_rectangle_t *area,

@@ -80,17 +80,24 @@ struct _GXPSFileClass {
 	GObjectClass parent_class;
 };
 
+GXPS_AVAILABLE_IN_ALL
 GType               gxps_file_get_type                     (void) G_GNUC_CONST;
+GXPS_AVAILABLE_IN_ALL
 GQuark              gxps_file_error_quark                  (void) G_GNUC_CONST;
+GXPS_AVAILABLE_IN_ALL
 GXPSFile           *gxps_file_new                          (GFile          *filename,
                                                             GError        **error);
 
+GXPS_AVAILABLE_IN_ALL
 guint               gxps_file_get_n_documents              (GXPSFile       *xps);
+GXPS_AVAILABLE_IN_ALL
 GXPSDocument       *gxps_file_get_document                 (GXPSFile       *xps,
                                                             guint           n_doc,
                                                             GError        **error);
+GXPS_AVAILABLE_IN_ALL
 gint                gxps_file_get_document_for_link_target (GXPSFile       *xps,
                                                             GXPSLinkTarget *target);
+GXPS_AVAILABLE_IN_ALL
 GXPSCoreProperties *gxps_file_get_core_properties          (GXPSFile       *xps,
                                                             GError        **error);
 

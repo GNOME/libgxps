@@ -24,7 +24,7 @@
 G_BEGIN_DECLS
 
 #ifdef GXPS_ENABLE_DEBUG
-gboolean gxps_debug_enabled (void);
+GXPS_VAR gboolean gxps_debug_enabled (void);
 #define GXPS_DEBUG(action) G_STMT_START {                \
                               if (gxps_debug_enabled ()) \
                                 action;                  \

@@ -32,10 +32,14 @@ struct _GXPSMatrix {
         cairo_matrix_t     matrix;
 };
 
+GXPS_AVAILABLE_IN_ALL
 GXPSMatrix *gxps_matrix_new         (GXPSRenderContext   *ctx);
+GXPS_AVAILABLE_IN_ALL
 void        gxps_matrix_free        (GXPSMatrix          *matrix);
+GXPS_AVAILABLE_IN_ALL
 gboolean    gxps_matrix_parse       (const gchar         *data,
                                      cairo_matrix_t      *matrix);
+GXPS_AVAILABLE_IN_ALL
 void        gxps_matrix_parser_push (GMarkupParseContext *context,
                                      GXPSMatrix          *matrix);
 

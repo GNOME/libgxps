@@ -50,12 +50,16 @@ struct _GXPSPath {
         gboolean           is_closed  : 1;
 };
 
+GXPS_AVAILABLE_IN_ALL
 GXPSPath *gxps_path_new         (GXPSRenderContext   *ctx);
+GXPS_AVAILABLE_IN_ALL
 void      gxps_path_free        (GXPSPath            *path);
+GXPS_AVAILABLE_IN_ALL
 gboolean  gxps_path_parse       (const gchar         *data,
                                  cairo_t             *cr,
                                  GError             **error);
 
+GXPS_AVAILABLE_IN_ALL
 void      gxps_path_parser_push (GMarkupParseContext *context,
                                  GXPSPath            *path);
 

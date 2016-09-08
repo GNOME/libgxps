@@ -26,6 +26,7 @@
 
 #include <glib-object.h>
 #include <cairo.h>
+#include "gxps-version.h"
 
 G_BEGIN_DECLS
 
@@ -46,18 +47,29 @@ typedef struct _GXPSLink       GXPSLink;
  */
 typedef struct _GXPSLinkTarget GXPSLinkTarget;
 
+GXPS_AVAILABLE_IN_ALL
 GType           gxps_link_get_type            (void) G_GNUC_CONST;
+GXPS_AVAILABLE_IN_ALL
 GXPSLink       *gxps_link_copy                (GXPSLink          *link);
+GXPS_AVAILABLE_IN_ALL
 void            gxps_link_free                (GXPSLink          *link);
+GXPS_AVAILABLE_IN_ALL
 GXPSLinkTarget *gxps_link_get_target          (GXPSLink          *link);
+GXPS_AVAILABLE_IN_ALL
 void            gxps_link_get_area            (GXPSLink          *link,
 					       cairo_rectangle_t *area);
 
+GXPS_AVAILABLE_IN_ALL
 GType           gxps_link_target_get_type     (void) G_GNUC_CONST;
+GXPS_AVAILABLE_IN_ALL
 GXPSLinkTarget *gxps_link_target_copy         (GXPSLinkTarget    *target);
+GXPS_AVAILABLE_IN_ALL
 void            gxps_link_target_free         (GXPSLinkTarget    *target);
+GXPS_AVAILABLE_IN_ALL
 gboolean        gxps_link_target_is_internal  (GXPSLinkTarget    *target);
+GXPS_AVAILABLE_IN_ALL
 const gchar    *gxps_link_target_get_anchor   (GXPSLinkTarget    *target);
+GXPS_AVAILABLE_IN_ALL
 const gchar    *gxps_link_target_get_uri      (GXPSLinkTarget    *target);
 
 G_END_DECLS

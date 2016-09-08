@@ -71,15 +71,22 @@ struct _GXPSOutlineIter {
 	gpointer dummy2;
 };
 
+GXPS_AVAILABLE_IN_ALL
 GType           gxps_document_structure_get_type          (void) G_GNUC_CONST;
 
+GXPS_AVAILABLE_IN_ALL
 gboolean        gxps_document_structure_has_outline       (GXPSDocumentStructure *structure);
+GXPS_AVAILABLE_IN_ALL
 gboolean        gxps_document_structure_outline_iter_init (GXPSOutlineIter       *iter,
 							   GXPSDocumentStructure *structure);
+GXPS_AVAILABLE_IN_ALL
 gboolean        gxps_outline_iter_next                    (GXPSOutlineIter       *iter);
+GXPS_AVAILABLE_IN_ALL
 gboolean        gxps_outline_iter_children                (GXPSOutlineIter       *iter,
 							   GXPSOutlineIter       *parent);
+GXPS_AVAILABLE_IN_ALL
 const gchar    *gxps_outline_iter_get_description         (GXPSOutlineIter       *iter);
+GXPS_AVAILABLE_IN_ALL
 GXPSLinkTarget *gxps_outline_iter_get_target              (GXPSOutlineIter       *iter);
 
 G_END_DECLS

@@ -25,6 +25,7 @@
 #define __GXPS_CORE_PROPERTIES_H__
 
 #include <glib-object.h>
+#include "gxps-version.h"
 
 G_BEGIN_DECLS
 
@@ -56,23 +57,40 @@ struct _GXPSCorePropertiesClass {
         GObjectClass parent_class;
 };
 
+GXPS_AVAILABLE_IN_ALL
 GType        gxps_core_properties_get_type             (void) G_GNUC_CONST;
 
+GXPS_AVAILABLE_IN_ALL
 const gchar *gxps_core_properties_get_title            (GXPSCoreProperties *core_props);
+GXPS_AVAILABLE_IN_ALL
 const gchar *gxps_core_properties_get_creator          (GXPSCoreProperties *core_props);
+GXPS_AVAILABLE_IN_ALL
 const gchar *gxps_core_properties_get_description      (GXPSCoreProperties *core_props);
+GXPS_AVAILABLE_IN_ALL
 const gchar *gxps_core_properties_get_subject          (GXPSCoreProperties *core_props);
+GXPS_AVAILABLE_IN_ALL
 const gchar *gxps_core_properties_get_keywords         (GXPSCoreProperties *core_props);
+GXPS_AVAILABLE_IN_ALL
 const gchar *gxps_core_properties_get_version          (GXPSCoreProperties *core_props);
+GXPS_AVAILABLE_IN_ALL
 const gchar *gxps_core_properties_get_revision         (GXPSCoreProperties *core_props);
+GXPS_AVAILABLE_IN_ALL
 const gchar *gxps_core_properties_get_identifier       (GXPSCoreProperties *core_props);
+GXPS_AVAILABLE_IN_ALL
 const gchar *gxps_core_properties_get_language         (GXPSCoreProperties *core_props);
+GXPS_AVAILABLE_IN_ALL
 const gchar *gxps_core_properties_get_category         (GXPSCoreProperties *core_props);
+GXPS_AVAILABLE_IN_ALL
 const gchar *gxps_core_properties_get_content_status   (GXPSCoreProperties *core_props);
+GXPS_AVAILABLE_IN_ALL
 const gchar *gxps_core_properties_get_content_type     (GXPSCoreProperties *core_props);
+GXPS_AVAILABLE_IN_ALL
 time_t       gxps_core_properties_get_created          (GXPSCoreProperties *core_props);
+GXPS_AVAILABLE_IN_ALL
 const gchar *gxps_core_properties_get_last_modified_by (GXPSCoreProperties *core_props);
+GXPS_AVAILABLE_IN_ALL
 time_t       gxps_core_properties_get_modified         (GXPSCoreProperties *core_props);
+GXPS_AVAILABLE_IN_ALL
 time_t       gxps_core_properties_get_last_printed     (GXPSCoreProperties *core_props);
 
 G_END_DECLS

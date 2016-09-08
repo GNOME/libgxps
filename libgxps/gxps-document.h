@@ -29,6 +29,7 @@
 
 #include "gxps-page.h"
 #include "gxps-document-structure.h"
+#include "gxps-version.h"
 
 G_BEGIN_DECLS
 
@@ -60,18 +61,24 @@ struct _GXPSDocumentClass {
 	GObjectClass parent_class;
 };
 
+GXPS_AVAILABLE_IN_ALL
 GType                  gxps_document_get_type            (void) G_GNUC_CONST;
 
+GXPS_AVAILABLE_IN_ALL
 guint                  gxps_document_get_n_pages         (GXPSDocument *doc);
+GXPS_AVAILABLE_IN_ALL
 GXPSPage              *gxps_document_get_page            (GXPSDocument *doc,
 							  guint         n_page,
 							  GError      **error);
+GXPS_AVAILABLE_IN_ALL
 gboolean               gxps_document_get_page_size       (GXPSDocument *doc,
 							  guint         n_page,
 							  gdouble      *width,
 							  gdouble      *height);
+GXPS_AVAILABLE_IN_ALL
 gint                   gxps_document_get_page_for_anchor (GXPSDocument *doc,
 							  const gchar  *anchor);
+GXPS_AVAILABLE_IN_ALL
 GXPSDocumentStructure *gxps_document_get_structure       (GXPSDocument *doc);
 
 G_END_DECLS

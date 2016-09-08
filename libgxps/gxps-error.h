@@ -25,6 +25,7 @@
 #define __GXPS_ERROR_H__
 
 #include <glib.h>
+#include "gxps-version.h"
 
 G_BEGIN_DECLS
 
@@ -51,6 +52,7 @@ typedef enum {
 	GXPS_ERROR_IMAGE
 } GXPSError;
 
+GXPS_AVAILABLE_IN_ALL
 GQuark gxps_error_quark (void) G_GNUC_CONST;
 
 G_END_DECLS

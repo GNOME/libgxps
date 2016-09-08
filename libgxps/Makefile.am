@@ -63,12 +63,13 @@ libgxps_la_CFLAGS = \
 	$(LCMS2_CFLAGS)		\
 	$(LIBPNG_CFLAGS)	\
 	$(WARN_CFLAGS)		\
-	$(AM_CFLAGS)
+	$(AM_CFLAGS)		\
+	$(GXPS_HIDDEN_VISIBILITY_CFLAGS)
 
 libgxps_la_LDFLAGS = \
 	-version-info $(GXPS_LT_VERSION_INFO)   \
 	-no-undefined				\
-	-export-symbols-regex "^gxps_*"		\
+	-export-dynamic				\
 	$(AM_LDFLAGS)
 
 libgxps_la_LIBADD = \
