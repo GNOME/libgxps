@@ -480,7 +480,13 @@ gxps_path_parse (const gchar *data,
                         is_rel = TRUE;
                 case 'A':
                         while (token.type == PD_TOKEN_NUMBER) {
-                                gdouble xr, yr, rx, farc, fsweep, x, y;
+                                gdouble xr, yr, x, y;
+#ifdef GXPS_ENABLE_DEBUG
+                                /* TODO: for now these variables are only used
+                                 * in debug mode.
+                                 */
+                                gdouble rx, farc, fsweep;
+#endif
 
                                 if (!path_data_get_point (&token, &xr, &yr, error))
                                         return FALSE;
@@ -491,7 +497,9 @@ gxps_path_parse (const gchar *data,
                                         path_data_parse_error (&token, PD_TOKEN_NUMBER, error);
                                         return FALSE;
                                 }
+#ifdef GXPS_ENABLE_DEBUG
                                 rx = token.number;
+#endif
 
                                 if (!path_data_iter_next (&token, error))
                                         return FALSE;
@@ -499,7 +507,9 @@ gxps_path_parse (const gchar *data,
                                         path_data_parse_error (&token, PD_TOKEN_NUMBER, error);
                                         return FALSE;
                                 }
+#ifdef GXPS_ENABLE_DEBUG
                                 farc = token.number;
+#endif
 
                                 if (!path_data_iter_next (&token, error))
                                         return FALSE;
@@ -507,7 +517,9 @@ gxps_path_parse (const gchar *data,
                                         path_data_parse_error (&token, PD_TOKEN_NUMBER, error);
                                         return FALSE;
                                 }
+#ifdef GXPS_ENABLE_DEBUG
                                 fsweep = token.number;
+#endif
 
                                 if (!path_data_iter_next (&token, error))
                                         return FALSE;
