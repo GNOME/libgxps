@@ -350,6 +350,7 @@ struct _jpeg_src_mgr {
 	jmp_buf setjmp_buffer;
 };
 
+#ifdef GXPS_ENABLE_DEBUG
 static const gchar *
 _jpeg_color_space_name (const J_COLOR_SPACE jpeg_color_space)
 {
@@ -363,6 +364,7 @@ _jpeg_color_space_name (const J_COLOR_SPACE jpeg_color_space)
 	default: return "invalid";
 	}
 }
+#endif
 
 static void
 _jpeg_init_source (j_decompress_ptr cinfo)
