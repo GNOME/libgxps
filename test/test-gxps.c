@@ -154,7 +154,7 @@ properties_button_clicked (GtkWidget *button, GXPSFile *xps)
         dialog = gtk_dialog_new_with_buttons ("Document Properties",
                                               GTK_WINDOW (gtk_widget_get_toplevel (button)),
                                               GTK_DIALOG_DESTROY_WITH_PARENT,
-                                              GTK_STOCK_CLOSE, GTK_RESPONSE_CLOSE,
+                                              "Close", GTK_RESPONSE_CLOSE,
                                               NULL);
         g_signal_connect (dialog, "response", G_CALLBACK (gtk_widget_destroy), NULL);
 
@@ -242,9 +242,9 @@ gint main (gint argc, gchar **argv)
 			  G_CALLBACK (gtk_main_quit),
 			  NULL);
 
-	vbox = gtk_vbox_new (FALSE, 6);
+	vbox = gtk_box_new (GTK_ORIENTATION_VERTICAL, 6);
 
-	hbox = gtk_hbox_new (FALSE, 6);
+	hbox = gtk_box_new (GTK_ORIENTATION_HORIZONTAL, 6);
 	view->spin_button = gtk_spin_button_new_with_range  (0,
 							     gxps_document_get_n_pages (view->doc) - 1,
 							     1);
@@ -260,7 +260,7 @@ gint main (gint argc, gchar **argv)
                           G_CALLBACK (properties_button_clicked),
                           xps);
         gtk_button_set_image (GTK_BUTTON (button),
-                              gtk_image_new_from_stock (GTK_STOCK_PROPERTIES, GTK_ICON_SIZE_SMALL_TOOLBAR));
+                              gtk_image_new_from_icon_name ("document-properties", GTK_ICON_SIZE_SMALL_TOOLBAR));
         gtk_box_pack_end (GTK_BOX (hbox), button, FALSE, FALSE, 0);
         gtk_widget_show (button);
 
@@ -276,8 +276,7 @@ gint main (gint argc, gchar **argv)
 	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW (sw),
 					GTK_POLICY_AUTOMATIC,
 					GTK_POLICY_AUTOMATIC);
-	gtk_scrolled_window_add_with_viewport (GTK_SCROLLED_WINDOW (sw),
-					       view->darea);
+	gtk_container_add (GTK_CONTAINER (sw), view->darea);
 	gtk_widget_show (view->darea);
 
 	gtk_box_pack_end (GTK_BOX (vbox), sw, TRUE, TRUE, 0);
