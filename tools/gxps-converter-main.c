@@ -29,8 +29,6 @@ gint main (gint argc, gchar **argv)
 
         setlocale (LC_ALL, "");
 
-        g_type_init ();
-
         converter = GXPS_CONVERTER (g_object_new (CONVERTER_TYPE, NULL));
 
         if (!gxps_converter_init_with_args (converter, &argc, &argv)) {
