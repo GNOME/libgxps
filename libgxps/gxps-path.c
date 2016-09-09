@@ -97,6 +97,8 @@ path_data_token_type_to_string (PathDataTokenType type)
         default:
                 g_assert_not_reached ();
         }
+
+        return NULL;
 }
 
 #ifdef GXPS_ENABLE_DEBUG
@@ -122,6 +124,8 @@ print_token (PathDataToken *token)
         default:
                 g_assert_not_reached ();
         }
+
+        return NULL;
 }
 #endif /* GXPS_ENABLE_DEBUG */
 

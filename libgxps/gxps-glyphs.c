@@ -106,6 +106,8 @@ glyphs_indices_token_type_to_string (GlyphsIndicesTokenType type)
         default:
                 g_assert_not_reached ();
         }
+
+        return NULL;
 }
 
 static gboolean
