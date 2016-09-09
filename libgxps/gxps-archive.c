@@ -70,7 +70,7 @@ _archive_open (struct archive *archive,
 	return (zip->error) ? ARCHIVE_FATAL : ARCHIVE_OK;
 }
 
-static ssize_t
+static la_ssize_t
 _archive_read (struct archive *archive,
 	       void           *data,
 	       const void    **buffer)
@@ -87,10 +87,10 @@ _archive_read (struct archive *archive,
 	return read_bytes;
 }
 
-static off_t
+static la_int64_t
 _archive_skip (struct archive *archive,
 	       void           *data,
-	       off_t           request)
+	       la_int64_t      request)
 {
 	ZipArchive *zip = (ZipArchive *)data;
 
