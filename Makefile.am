@@ -1,4 +1,4 @@
-SUBDIRS = libgxps tools
+SUBDIRS = libgxps tools nmake
 
 if ENABLE_TEST
 SUBDIRS += test
