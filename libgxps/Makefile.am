@@ -1,53 +1,14 @@
 lib_LTLIBRARIES = libgxps.la
 
-NOINST_H_FILES = \
-	gxps-archive.h		\
-	gxps-brush.h		\
-	gxps-color.h		\
-	gxps-debug.h		\
-	gxps-fonts.h		\
-	gxps-glyphs.h		\
-	gxps-images.h		\
-	gxps-matrix.h		\
-	gxps-page-private.h	\
-	gxps-parse-utils.h	\
-	gxps-path.h		\
-	gxps-private.h
-
-INST_H_FILES = \
-	gxps.h				\
-	gxps-core-properties.h		\
-	gxps-document.h			\
-	gxps-document-structure.h	\
-	gxps-error.h			\
-	gxps-file.h			\
-	gxps-links.h			\
-	gxps-page.h			\
-	gxps-version.h
+include Makefile.sources
 
 libgxpsincludedir = $(includedir)/libgxps
-libgxpsinclude_HEADERS = $(INST_H_FILES)
+libgxpsinclude_HEADERS = $(GXPS_BASE_INST_H_FILES)
 
 libgxps_la_SOURCES = \
-	gxps-archive.c			\
-	gxps-brush.c			\
-	gxps-color.c			\
-	gxps-core-properties.c		\
-	gxps-debug.c			\
-	gxps-document.c			\
-	gxps-document-structure.c	\
-	gxps-error.c			\
-	gxps-file.c			\
-	gxps-fonts.c			\
-	gxps-glyphs.c			\
-	gxps-links.c			\
-	gxps-matrix.c			\
-	gxps-images.c			\
-	gxps-page.c			\
-	gxps-parse-utils.c		\
-	gxps-path.c			\
-	$(NOINST_H_FILES)		\
-	$(INST_H_FILES)
+	$(GXPS_BASE_SOURCES)		\
+	$(GXPS_BASE_NOINST_H_FILES)	\
+	$(GXPS_BASE_INST_H_FILES)
 
 libgxps_la_CPPFLAGS = \
 	-I$(top_builddir)	\
