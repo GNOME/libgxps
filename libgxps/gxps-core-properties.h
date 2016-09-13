@@ -25,7 +25,7 @@
 #define __GXPS_CORE_PROPERTIES_H__
 
 #include <glib-object.h>
-#include "gxps-version.h"
+#include <libgxps/gxps-version.h>
 
 G_BEGIN_DECLS
 

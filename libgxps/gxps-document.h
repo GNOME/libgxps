@@ -27,9 +27,10 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 
+#include <libgxps/gxps-version.h>
+
 #include "gxps-page.h"
 #include "gxps-document-structure.h"
-#include "gxps-version.h"
 
 G_BEGIN_DECLS
 

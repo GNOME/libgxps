@@ -27,7 +27,7 @@
 #include <glib-object.h>
 #include <gio/gio.h>
 #include <cairo.h>
-#include "gxps-version.h"
+#include <libgxps/gxps-version.h>
 
 G_BEGIN_DECLS
 

@@ -25,7 +25,7 @@
 #define __GXPS_ERROR_H__
 
 #include <glib.h>
-#include "gxps-version.h"
+#include <libgxps/gxps-version.h>
 
 G_BEGIN_DECLS
 
