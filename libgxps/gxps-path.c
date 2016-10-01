@@ -126,8 +126,6 @@ print_token (PathDataToken *token)
         default:
                 g_assert_not_reached ();
         }
-
-        return NULL;
 }
 #endif /* GXPS_ENABLE_DEBUG */
 
