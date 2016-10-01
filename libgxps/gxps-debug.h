@@ -21,6 +21,8 @@
 
 #include <glib.h>
 
+#include "gxps-version.h"
+
 G_BEGIN_DECLS
 
 #ifdef GXPS_ENABLE_DEBUG
