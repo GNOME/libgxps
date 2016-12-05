@@ -59,7 +59,7 @@ introspection_sources = $(filter-out $(NOINST_H_FILES) gxps-archive.c gxps-fonts
 
 GXPS-0.1.gir: libgxps.la
 GXPS_0_1_gir_INCLUDES = GObject-2.0 Gio-2.0 cairo-1.0
-GXPS_0_1_gir_CFLAGS = $(libgxps_la_CPPFLAGS) $(Gxps_CFLAGS)
+GXPS_0_1_gir_CFLAGS = $(libgxps_la_CPPFLAGS) $(GXPS_CFLAGS)
 GXPS_0_1_gir_LIBS = libgxps.la
 GXPS_0_1_gir_FILES = $(addprefix $(srcdir)/, $(introspection_sources))
 
