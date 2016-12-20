@@ -363,6 +363,7 @@ core_props_end_element (GMarkupParseContext  *context,
                 break;
         case CP_CONTENT_TYPE:
                 priv->content_type = g_strndup (text, text_len);
+                break;
         case CP_CREATED:
                 priv->created = w3cdtf_to_time_t (text);
                 break;
