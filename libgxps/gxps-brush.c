@@ -607,7 +607,7 @@ brush_start_element (GMarkupParseContext  *context,
         } else if (strcmp (element_name, "ImageBrush") == 0) {
                 GXPSBrushImage *image;
                 gchar *image_source = NULL;
-                cairo_rectangle_t viewport, viewbox;
+                cairo_rectangle_t viewport = { 0, }, viewbox = { 0, };
                 cairo_matrix_t matrix;
                 cairo_extend_t extend = CAIRO_EXTEND_NONE;
                 gint i;
@@ -866,7 +866,7 @@ brush_start_element (GMarkupParseContext  *context,
         } else if (strcmp (element_name, "VisualBrush") == 0) {
                 GXPSBrushVisual *visual;
                 GXPSRenderContext *sub_ctx;
-                cairo_rectangle_t viewport, viewbox;
+                cairo_rectangle_t viewport = { 0, }, viewbox = { 0, };
                 cairo_matrix_t matrix;
                 cairo_extend_t extend = CAIRO_EXTEND_NONE;
                 double width, height;
