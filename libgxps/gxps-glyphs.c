@@ -199,7 +199,6 @@ glyphs_lookup_index (cairo_scaled_font_t *scaled_font,
         cairo_glyph_t stack_glyphs[1];
         cairo_glyph_t *glyphs = stack_glyphs;
         int num_glyphs = 1;
-        int utf8_len = g_utf8_next_char (utf8) - utf8;
         gulong index = 0;
 
         if (utf8 == NULL || *utf8 == '\0')
@@ -207,7 +206,8 @@ glyphs_lookup_index (cairo_scaled_font_t *scaled_font,
 
         status = cairo_scaled_font_text_to_glyphs (scaled_font,
                                                    0, 0,
-                                                   utf8, utf8_len,
+                                                   utf8,
+                                                   g_utf8_next_char (utf8) - utf8,
                                                    &glyphs, &num_glyphs,
                                                    NULL, NULL, NULL);
 
