@@ -366,6 +366,7 @@ glyphs_indices_parse (const char          *indices,
                         break;
                 case GI_TOKEN_EOF:
                         eof = TRUE;
+                        /* fall through */
                 case GI_TOKEN_SEMICOLON: {
                         cairo_text_extents_t extents;
 
