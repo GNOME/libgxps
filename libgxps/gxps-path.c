@@ -879,12 +879,14 @@ path_geometry_end_element (GMarkupParseContext  *context,
 
 		if (path->opacity_mask) {
 			gdouble x1 = 0, y1 = 0, x2 = 0, y2 = 0;
+			cairo_path_t *cairo_path;
+
 			if (path->stroke_pattern)
 				cairo_stroke_extents (path->ctx->cr, &x1, &y1, &x2, &y2);
 			else if (path->fill_pattern)
 				cairo_fill_extents (path->ctx->cr, &x1, &y1, &x2, &y2);
 
-			cairo_path_t *cairo_path = cairo_copy_path (path->ctx->cr);
+			cairo_path = cairo_copy_path (path->ctx->cr);
 			cairo_new_path (path->ctx->cr);
 			cairo_rectangle (path->ctx->cr, x1, y1, x2 - x1, y2 - y1);
 			cairo_clip (path->ctx->cr);
