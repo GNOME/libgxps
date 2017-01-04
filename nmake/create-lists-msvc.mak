@@ -48,6 +48,29 @@ NULL=
 !if [del /f /q gxps_objs.mak]
 !endif
 
+# For gxpstools
+!if [call create-lists.bat header gxps_objs.mak gxps_tools_OBJS]
+!endif
+
+!if [for %c in ($(LIBGXPS_TOOLS_SOURCES)) do @if "%~xc" == ".c" @call create-lists.bat file gxps_objs.mak ^$(CFG)\^$(PLAT)\tools\%~nc.obj]
+!endif
+
+!if [call create-lists.bat footer gxps_objs.mak]
+!endif
+
+# For xpstopdf
+!if "$(CAIRO_PDF)" == "1"
+
+!if [call create-lists.bat header gxps_objs.mak xpstopdf_OBJS]
+!endif
+
+!if [for %c in ($(XPS_TO_PDF_SOURCES)) do @if "%~xc" == ".c" @call create-lists.bat file gxps_objs.mak ^$(CFG)\^$(PLAT)\xpstopdf\%~nc.obj]
+!endif
+
+!if [call create-lists.bat footer gxps_objs.mak]
+!endif
+!endif
+
 # Gather the list of headers
 !if [call create-lists.bat header gxps_srcs.mak GXPS_ACTUAL_HEADERS]
 !endif

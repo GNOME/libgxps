@@ -1,14 +1,8 @@
+include Makefile.sources
+
 noinst_LTLIBRARIES = libgxpstools.la
 
-libgxpstools_la_SOURCES = \
-	gxps-converter.c	\
-	gxps-converter.h	\
-	gxps-image-converter.c	\
-	gxps-image-converter.h	\
-	gxps-image-writer.c	\
-	gxps-image-writer.h	\
-	gxps-print-converter.c	\
-	gxps-print-converter.h
+libgxpstools_la_SOURCES = $(LIBGXPS_TOOLS_SOURCES)
 
 libgxpstools_la_CPPFLAGS = \
 	-I$(top_srcdir)		\
@@ -36,12 +30,7 @@ tools_cflags = \
 if HAVE_LIBPNG
 bin_PROGRAMS += xpstopng
 
-xpstopng_SOURCES = \
-	gxps-converter-main.c	\
-	gxps-png-converter.c	\
-	gxps-png-converter.h	\
-	gxps-png-writer.c	\
-	gxps-png-writer.h
+xpstopng_SOURCES = $(XPS_TO_PNG_SOURCES)
 
 xpstopng_CPPFLAGS = \
 	$(tools_cppflags)				\
@@ -61,12 +50,7 @@ endif # HAVE_LIBPNG
 if HAVE_LIBJPEG
 bin_PROGRAMS += xpstojpeg
 
-xpstojpeg_SOURCES = \
-	gxps-converter-main.c	\
-	gxps-jpeg-converter.c	\
-	gxps-jpeg-converter.h	\
-	gxps-jpeg-writer.c	\
-	gxps-jpeg-writer.h
+xpstojpeg_SOURCES = $(XPS_TO_JPEG_SOURCES)
 
 xpstojpeg_CPPFLAGS = \
 	$(tools_cppflags)				\
@@ -85,10 +69,7 @@ endif # HAVE_LIBJPEG
 if HAVE_CAIRO_PDF
 bin_PROGRAMS += xpstopdf
 
-xpstopdf_SOURCES = \
-	gxps-converter-main.c	\
-	gxps-pdf-converter.c	\
-	gxps-pdf-converter.h
+xpstopdf_SOURCES = $(XPS_TO_PDF_SOURCES)
 
 xpstopdf_CPPFLAGS = \
 	$(tools_cppflags)				\
@@ -108,10 +89,7 @@ endif # HAVE_CAIRO_PDF
 if HAVE_CAIRO_PS
 bin_PROGRAMS += xpstops
 
-xpstops_SOURCES = \
-	gxps-converter-main.c	\
-	gxps-ps-converter.c	\
-	gxps-ps-converter.h
+xpstops_SOURCES = $(XPS_TO_PS_SOURCES)
 
 xpstops_CPPFLAGS = \
 	$(tools_cppflags)				\
@@ -131,10 +109,7 @@ endif # HAVE_CAIRO_PS
 if HAVE_CAIRO_SVG
 bin_PROGRAMS += xpstosvg
 
-xpstosvg_SOURCES = \
-	gxps-converter-main.c	\
-	gxps-svg-converter.c	\
-	gxps-svg-converter.h
+xpstosvg_SOURCES = $(XPS_TO_SVG_SOURCES)
 
 xpstosvg_CPPFLAGS = \
 	$(tools_cppflags)				\

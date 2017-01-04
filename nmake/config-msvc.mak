@@ -28,11 +28,13 @@ GXPS_HEADERS = \
 GXPS_DEP_LIBS = user32.lib Advapi32.lib $(GXPS_MAIN_LIBS)
 
 # We build the GXPS DLL/LIB at least
-GXPS_LIBS = $(CFG)\$(PLAT)\gxps.lib
+GXPS_LIBS = $(CFG)\$(PLAT)\gxps.lib $(CFG)\$(PLAT)\gxpstools.lib
 
 # Note: All the utility and test programs require GLib support to be present!
 GXPS_TESTS =
 GXPS_TESTS_DEP_LIBS = $(GXPS_MAIN_LIBS)
+
+GXPS_TOOLS =
 
 # Use libtool-style DLL names, if desired
 !if "$(LIBTOOL_DLL_NAME)" == "1"
@@ -53,6 +55,7 @@ GXPS_CFLAGS = \
 # Enable cairo-pdf if desired
 !if "$(CAIRO_PDF)" == "1"
 GXPS_DEFINES = $(GXPS_DEFINES) /DHAVE_CAIRO_PDF=1
+GXPS_TOOLS = $(GXPS_TOOLS) $(CFG)\$(PLAT)\xpstopdf.exe
 !endif
 
 # Enable cairo-ps if desired

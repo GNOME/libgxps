@@ -1,0 +1,46 @@
+NULL =
+
+LIBGXPS_TOOLS_SOURCES = \
+	gxps-converter.c	\
+	gxps-converter.h	\
+	gxps-image-converter.c	\
+	gxps-image-converter.h	\
+	gxps-image-writer.c	\
+	gxps-image-writer.h	\
+	gxps-print-converter.c	\
+	gxps-print-converter.h	\
+	$(NULL)
+
+XPS_TO_PNG_SOURCES = \
+	gxps-converter-main.c	\
+	gxps-png-converter.c	\
+	gxps-png-converter.h	\
+	gxps-png-writer.c	\
+	gxps-png-writer.h	\
+	$(NULL)
+
+XPS_TO_JPEG_SOURCES = \
+	gxps-converter-main.c	\
+	gxps-jpeg-converter.c	\
+	gxps-jpeg-converter.h	\
+	gxps-jpeg-writer.c	\
+	gxps-jpeg-writer.h	\
+	$(NULL)
+
+XPS_TO_PDF_SOURCES = \
+	gxps-converter-main.c	\
+	gxps-pdf-converter.c	\
+	gxps-pdf-converter.h	\
+	$(NULL)
+
+XPS_TO_PS_SOURCES = \
+	gxps-converter-main.c	\
+	gxps-ps-converter.c	\
+	gxps-ps-converter.h	\
+	$(NULL)
+
+XPS_TO_SVG_SOURCES = \
+	gxps-converter-main.c	\
+	gxps-svg-converter.c	\
+	gxps-svg-converter.h	\
+	$(NULL)

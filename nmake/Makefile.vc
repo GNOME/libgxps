@@ -11,6 +11,7 @@
 
 # Include the Makefile portions with the source listings
 !include ..\libgxps\Makefile.sources
+!include ..\tools\Makefile.sources
 
 # Include the Makefile portion that enables features based on user input
 !include config-msvc.mak
@@ -21,7 +22,7 @@
 # into the lists we need for compilation and introspection
 !include create-lists-msvc.mak
 
-all: $(GXPS_LIBS) $(EXTRA_TARGETS) all-build-info
+all: $(GXPS_LIBS) $(GXPS_TOOLS) $(EXTRA_TARGETS) all-build-info
 
 tests: all $(GXPS_TESTS)
 

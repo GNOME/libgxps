@@ -4,6 +4,10 @@ INC_FEATURES =
 BUILT_TOOLS =
 BUILT_LIBRARIES = GXPS
 
+!if "$(CAIRO_PDF)" == "1"
+BUILT_TOOLS = xpstopdf.exe $(BUILT_TOOLS)
+!endif
+
 build-info-gxps:
 	@echo.
 	@echo ==================================

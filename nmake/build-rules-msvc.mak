@@ -18,6 +18,16 @@
 $<
 <<
 
+{..\tools\}.c{$(CFG)\$(PLAT)\tools\}.obj::
+	$(CXX) $(CFLAGS) $(GXPS_DEFINES) $(GXPS_LIB_CFLAGS) /Fo$(CFG)\$(PLAT)\tools\ /c @<<
+$<
+<<
+
+{..\tools\}.c{$(CFG)\$(PLAT)\xpstopdf\}.obj::
+	$(CXX) $(CFLAGS) $(GXPS_DEFINES) /DCONVERTER_TYPE=GXPS_TYPE_PDF_CONVERTER /DCONVERTER_HEADER=gxps-pdf-converter.h $(GXPS_LIB_CFLAGS) /Fo$(CFG)\$(PLAT)\xpstopdf\ /c @<<
+$<
+<<
+
 # Inference rules for building the test programs
 # Used for programs with a single source file.
 # Format is as follows
@@ -44,6 +54,11 @@ $(gxps_dll_OBJS)
 <<
 	@-if exist $@.manifest mt /manifest $@.manifest /outputresource:$@;2
 
+$(CFG)\$(PLAT)\gxpstools.lib: $(CFG)\$(PLAT)\gxps.lib $(CFG)\$(PLAT)\tools $(gxps_tools_OBJS)
+	lib $(LDFLAGS_BASE) $(CFG)\$(PLAT)\gxps.lib -out:$@ @<<
+$(gxps_tools_OBJS)
+<<
+
 # Rules for linking Executables
 # Format is as follows (the mt command is needed for MSVC 2005/2008 builds):
 # $(dll_name_with_path): $(dependent_libs_files_objects_and_items)
@@ -51,7 +66,11 @@ $(gxps_dll_OBJS)
 # $(dependent_objects)
 # <<
 # 	@-if exist $@.manifest mt /manifest $@.manifest /outputresource:$@;1
-
+$(CFG)\$(PLAT)\xpstopdf.exe: $(CFG)\$(PLAT)\gxps.lib $(CFG)\$(PLAT)\gxpstools.lib $(CFG)\$(PLAT)\xpstopdf $(xpstopdf_OBJS)
+	link $(LDFLAGS) $(CFG)\$(PLAT)\gxps.lib $(CFG)\$(PLAT)\gxpstools.lib $(GXPS_DEP_LIBS) -out:$@ @<<
+$(xpstopdf_OBJS)
+<<
+	@-if exist $@.manifest mt /manifest $@.manifest /outputresource:$@;1
 
 # Other .obj files requiring individual attention, that could not be covered by the inference rules.
 # Format is as follows (all dirs must have a trailing '\'):
@@ -63,10 +82,13 @@ $(gxps_dll_OBJS)
 
 clean:
 	@-del /f /q $(CFG)\$(PLAT)\*.pdb
+	@-if exist $(CFG)\$(PLAT)\.exe.manifest del /f /q $(CFG)\$(PLAT)\*.exe.manifest
+	@-if exist $(CFG)\$(PLAT)\.exe del /f /q $(CFG)\$(PLAT)\*.exe
 	@-del /f /q $(CFG)\$(PLAT)\*.dll.manifest
 	@-del /f /q $(CFG)\$(PLAT)\*.dll
 	@-del /f /q $(CFG)\$(PLAT)\*.ilk
 	@-del /f /q $(CFG)\$(PLAT)\*.obj
 	@-del /f /q $(CFG)\$(PLAT)\gxps\*.obj
+	@-if exist $(CFG)\$(PLAT)\tools del /f /q $(CFG)\$(PLAT)\tools\*.obj
 	@-rmdir /s /q $(CFG)\$(PLAT)
 	@-del vc$(VSVER)0.pdb

@@ -8,4 +8,6 @@ install: all
 	@copy /b $(GXPS_DLL_FILENAME).dll $(PREFIX)\bin
 	@copy /b $(GXPS_DLL_FILENAME).pdb $(PREFIX)\bin
 	@copy /b $(CFG)\$(PLAT)\gxps.lib $(PREFIX)\lib
+	@if exist $(CFG)\$(PLAT)\xpstopdf.exe copy /b $(CFG)\$(PLAT)\xpstopdf.exe $(PREFIX)\bin
+	@if exist $(CFG)\$(PLAT)\xpstopdf.exe copy /b $(CFG)\$(PLAT)\xpstopdf.pdb $(PREFIX)\bin
 	@for %h in ($(GXPS_ACTUAL_HEADERS)) do @copy %h $(PREFIX)\include\libgxps

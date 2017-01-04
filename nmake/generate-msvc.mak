@@ -4,5 +4,5 @@
 # one is maintaining the NMake build files.
 
 # Create the build directories
-$(CFG)\$(PLAT)\gxps:
+$(CFG)\$(PLAT)\gxps $(CFG)\$(PLAT)\tools $(CFG)\$(PLAT)\xpstopdf:
 	@-mkdir $@
