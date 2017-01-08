@@ -6,6 +6,9 @@ GXPS_MAIN_LIBS = gio-2.0.lib gobject-2.0.lib glib-2.0.lib cairo.lib archive.lib 
 # libpng library
 LIBPNG_LIB = libpng16.lib
 
+# libjpeg library
+LIBJPEG_LIB = jpeg.lib
+
 # Please do not change anything beneath this line unless maintaining the NMake Makefiles
 # Bare minimum features and sources built into GXPS on Windows
 GXPS_DEFINES = /DGXPS_COMPILATION
@@ -50,6 +53,11 @@ GXPS_DEP_LIBS = $(GXPS_DEP_LIBS) $(LIBPNG_LIB)
 GXPS_CFLAGS = \
 	$(GXPS_CFLAGS) \
 	/I$(PREFIX)\include\libpng
+!endif
+
+!if "$(LIBJPEG)" == "1"
+GXPS_DEFINES = $(GXPS_DEFINES) /DHAVE_LIBJPEG=1
+GXPS_DEP_LIBS = $(GXPS_DEP_LIBS) $(LIBJPEG_LIB)
 !endif
 
 # Enable cairo-pdf if desired
