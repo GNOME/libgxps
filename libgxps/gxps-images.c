@@ -903,21 +903,26 @@ gxps_images_get_image (GXPSArchive *zip,
 		       GError     **error)
 {
 	GXPSImage *image = NULL;
+	gchar *image_uri_lower;
 
 	/* First try with extensions,
 	 * as it's recommended by the spec
 	 * (2.1.5 Image Parts)
 	 */
-	if (g_str_has_suffix (image_uri, ".png")) {
+	image_uri_lower = g_utf8_strdown (image_uri, -1);
+	if (g_str_has_suffix (image_uri_lower, ".png")) {
 		image = gxps_images_create_from_png (zip, image_uri, error);
-	} else if (g_str_has_suffix (image_uri, ".jpg")) {
+	} else if (g_str_has_suffix (image_uri_lower, ".jpg")) {
 		image = gxps_images_create_from_jpeg (zip, image_uri, error);
-	} else if (g_str_has_suffix (image_uri, ".tif")) {
+	} else if (g_str_has_suffix (image_uri_lower, ".tif")) {
 		image = gxps_images_create_from_tiff (zip, image_uri, error);
-	} else if (g_str_has_suffix (image_uri, "wdp")) {
+	} else if (g_str_has_suffix (image_uri_lower, "wdp")) {
 		GXPS_DEBUG (g_message ("Unsupported image format windows media photo"));
+		g_free (image_uri_lower);
 		return NULL;
 	}
+
+	g_free (image_uri_lower);
 
 	if (!image) {
 		gchar *mime_type;
