@@ -49,7 +49,7 @@ enum {
 struct _GXPSFilePrivate {
 	GFile       *file;
 	GXPSArchive *zip;
-	GList       *docs;
+	GPtrArray   *docs;
 
 	gboolean     initialized;
 	GError      *init_error;
@@ -178,11 +178,10 @@ fixed_repr_start_element (GMarkupParseContext  *context,
 
 		for (i = 0; names[i]; i++) {
 			if (strcmp (names[i], "Source") == 0) {
-				xps->priv->docs = g_list_prepend (xps->priv->docs,
-								  gxps_resolve_relative_path (xps->priv->fixed_repr, values[i]));
+				g_ptr_array_add (xps->priv->docs,
+						 gxps_resolve_relative_path (xps->priv->fixed_repr, values[i]));
 			}
 		}
-		xps->priv->docs = g_list_reverse (xps->priv->docs);
 	} else if (strcmp (element_name, "FixedDocumentSequence") == 0) {
 		/* Nothing to do */
 	} else {
@@ -242,8 +241,7 @@ gxps_file_finalize (GObject *object)
 	}
 
 	if (xps->priv->docs) {
-		g_list_foreach (xps->priv->docs, (GFunc)g_free, NULL);
-		g_list_free (xps->priv->docs);
+		g_ptr_array_free (xps->priv->docs, TRUE);
 		xps->priv->docs = NULL;
 	}
 
@@ -331,6 +329,8 @@ gxps_file_initable_init (GInitable     *initable,
 
 	xps->priv->initialized = TRUE;
 
+	xps->priv->docs = g_ptr_array_new_with_free_func (g_free);
+
 	xps->priv->zip = gxps_archive_new (xps->priv->file, &xps->priv->init_error);
 	if (!xps->priv->zip) {
 		g_propagate_error (error, g_error_copy (xps->priv->init_error));
@@ -356,7 +356,7 @@ gxps_file_initable_init (GInitable     *initable,
 		return FALSE;
 	}
 
-	if (!xps->priv->docs) {
+	if (xps->priv->docs->len == 0) {
 		g_set_error_literal (&xps->priv->init_error,
 				     GXPS_FILE_ERROR,
 				     GXPS_FILE_ERROR_INVALID,
@@ -408,7 +408,7 @@ gxps_file_get_n_documents (GXPSFile *xps)
 {
 	g_return_val_if_fail (GXPS_IS_FILE (xps), 0);
 
-	return g_list_length (xps->priv->docs);
+	return xps->priv->docs->len;
 }
 
 /**
@@ -431,8 +431,9 @@ gxps_file_get_document (GXPSFile *xps,
 	const gchar  *source;
 
 	g_return_val_if_fail (GXPS_IS_FILE (xps), NULL);
+	g_return_val_if_fail (n_doc < xps->priv->docs->len, NULL);
 
-	source = g_list_nth_data (xps->priv->docs, n_doc);
+	source = g_ptr_array_index (xps->priv->docs, n_doc);
 	g_assert (source != NULL);
 
 	return _gxps_document_new (xps->priv->zip, source, error);
@@ -458,18 +459,16 @@ gint
 gxps_file_get_document_for_link_target (GXPSFile       *xps,
 					GXPSLinkTarget *target)
 {
-	GList       *l;
-	guint        n_doc = 0;
+	guint        i;
 	const gchar *uri;
 
         g_return_val_if_fail (GXPS_IS_FILE (xps), -1);
         g_return_val_if_fail (target != NULL, -1);
 
 	uri = gxps_link_target_get_uri (target);
-	for (l = xps->priv->docs; l; l = g_list_next (l)) {
-		if (g_ascii_strcasecmp (uri, (gchar *)l->data) == 0)
-			return n_doc;
-		n_doc++;
+	for (i = 0; i < xps->priv->docs->len; ++i) {
+		if (g_ascii_strcasecmp (uri, (gchar *)xps->priv->docs->pdata[i]) == 0)
+			return i;
 	}
 
 	return -1;
