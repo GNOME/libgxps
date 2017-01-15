@@ -35,10 +35,10 @@ enum {
 struct _GXPSArchive {
 	GObject parent;
 
-	gboolean  initialized;
-	GError   *init_error;
-	GFile    *filename;
-	GList    *entries;
+	gboolean    initialized;
+	GError     *init_error;
+	GFile      *filename;
+	GHashTable *entries;
 };
 
 struct _GXPSArchiveClass {
@@ -182,8 +182,7 @@ gxps_archive_finalize (GObject *object)
 	GXPSArchive *archive = GXPS_ARCHIVE (object);
 
 	if (archive->entries) {
-		g_list_foreach (archive->entries, (GFunc)g_free, NULL);
-		g_list_free (archive->entries);
+		g_hash_table_unref (archive->entries);
 		archive->entries = NULL;
 	}
 
@@ -197,10 +196,30 @@ gxps_archive_finalize (GObject *object)
 	G_OBJECT_CLASS (gxps_archive_parent_class)->finalize (object);
 }
 
+static guint
+caseless_hash (gconstpointer v)
+{
+    gchar *lower;
+    guint ret;
+
+    lower = g_ascii_strdown (v, -1);
+    ret = g_str_hash (lower);
+    g_free (lower);
+
+    return ret;
+}
+
+static gboolean
+caseless_equal (gconstpointer v1,
+                gconstpointer v2)
+{
+    return g_ascii_strcasecmp (v1, v2) == 0;
+}
+
 static void
 gxps_archive_init (GXPSArchive *archive)
 {
-
+	archive->entries = g_hash_table_new_full (caseless_hash, caseless_equal, g_free, NULL);
 }
 
 static void
@@ -271,8 +290,7 @@ gxps_archive_initable_init (GInitable     *initable,
 
         while (gxps_zip_archive_iter_next (zip, &entry)) {
                 /* FIXME: We can ignore directories here */
-                archive->entries = g_list_prepend (archive->entries,
-                                                   g_strdup (archive_entry_pathname (entry)));
+                g_hash_table_add (archive->entries, g_strdup (archive_entry_pathname (entry)));
                 archive_read_data_skip (zip->archive);
         }
 
@@ -297,21 +315,17 @@ gxps_archive_new (GFile   *filename,
 			       NULL);
 }
 
-static inline gboolean
-archive_has_entry (GXPSArchive *archive,
-                   const gchar *path)
-{
-        return g_list_find_custom (archive->entries, path, (GCompareFunc)g_ascii_strcasecmp) != NULL;
-}
-
 gboolean
 gxps_archive_has_entry (GXPSArchive *archive,
 			const gchar *path)
 {
-	if (path && path[0] == '/')
+	if (path == NULL)
+		return FALSE;
+
+	if (path[0] == '/')
 		path++;
 
-	return archive_has_entry (archive, path);
+	return g_hash_table_contains (archive->entries, path);
 }
 
 /* GXPSArchiveInputStream */
@@ -340,14 +354,17 @@ gxps_archive_open (GXPSArchive *archive,
 		   const gchar *path)
 {
 	GXPSArchiveInputStream *stream;
-        gchar                  *first_piece_path = NULL;
+	gchar                  *first_piece_path = NULL;
 
-	if (path && path[0] == '/')
+	if (path == NULL)
+		return NULL;
+
+	if (path[0] == '/')
 		path++;
 
-	if (!archive_has_entry (archive, path)) {
+	if (!g_hash_table_contains (archive->entries, path)) {
                 first_piece_path = g_build_filename (path, "[0].piece", NULL);
-                if (!archive_has_entry (archive, first_piece_path)) {
+                if (!g_hash_table_contains (archive->entries, first_piece_path)) {
                         g_free (first_piece_path);
 
                         return NULL;
