@@ -374,7 +374,7 @@ _jpeg_init_source (j_decompress_ptr cinfo)
 {
 }
 
-static int
+static boolean
 _jpeg_fill_input_buffer (j_decompress_ptr cinfo)
 {
 	struct _jpeg_src_mgr *src = (struct _jpeg_src_mgr *)cinfo->src;
