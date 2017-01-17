@@ -76,9 +76,7 @@ outline_node_free (OutlineNode *node)
 
 	g_free (node->desc);
 	g_free (node->target);
-
-	if (node->children)
-		g_list_foreach (node->children, (GFunc)outline_node_free, NULL);
+	g_list_free_full (node->children, (GDestroyNotify)outline_node_free);
 
 	g_slice_free (OutlineNode, node);
 }
@@ -99,7 +97,7 @@ gxps_document_structure_finalize (GObject *object)
 	}
 
 	if (structure->priv->outline) {
-		g_list_foreach (structure->priv->outline, (GFunc)outline_node_free, NULL);
+		g_list_free_full (structure->priv->outline, (GDestroyNotify)outline_node_free);
 		structure->priv->outline = NULL;
 	}
 
