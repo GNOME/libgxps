@@ -24,7 +24,7 @@ tools_cppflags = \
 
 tools_cflags = \
 	$(GXPS_CFLAGS)	\
-	$(WARN_CFLAGS)
+	$(WARN_CFLAGS) \
 	$(AM_CFLAGS)
 
 if HAVE_LIBPNG
