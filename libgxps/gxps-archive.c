@@ -199,21 +199,21 @@ gxps_archive_finalize (GObject *object)
 static guint
 caseless_hash (gconstpointer v)
 {
-    gchar *lower;
-    guint ret;
+	gchar *lower;
+	guint ret;
 
-    lower = g_ascii_strdown (v, -1);
-    ret = g_str_hash (lower);
-    g_free (lower);
+	lower = g_ascii_strdown (v, -1);
+	ret = g_str_hash (lower);
+	g_free (lower);
 
-    return ret;
+	return ret;
 }
 
 static gboolean
 caseless_equal (gconstpointer v1,
                 gconstpointer v2)
 {
-    return g_ascii_strcasecmp (v1, v2) == 0;
+	return g_ascii_strcasecmp (v1, v2) == 0;
 }
 
 static void
