@@ -109,7 +109,6 @@ gxps_converter_print_converter_begin_document (GXPSConverter *converter,
         basename = g_path_get_basename (converter->input_filename);
         basename_lower = g_ascii_strdown (basename, -1);
         ext = g_strrstr (basename_lower, ".xps");
-        g_free (basename_lower);
 
         if (ext) {
                 gchar *name;
@@ -123,6 +122,7 @@ gxps_converter_print_converter_begin_document (GXPSConverter *converter,
                                                              gxps_converter_get_extension (converter));
         }
 
+        g_free (basename_lower);
         g_free (basename);
 }
 
