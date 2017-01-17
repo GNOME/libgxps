@@ -43,11 +43,6 @@ NULL=
 !if [call create-lists.bat footer gxps_objs.mak]
 !endif
 
-!include gxps_objs.mak
-
-!if [del /f /q gxps_objs.mak]
-!endif
-
 # For gxpstools
 !if [call create-lists.bat header gxps_objs.mak gxps_tools_OBJS]
 !endif
@@ -69,6 +64,11 @@ NULL=
 
 !if [call create-lists.bat footer gxps_objs.mak]
 !endif
+!endif
+
+!include gxps_objs.mak
+
+!if [del /f /q gxps_objs.mak]
 !endif
 
 # Gather the list of headers
