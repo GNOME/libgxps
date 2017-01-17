@@ -431,10 +431,11 @@ gxps_archive_read_entry (GXPSArchive *archive,
 			*bytes_read += bytes;
 		} while (bytes > 0);
 
+		g_object_unref (stream);
+
 		if (*bytes_read == 0) {
 			/* TODO: Error */
 			g_free (*buffer);
-			g_object_unref (stream);
 			return FALSE;
 		}
 
