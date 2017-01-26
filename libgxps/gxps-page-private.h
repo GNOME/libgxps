@@ -26,6 +26,7 @@
 #include "gxps-page.h"
 #include "gxps-archive.h"
 #include "gxps-images.h"
+#include "gxps-resources.h"
 
 G_BEGIN_DECLS
 

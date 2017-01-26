@@ -39,6 +39,8 @@ struct _GXPSArchive {
 	GError     *init_error;
 	GFile      *filename;
 	GHashTable *entries;
+
+	GXPSResources *resources;
 };
 
 struct _GXPSArchiveClass {
@@ -182,6 +184,7 @@ gxps_archive_finalize (GObject *object)
 	g_clear_pointer (&archive->entries, g_hash_table_unref);
 	g_clear_object (&archive->filename);
 	g_clear_error (&archive->init_error);
+	g_clear_object (&archive->resources);
 
 	G_OBJECT_CLASS (gxps_archive_parent_class)->finalize (object);
 }
@@ -316,6 +319,19 @@ gxps_archive_has_entry (GXPSArchive *archive,
 		path++;
 
 	return g_hash_table_contains (archive->entries, path);
+}
+
+GXPSResources *
+gxps_archive_get_resources (GXPSArchive *archive)
+{
+	g_return_val_if_fail (GXPS_IS_ARCHIVE (archive), NULL);
+
+	if (archive->resources == NULL)
+		archive->resources = g_object_new (GXPS_TYPE_RESOURCES,
+		                                   "archive", archive,
+		                                   NULL);
+
+	return archive->resources;
 }
 
 /* GXPSArchiveInputStream */

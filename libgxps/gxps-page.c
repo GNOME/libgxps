@@ -276,6 +276,7 @@ typedef struct {
 
 	gdouble            opacity;
 	cairo_pattern_t   *opacity_mask;
+	gboolean           pop_resource_dict;
 } GXPSCanvas;
 
 static GXPSCanvas *
@@ -288,6 +289,7 @@ gxps_canvas_new (GXPSRenderContext *ctx)
 
 	/* Default values */
 	canvas->opacity = 1.0;
+	canvas->pop_resource_dict = FALSE;
 
 	return canvas;
 }
@@ -322,6 +324,22 @@ canvas_start_element (GMarkupParseContext  *context,
 
 		brush = gxps_brush_new (canvas->ctx);
 		gxps_brush_parser_push (context, brush);
+	} else if (strcmp (element_name, "Canvas.Resources") == 0) {
+		GXPSResources *resources;
+
+		if (canvas->pop_resource_dict) {
+			gxps_parse_error (context,
+					  canvas->ctx->page->priv->source,
+					  G_MARKUP_ERROR_UNKNOWN_ELEMENT,
+					  element_name, NULL, NULL, error);
+			return;
+		}
+
+		resources = gxps_archive_get_resources (canvas->ctx->page->priv->zip);
+		gxps_resources_push_dict (resources);
+		canvas->pop_resource_dict = TRUE;
+		gxps_resources_parser_push (context, resources,
+		                            canvas->ctx->page->priv->source);
 	} else {
 		render_start_element (context,
 				      element_name,
@@ -359,6 +377,8 @@ canvas_end_element (GMarkupParseContext  *context,
 			cairo_push_group (canvas->ctx->cr);
 		}
 		gxps_brush_free (brush);
+	} else if (strcmp (element_name, "Canvas.Resources") == 0) {
+		gxps_resources_parser_pop (context);
 	} else {
 		render_end_element (context,
 				    element_name,
@@ -385,6 +405,95 @@ static GMarkupParser canvas_parser = {
 };
 
 static void
+resource_start_element (GMarkupParseContext  *context,
+                        const gchar          *element_name,
+                        const gchar         **names,
+                        const gchar         **values,
+                        gpointer              user_data,
+                        GError              **error)
+{
+	if (strcmp (element_name, "PathGeometry") == 0) {
+		GXPSPath *path = (GXPSPath *)user_data;
+
+		gxps_path_parser_push (context, path);
+	} else if (g_str_has_suffix (element_name, "Brush")) {
+		GXPSPath *path = (GXPSPath *)user_data;
+		GXPSBrush *brush;
+
+		brush = gxps_brush_new (path->ctx);
+		gxps_brush_parser_push (context, brush);
+	}
+}
+
+static void
+resource_end_element (GMarkupParseContext  *context,
+		      const gchar          *element_name,
+		      gpointer              user_data,
+		      GError              **error)
+{
+	if (strcmp (element_name, "PathGeometry") == 0) {
+		g_markup_parse_context_pop (context);
+	} else if (g_str_has_suffix (element_name, "Brush")) {
+		GXPSPath *path = (GXPSPath *)user_data;
+		GXPSBrush *brush = g_markup_parse_context_pop (context);
+
+		path->fill_pattern = cairo_pattern_reference (brush->pattern);
+		gxps_brush_free (brush);
+	}
+}
+
+static GMarkupParser resource_parser = {
+	resource_start_element,
+	resource_end_element,
+	NULL,
+	NULL,
+	NULL
+};
+
+static gboolean
+expand_resource (GXPSPage    *page,
+                 const gchar *data,
+                 gpointer     user_data)
+{
+	gchar *resource_key;
+	gchar *p;
+	gsize len;
+	GXPSResources *resources;
+	const gchar *resource;
+	GMarkupParseContext *context;
+	gboolean ret = TRUE;
+
+	if (!g_str_has_prefix (data, "{StaticResource "))
+		return FALSE;
+
+	p = strstr (data, "}");
+	if (p == NULL)
+		return FALSE;
+
+	len = strlen ("{StaticResource ");
+	resource_key = g_strndup (data + len, p - (data + len));
+
+	if (!resource_key || *resource_key == '\0') {
+		g_free (resource_key);
+		return FALSE;
+	}
+
+	resources = gxps_archive_get_resources (page->priv->zip);
+	resource = gxps_resources_get_resource (resources, resource_key);
+	g_free (resource_key);
+	if (!resource)
+		return FALSE;
+
+	context = g_markup_parse_context_new (&resource_parser, 0, user_data, NULL);
+
+	ret = g_markup_parse_context_parse (context, resource, strlen (resource), NULL) &&
+	      g_markup_parse_context_end_parse (context, NULL);
+	g_markup_parse_context_free (context);
+
+	return ret;
+}
+
+static void
 render_start_element (GMarkupParseContext  *context,
 		      const gchar          *element_name,
 		      const gchar         **names,
@@ -404,7 +513,15 @@ render_start_element (GMarkupParseContext  *context,
 		path = gxps_path_new (ctx);
 
 		for (i = 0; names[i] != NULL; i++) {
-			if (strcmp (names[i], "Data") == 0) {
+			/* FIXME: if the resource gets expanded, that specific
+			 * resource will be already handled leading to a different
+			 * behavior of what we are actually doing without resources.
+			 * In an ideal world we would handle the resource without
+			 * special casing
+			 */
+			if (expand_resource (ctx->page, values[i], path)) {
+				GXPS_DEBUG (g_message ("expanded resource: %s", names[i]));
+			} else if (strcmp (names[i], "Data") == 0) {
 				path->data = g_strdup (values[i]);
 			} else if (strcmp (names[i], "RenderTransform") == 0) {
 				cairo_matrix_t matrix;
@@ -425,8 +542,7 @@ render_start_element (GMarkupParseContext  *context,
 			} else if (strcmp (names[i], "Clip") == 0) {
 				path->clip_data = g_strdup (values[i]);
 			} else if (strcmp (names[i], "Fill") == 0) {
-				GXPS_DEBUG (g_message ("set_fill_pattern (solid)"));
-                                if (!gxps_brush_solid_color_parse (values[i], ctx->page->priv->zip, 1., &path->fill_pattern)) {
+				if (!gxps_brush_solid_color_parse (values[i], ctx->page->priv->zip, 1., &path->fill_pattern)) {
 					gxps_parse_error (context,
 							  ctx->page->priv->source,
 							  G_MARKUP_ERROR_INVALID_CONTENT,
@@ -434,6 +550,7 @@ render_start_element (GMarkupParseContext  *context,
 					gxps_path_free (path);
 					return;
 				}
+				GXPS_DEBUG (g_message ("set_fill_pattern (solid)"));
 			} else if (strcmp (names[i], "Stroke") == 0) {
 				GXPS_DEBUG (g_message ("set_stroke_pattern (solid)"));
                                 if (!gxps_brush_solid_color_parse (values[i], ctx->page->priv->zip, 1., &path->stroke_pattern)) {
@@ -713,6 +830,12 @@ render_start_element (GMarkupParseContext  *context,
 		if (canvas->opacity != 1.0)
 			cairo_push_group (canvas->ctx->cr);
 		g_markup_parse_context_push (context, &canvas_parser, canvas);
+	} else if (strcmp (element_name, "FixedPage.Resources") == 0) {
+		GXPSResources *resources;
+
+		resources = gxps_archive_get_resources (ctx->page->priv->zip);
+		gxps_resources_parser_push (context, resources,
+		                            ctx->page->priv->source);
 	} else if (strcmp (element_name, "FixedPage") == 0) {
 		/* Do Nothing */
 	} else {
@@ -956,7 +1079,15 @@ render_end_element (GMarkupParseContext  *context,
 		}
 		cairo_restore (ctx->cr);
 		GXPS_DEBUG (g_message ("restore"));
+		if (canvas->pop_resource_dict) {
+			GXPSResources *resources;
+
+			resources = gxps_archive_get_resources (ctx->page->priv->zip);
+			gxps_resources_pop_dict (resources);
+		}
 		gxps_canvas_free (canvas);
+	} else if (strcmp (element_name, "FixedPage.Resources") == 0) {
+		gxps_resources_parser_pop (context);
 	} else if (strcmp (element_name, "FixedPage") == 0) {
 		/* Do Nothing */
 	} else {

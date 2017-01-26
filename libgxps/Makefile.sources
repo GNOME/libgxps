@@ -13,6 +13,7 @@ GXPS_BASE_NOINST_H_FILES = \
 	gxps-parse-utils.h	\
 	gxps-path.h		\
 	gxps-private.h		\
+	gxps-resources.h	\
 	$(NULL)
 
 GXPS_BASE_INST_H_FILES = \
@@ -45,4 +46,5 @@ GXPS_BASE_SOURCES = \
 	gxps-page.c			\
 	gxps-parse-utils.c		\
 	gxps-path.c			\
+	gxps-resources.c		\
 	$(NULL)

@@ -24,6 +24,7 @@
 #include <gio/gio.h>
 #include <archive.h>
 #include <libgxps/gxps-version.h>
+#include <libgxps/gxps-resources.h>
 
 G_BEGIN_DECLS
 
@@ -42,6 +43,7 @@ GXPSArchive      *gxps_archive_new            (GFile            *filename,
 					       GError          **error);
 gboolean          gxps_archive_has_entry      (GXPSArchive      *archive,
 					       const gchar      *path);
+GXPSResources    *gxps_archive_get_resources  (GXPSArchive      *archive);
 GInputStream     *gxps_archive_open           (GXPSArchive      *archive,
 					       const gchar      *path);
 gboolean          gxps_archive_read_entry     (GXPSArchive      *archive,

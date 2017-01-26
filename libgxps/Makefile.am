@@ -55,7 +55,7 @@ INTROSPECTION_SCANNER_ARGS = --add-include-path=$(srcdir) --warn-all --identifie
 INTROSPECTION_COMPILER_ARGS = --includedir=$(srcdir)
 
 if HAVE_INTROSPECTION
-introspection_sources = $(filter-out $(GXPS_BASE_NOINST_H_FILES) gxps-archive.c gxps-fonts.c gxps-images.c gxps-parse-utils.c gxps-version.h, $(libgxps_la_SOURCES))
+introspection_sources = $(filter-out $(GXPS_BASE_NOINST_H_FILES) gxps-resources.c gxps-archive.c gxps-fonts.c gxps-images.c gxps-parse-utils.c gxps-version.h, $(libgxps_la_SOURCES))
 
 GXPS-0.1.gir: libgxps.la
 GXPS_0_1_gir_INCLUDES = GObject-2.0 Gio-2.0 cairo-1.0
