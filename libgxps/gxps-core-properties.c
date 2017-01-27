@@ -471,16 +471,8 @@ gxps_core_properties_finalize (GObject *object)
 {
         GXPSCoreProperties *core_props = GXPS_CORE_PROPERTIES (object);
 
-        if (core_props->priv->zip) {
-                g_object_unref (core_props->priv->zip);
-                core_props->priv->zip = NULL;
-        }
-
-        if (core_props->priv->source) {
-                g_free (core_props->priv->source);
-                core_props->priv->source = NULL;
-        }
-
+        g_clear_object (&core_props->priv->zip);
+        g_clear_pointer (&core_props->priv->source, g_free);
         g_clear_error (&core_props->priv->init_error);
 
         G_OBJECT_CLASS (gxps_core_properties_parent_class)->finalize (object);

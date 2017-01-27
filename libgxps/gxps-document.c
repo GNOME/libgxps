@@ -320,20 +320,9 @@ gxps_document_finalize (GObject *object)
 {
 	GXPSDocument *doc = GXPS_DOCUMENT (object);
 
-	if (doc->priv->zip) {
-		g_object_unref (doc->priv->zip);
-		doc->priv->zip = NULL;
-	}
-
-	if (doc->priv->source) {
-		g_free (doc->priv->source);
-		doc->priv->source = NULL;
-	}
-
-	if (doc->priv->structure) {
-		g_free (doc->priv->structure);
-		doc->priv->structure = NULL;
-	}
+	g_clear_object (&doc->priv->zip);
+	g_clear_pointer (&doc->priv->source, g_free);
+	g_clear_pointer (&doc->priv->structure, g_free);
 
 	if (doc->priv->pages) {
 		gint i;

@@ -57,10 +57,7 @@ gxps_charset_converter_finalize (GObject *object)
 {
 	GXPSCharsetConverter *conv = GXPS_CHARSET_CONVERTER (object);
 
-	if (conv->conv) {
-		g_object_unref (conv->conv);
-		conv->conv = NULL;
-	}
+	g_clear_object (&conv->conv);
 
 	G_OBJECT_CLASS (gxps_charset_converter_parent_class)->finalize (object);
 }
@@ -138,11 +135,7 @@ gxps_charset_converter_reset (GConverter *converter)
 {
 	GXPSCharsetConverter *conv = GXPS_CHARSET_CONVERTER (converter);
 
-	if (conv->conv) {
-		g_object_unref (conv->conv);
-		conv->conv = NULL;
-	}
-
+	g_clear_object (&conv->conv);
 	conv->is_utf8 = FALSE;
 }
 

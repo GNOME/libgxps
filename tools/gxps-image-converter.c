@@ -161,15 +161,8 @@ gxps_image_converter_finalize (GObject *object)
 {
         GXPSImageConverter *converter = GXPS_IMAGE_CONVERTER (object);
 
-        if (converter->page_prefix) {
-                g_free (converter->page_prefix);
-                converter->page_prefix = NULL;
-        }
-
-        if (converter->writer) {
-                g_object_unref (converter->writer);
-                converter->writer = NULL;
-        }
+        g_clear_pointer (&converter->page_prefix, g_free);
+        g_clear_object (&converter->writer);
 
         G_OBJECT_CLASS (gxps_image_converter_parent_class)->finalize (object);
 }

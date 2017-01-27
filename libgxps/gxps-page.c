@@ -1517,41 +1517,14 @@ gxps_page_finalize (GObject *object)
 {
 	GXPSPage *page = GXPS_PAGE (object);
 
-	if (page->priv->zip) {
-		g_object_unref (page->priv->zip);
-		page->priv->zip = NULL;
-	}
-
-	if (page->priv->source) {
-		g_free (page->priv->source);
-		page->priv->source = NULL;
-	}
-
-	if (page->priv->init_error) {
-		g_error_free (page->priv->init_error);
-		page->priv->init_error = NULL;
-	}
-
-	if (page->priv->lang) {
-		g_free (page->priv->lang);
-		page->priv->lang = NULL;
-	}
-
-	if (page->priv->name) {
-		g_free (page->priv->name);
-		page->priv->name = NULL;
-	}
-
-	if (page->priv->image_cache) {
-		g_hash_table_destroy (page->priv->image_cache);
-		page->priv->image_cache = NULL;
-	}
-
-	if (page->priv->anchors) {
-		g_hash_table_destroy (page->priv->anchors);
-		page->priv->anchors = NULL;
-		page->priv->has_anchors = FALSE;
-	}
+	g_clear_object (&page->priv->zip);
+	g_clear_pointer (&page->priv->source, g_free);
+	g_clear_error (&page->priv->init_error);
+	g_clear_pointer (&page->priv->lang, g_free);
+	g_clear_pointer (&page->priv->name, g_free);
+	g_clear_pointer (&page->priv->image_cache, g_hash_table_destroy);
+	g_clear_pointer (&page->priv->anchors, g_hash_table_destroy);
+	page->priv->has_anchors = FALSE;
 
 	G_OBJECT_CLASS (gxps_page_parent_class)->finalize (object);
 }

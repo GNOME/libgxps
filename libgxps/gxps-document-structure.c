@@ -86,20 +86,10 @@ gxps_document_structure_finalize (GObject *object)
 {
 	GXPSDocumentStructure *structure = GXPS_DOCUMENT_STRUCTURE (object);
 
-	if (structure->priv->zip) {
-		g_object_unref (structure->priv->zip);
-		structure->priv->zip = NULL;
-	}
-
-	if (structure->priv->source) {
-		g_free (structure->priv->source);
-		structure->priv->source = NULL;
-	}
-
-	if (structure->priv->outline) {
-		g_list_free_full (structure->priv->outline, (GDestroyNotify)outline_node_free);
-		structure->priv->outline = NULL;
-	}
+	g_clear_object (&structure->priv->zip);
+	g_clear_pointer (&structure->priv->source, g_free);
+	g_list_free_full (structure->priv->outline, (GDestroyNotify)outline_node_free);
+	structure->priv->outline = NULL;
 
 	G_OBJECT_CLASS (gxps_document_structure_parent_class)->finalize (object);
 }

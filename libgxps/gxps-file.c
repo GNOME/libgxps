@@ -230,36 +230,12 @@ gxps_file_finalize (GObject *object)
 {
 	GXPSFile *xps = GXPS_FILE (object);
 
-	if (xps->priv->zip) {
-		g_object_unref (xps->priv->zip);
-		xps->priv->zip = NULL;
-	}
-
-	if (xps->priv->file) {
-		g_object_unref (xps->priv->file);
-		xps->priv->file = NULL;
-	}
-
-	if (xps->priv->docs) {
-		g_ptr_array_free (xps->priv->docs, TRUE);
-		xps->priv->docs = NULL;
-	}
-
-	if (xps->priv->fixed_repr) {
-		g_free (xps->priv->fixed_repr);
-		xps->priv->fixed_repr = NULL;
-	}
-
-	if (xps->priv->thumbnail) {
-		g_free (xps->priv->thumbnail);
-		xps->priv->thumbnail = NULL;
-	}
-
-	if (xps->priv->core_props) {
-		g_free (xps->priv->core_props);
-		xps->priv->core_props = NULL;
-	}
-
+	g_clear_object (&xps->priv->zip);
+	g_clear_object (&xps->priv->file);
+	g_clear_pointer (&xps->priv->docs, g_ptr_array_unref);
+	g_clear_pointer (&xps->priv->fixed_repr, g_free);
+	g_clear_pointer (&xps->priv->thumbnail, g_free);
+	g_clear_pointer (&xps->priv->core_props, g_free);
 	g_clear_error (&xps->priv->init_error);
 
 	G_OBJECT_CLASS (gxps_file_parent_class)->finalize (object);

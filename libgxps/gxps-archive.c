@@ -119,9 +119,7 @@ _archive_close (struct archive *archive,
 {
 	ZipArchive *zip = (ZipArchive *)data;
 
-	if (zip->stream)
-		g_object_unref (zip->stream);
-	zip->stream = NULL;
+	g_clear_object (&zip->stream);
 
 	return ARCHIVE_OK;
 }
@@ -181,16 +179,8 @@ gxps_archive_finalize (GObject *object)
 {
 	GXPSArchive *archive = GXPS_ARCHIVE (object);
 
-	if (archive->entries) {
-		g_hash_table_unref (archive->entries);
-		archive->entries = NULL;
-	}
-
-	if (archive->filename) {
-		g_object_unref (archive->filename);
-		archive->filename = NULL;
-	}
-
+	g_clear_pointer (&archive->entries, g_hash_table_unref);
+	g_clear_object (&archive->filename);
 	g_clear_error (&archive->init_error);
 
 	G_OBJECT_CLASS (gxps_archive_parent_class)->finalize (object);

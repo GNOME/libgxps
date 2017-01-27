@@ -195,20 +195,9 @@ gxps_converter_finalize (GObject *object)
 {
         GXPSConverter *converter = GXPS_CONVERTER (object);
 
-        if (converter->document) {
-                g_object_unref (converter->document);
-                converter->document = NULL;
-        }
-
-        if (converter->surface) {
-                g_object_unref (converter->surface);
-                converter->surface = NULL;
-        }
-
-        if (converter->input_filename) {
-                g_free (converter->input_filename);
-                converter->input_filename = NULL;
-        }
+        g_clear_object (&converter->document);
+        g_clear_object (&converter->surface);
+        g_clear_pointer (&converter->input_filename, g_free);
 
         G_OBJECT_CLASS (gxps_converter_parent_class)->finalize (object);
 }
