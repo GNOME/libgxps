@@ -363,7 +363,7 @@ gxps_archive_open (GXPSArchive *archive,
 		path++;
 
 	if (!g_hash_table_contains (archive->entries, path)) {
-                first_piece_path = g_build_filename (path, "[0].piece", NULL);
+                first_piece_path = g_build_path ("/", path, "[0].piece", NULL);
                 if (!g_hash_table_contains (archive->entries, first_piece_path)) {
                         g_free (first_piece_path);
 
