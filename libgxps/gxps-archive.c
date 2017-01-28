@@ -524,10 +524,7 @@ gxps_archive_input_stream_close (GInputStream  *stream,
 	if (g_cancellable_set_error_if_cancelled (cancellable, error))
 		return FALSE;
 
-	if (istream->zip) {
-		gxps_zip_archive_destroy (istream->zip);
-		istream->zip = NULL;
-	}
+	g_clear_pointer (&istream->zip, gxps_zip_archive_destroy);
 
 	return TRUE;
 }
@@ -537,10 +534,7 @@ gxps_archive_input_stream_finalize (GObject *object)
 {
 	GXPSArchiveInputStream *stream = GXPS_ARCHIVE_INPUT_STREAM (object);
 
-	if (stream->zip) {
-		gxps_zip_archive_destroy (stream->zip);
-		stream->zip = NULL;
-	}
+	g_clear_pointer (&stream->zip, gxps_zip_archive_destroy);
 
 	G_OBJECT_CLASS (gxps_archive_input_stream_parent_class)->finalize (object);
 }
