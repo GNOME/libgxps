@@ -33,11 +33,9 @@ struct _GXPSImage {
 	double           res_y;
 };
 
-GXPS_AVAILABLE_IN_ALL
 GXPSImage *gxps_images_get_image (GXPSArchive  *zip,
                                   const gchar  *image_uri,
                                   GError      **error);
-GXPS_AVAILABLE_IN_ALL
 void       gxps_image_free       (GXPSImage    *image);
 
 G_END_DECLS

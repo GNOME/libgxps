@@ -37,20 +37,13 @@ G_BEGIN_DECLS
 typedef struct _GXPSArchive      GXPSArchive;
 typedef struct _GXPSArchiveClass GXPSArchiveClass;
 
-GXPS_AVAILABLE_IN_ALL
 GType             gxps_archive_get_type       (void) G_GNUC_CONST;
-
-GXPS_AVAILABLE_IN_ALL
 GXPSArchive      *gxps_archive_new            (GFile            *filename,
 					       GError          **error);
-
-GXPS_AVAILABLE_IN_ALL
 gboolean          gxps_archive_has_entry      (GXPSArchive      *archive,
 					       const gchar      *path);
-GXPS_AVAILABLE_IN_ALL
 GInputStream     *gxps_archive_open           (GXPSArchive      *archive,
 					       const gchar      *path);
-GXPS_AVAILABLE_IN_ALL
 gboolean          gxps_archive_read_entry     (GXPSArchive      *archive,
 					       const gchar      *path,
 					       guchar          **buffer,

@@ -45,15 +45,12 @@ struct _GXPSGlyphs {
         guint              italic      : 1;
 };
 
-GXPS_AVAILABLE_IN_ALL
 GXPSGlyphs *gxps_glyphs_new             (GXPSRenderContext     *ctx,
                                          gchar                 *font_uri,
                                          gdouble                font_size,
                                          gdouble                origin_x,
                                          gdouble                origin_y);
-GXPS_AVAILABLE_IN_ALL
 void        gxps_glyphs_free            (GXPSGlyphs            *glyphs);
-GXPS_AVAILABLE_IN_ALL
 gboolean    gxps_glyphs_to_cairo_glyphs (GXPSGlyphs            *gxps_glyphs,
                                          cairo_scaled_font_t   *scaled_font,
                                          const gchar           *utf8,
@@ -62,7 +59,6 @@ gboolean    gxps_glyphs_to_cairo_glyphs (GXPSGlyphs            *gxps_glyphs,
                                          cairo_text_cluster_t **clusters,
                                          int                   *num_clusters,
                                          GError               **error);
-GXPS_AVAILABLE_IN_ALL
 void        gxps_glyphs_parser_push     (GMarkupParseContext   *context,
                                          GXPSGlyphs            *glyphs);
 

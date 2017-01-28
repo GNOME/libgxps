@@ -34,7 +34,6 @@ typedef struct _GXPSColor {
         gdouble blue;
 } GXPSColor;
 
-GXPS_AVAILABLE_IN_ALL
 gboolean gxps_color_new_for_icc (GXPSArchive *zip,
                                  const gchar *icc_profile_uri,
                                  gdouble     *values,

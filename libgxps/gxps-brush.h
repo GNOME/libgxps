@@ -33,16 +33,12 @@ struct _GXPSBrush {
         gdouble            opacity;
 };
 
-GXPS_AVAILABLE_IN_ALL
 GXPSBrush *gxps_brush_new               (GXPSRenderContext   *ctx);
-GXPS_AVAILABLE_IN_ALL
 void       gxps_brush_free              (GXPSBrush           *brush);
-GXPS_AVAILABLE_IN_ALL
 gboolean   gxps_brush_solid_color_parse (const gchar         *data,
                                          GXPSArchive         *zip,
                                          gdouble              alpha,
                                          cairo_pattern_t    **pattern);
-GXPS_AVAILABLE_IN_ALL
 void       gxps_brush_parser_push       (GMarkupParseContext *context,
                                          GXPSBrush           *brush);
 

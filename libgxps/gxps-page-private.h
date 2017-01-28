@@ -58,16 +58,9 @@ struct _GXPSRenderContext {
         GXPSBrushVisual *visual;
 };
 
-/* FIXME: these methods are suppose to be private but they were exported
- * before adding the AVALABLE macros, so we keep them exported to not break
- * the abi. If in the future we break the abi for some reason we could remove
- * these exports.
- */
-GXPS_AVAILABLE_IN_ALL
 GXPSImage *gxps_page_get_image          (GXPSPage            *page,
                                          const gchar         *image_uri,
                                          GError             **error);
-GXPS_AVAILABLE_IN_ALL
 void       gxps_page_render_parser_push (GMarkupParseContext *context,
                                          GXPSRenderContext   *ctx);
 

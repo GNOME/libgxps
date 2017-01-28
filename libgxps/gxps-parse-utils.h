@@ -24,11 +24,9 @@
 
 G_BEGIN_DECLS
 
-GXPS_AVAILABLE_IN_ALL
 gboolean gxps_parse_stream                  (GMarkupParseContext  *context,
                                              GInputStream         *stream,
                                              GError              **error);
-GXPS_AVAILABLE_IN_ALL
 void     gxps_parse_error                   (GMarkupParseContext  *context,
                                              const gchar          *source,
                                              GMarkupError          error_type,
@@ -36,29 +34,21 @@ void     gxps_parse_error                   (GMarkupParseContext  *context,
                                              const gchar          *attribute_name,
                                              const gchar          *content,
                                              GError              **error);
-GXPS_AVAILABLE_IN_ALL
 gboolean gxps_value_get_int                 (const gchar          *value,
                                              gint                 *int_value);
-GXPS_AVAILABLE_IN_ALL
 gboolean gxps_value_get_double              (const gchar          *value,
                                              gdouble              *double_value);
-GXPS_AVAILABLE_IN_ALL
 gboolean gxps_value_get_double_positive     (const gchar          *value,
                                              gdouble              *double_value);
-GXPS_AVAILABLE_IN_ALL
 gboolean gxps_value_get_double_non_negative (const gchar          *value,
                                              gdouble              *double_value);
-GXPS_AVAILABLE_IN_ALL
 gboolean gxps_value_get_boolean             (const gchar          *value,
                                              gboolean             *boolean_value);
-GXPS_AVAILABLE_IN_ALL
 gboolean gxps_point_parse                   (const gchar          *point,
                                              gdouble              *x,
                                              gdouble              *y);
-GXPS_AVAILABLE_IN_ALL
 void     gxps_parse_skip_number             (gchar               **iter,
                                              const gchar          *end);
-GXPS_AVAILABLE_IN_ALL
 gchar   *gxps_resolve_relative_path         (const gchar          *source,
                                              const gchar          *target);
 
