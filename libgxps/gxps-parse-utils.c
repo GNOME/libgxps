@@ -395,13 +395,100 @@ gxps_parse_skip_number (gchar      **iter,
         *iter = p;
 }
 
+/* NOTE: Taken from glocalfile. Because we always need to use / on all platforms */
+static char *
+canonicalize_filename (const char *filename)
+{
+	char *canon, *start, *p, *q;
+	char *cwd;
+	int i;
+
+	if (!g_path_is_absolute (filename)) {
+		cwd = g_get_current_dir ();
+		canon = g_build_path ("/", cwd, filename, NULL);
+		g_free (cwd);
+	} else
+		canon = g_strdup (filename);
+
+	start = (char *)g_path_skip_root (canon);
+
+	if (start == NULL) {
+		/* This shouldn't really happen, as g_get_current_dir() should
+		 * return an absolute pathname, but bug 573843 shows this is
+		 * not always happening
+		 */
+		g_free (canon);
+		return g_build_path ("/", "/", filename, NULL);
+	}
+
+	/* POSIX allows double slashes at the start to
+	 * mean something special (as does windows too).
+	 * So, "//" != "/", but more than two slashes
+	 * is treated as "/".
+	 */
+	i = 0;
+	for (p = start - 1; (p >= canon) && (*p == '/'); p--)
+		i++;
+
+	if (i > 2) {
+		i -= 1;
+		start -= i;
+		memmove (start, start+i, strlen (start+i)+1);
+	}
+
+	/* Make sure we're using the canonical dir separator */
+	p++;
+	while (p < start && *p == '/')
+		*p++ = '/';
+
+	p = start;
+	while (*p != 0) {
+		if (p[0] == '.' && (p[1] == 0 || p[1] == '/')) {
+			memmove (p, p+1, strlen (p+1)+1);
+		} else if (p[0] == '.' && p[1] == '.' && (p[2] == 0 || p[2] == '/')) {
+			q = p + 2;
+			/* Skip previous separator */
+			p = p - 2;
+			if (p < start)
+				p = start;
+			while (p > start && *p != '/')
+				p--;
+			if (*p == '/')
+				*p++ = '/';
+			memmove (p, q, strlen (q)+1);
+		} else {
+			/* Skip until next separator */
+			while (*p != 0 && *p != '/')
+				p++;
+
+			if (*p != 0) {
+				/* Canonicalize one separator */
+				*p++ = '/';
+			}
+		}
+
+		/* Remove additional separators */
+		q = p;
+		while (*q && *q == '/')
+			q++;
+
+		if (p != q)
+			memmove (p, q, strlen (q)+1);
+	}
+
+	/* Remove trailing slashes */
+	if (p > start && *(p-1) == '/')
+		*(p-1) = 0;
+
+	return canon;
+}
+
 gchar *
 gxps_resolve_relative_path (const gchar *source,
 			    const gchar *target)
 {
-	GFile *source_file;
-	GFile *abs_file;
 	gchar *dirname;
+	gchar *abs_path;
 	gchar *retval;
 
 	if (target[0] == '/')
@@ -410,13 +497,11 @@ gxps_resolve_relative_path (const gchar *source,
 	dirname = g_path_get_dirname (source);
 	if (strlen (dirname) == 1 && dirname[0] == '.')
 		dirname[0] = '/';
-	source_file = g_file_new_for_path (dirname);
+	abs_path = g_build_path ("/", dirname, target, NULL);
 	g_free (dirname);
 
-	abs_file = g_file_resolve_relative_path (source_file, target);
-	retval = g_file_get_path (abs_file);
-	g_object_unref (abs_file);
-	g_object_unref (source_file);
+	retval = canonicalize_filename (abs_path);
+	g_free (abs_path);
 
 	return retval;
 }
