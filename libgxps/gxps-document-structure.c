@@ -242,10 +242,12 @@ outline_start_element (GMarkupParseContext  *context,
 			ctx->prevs = g_list_delete_link (ctx->prevs, ctx->prevs);
 		}
 
-		if (level == 1)
+		if (level == 1) {
 			ctx->outline = g_list_prepend (ctx->outline, node);
-		else
+                } else {
+                        g_assert (node->parent != NULL);
 			node->parent->children = g_list_prepend (node->parent->children, node);
+                }
 
 		ctx->prevs = g_list_prepend (ctx->prevs, node);
 		ctx->level = level;
