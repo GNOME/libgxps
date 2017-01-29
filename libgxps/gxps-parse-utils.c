@@ -399,6 +399,8 @@ gchar *
 gxps_resolve_relative_path (const gchar *source,
 			    const gchar *target)
 {
+	GFile *source_file;
+	GFile *abs_file;
 	gchar *dirname;
 	gchar *retval;
 
@@ -408,10 +410,13 @@ gxps_resolve_relative_path (const gchar *source,
 	dirname = g_path_get_dirname (source);
 	if (strlen (dirname) == 1 && dirname[0] == '.')
 		dirname[0] = '/';
-
-	/* We want / on all platforms */
-	retval = g_build_path ("/", dirname, target, NULL);
+	source_file = g_file_new_for_path (dirname);
 	g_free (dirname);
+
+	abs_file = g_file_resolve_relative_path (source_file, target);
+	retval = g_file_get_path (abs_file);
+	g_object_unref (abs_file);
+	g_object_unref (source_file);
 
 	return retval;
 }
