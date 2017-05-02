@@ -1,0 +1,7 @@
+option('enable-test', type: 'boolean', value: true, description: 'Compile test application')
+option('enable-gtk-doc', type: 'boolean', value: false, description: 'Enable generating the API reference (depends on GTK-Doc)')
+option('enable-man', type: 'boolean', value: false, description: 'Whether to generate the man pages for libgxps tools')
+option('disable-introspection', type: 'boolean', value: false, description: 'Whether to disable the introspection generation')
+option('with-liblcms2', type: 'boolean', value: true, description: 'With Little CMS 2')
+option('with-libjpeg', type: 'boolean', value: true, description: 'With libjpeg')
+option('with-libtiff', type: 'boolean', value: true, description: 'With libtiff')
