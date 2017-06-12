@@ -92,6 +92,15 @@ gxps_dep = declare_dependency(link_with: gxps,
                               include_directories: [ gxps_inc, core_inc ],
                               dependencies: gxps_deps)
 
+# Generate the pkg-config file
+pkgg = import('pkgconfig')
+
+pkgg.generate(libraries: gxps,
+              version: gxps_version,
+              name: 'libgxps',
+              description: 'XPS Documents library',
+              requires: 'gobject-2.0 >= ' + glib_req + ', gio-2.0 >= ' + glib_req + ', libarchive >= ' + archive_req + ', cairo >= ' + cairo_req)
+
 if build_gir
   gir_extra_args = [
     '--identifier-prefix=GXPS',

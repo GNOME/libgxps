@@ -38,17 +38,6 @@ gxps_mandir = join_paths(get_option('prefix'), get_option('mandir'))
 cc = meson.get_compiler('c')
 host_system = host_machine.system()
 
-conf = configuration_data()
-
-# Compat variables for pkgconfig
-conf.set('prefix', gxps_prefix)
-conf.set('exec_prefix', gxps_prefix)
-conf.set('libdir', gxps_libdir)
-conf.set('includedir', gxps_includedir)
-
-# Version macros
-conf.set('VERSION', gxps_version)
-
 # Compiler flags
 if cc.get_id() == 'msvc'
   # Make MSVC more pedantic, this is a recommended pragma list
@@ -171,13 +160,6 @@ gir = find_program('g-ir-scanner', required: false)
 build_gir = gir.found() and not meson.is_cross_build() and not get_option('disable-introspection')
 
 configure_file(output: 'config.h', configuration: cdata)
-
-# Generate the pkg-config files
-configure_file(input: 'libgxps.pc.in',
-               output: 'libgxps.pc',
-               configuration: conf,
-               install: true,
-               install_dir: join_paths(gxps_libdir, 'pkgconfig'))
 
 subdir('libgxps')
 subdir('tools')
