@@ -289,7 +289,6 @@ docs/Makefile
 docs/reference/Makefile
 docs/reference/version.xml
 docs/tools/Makefile
-nmake/Makefile
 ])
 
 AC_OUTPUT
