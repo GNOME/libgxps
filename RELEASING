@@ -29,35 +29,27 @@ Here are the steps to follow to create a new libgxps release:
                 ! -name 'gxps-matrix.h' \
                 ! -name 'gxps-parse-utils.h' | xargs git log -p X.Y.Z.. --
 
-3) Increment gxps_{minor|micro}_version and LT_{CURRENT|REVISION|AGE}
-   in configure.ac:
+3) Increment the gxps version in meson.build:
 
-        If there are API additions, then increment gxps_minor_version
-        and reset gxps_micro_version to 0.
+        If there are API additions, then increment the minor version
+        and reset the micro version to 0.
 
         Otherwise, (ie. there are only bug fixes), increment
-        gxps_micro_version to the next larger number.
+        the micro version to the next larger number.
 
-        Adjust LT_CURRENT, LT_REVISION, and LT_AGE as described in the
-        comments in configure.ac.
+        Adjust current, revision and age as described in the
+        comments in the top level meson.build.
 
-4) Verify that the code passes "make distcheck"
+4) Run "ninja release"
 
-        First, make sure you have 'nm' and 'readelf' commands in PATH.
-        this should be Ok with any Linux distro.
+        Running "ninja release" generates the new tarball on the form of:
 
-        Running "make distcheck" should result in no warnings or
-        errors and end with a message of the form:
-
-        ==================================================
-        libgxps-X.Y.Z archives ready for distribution:
-        libgxps-X.Y.Z.tar.bz2
-        ==================================================
+        libgxps-X.Y.Z.tar.xz
 
         (But the tar file isn't actually ready yet, as we still have
         some more steps to follow).
 
-5) Commit the changes to NEWS and configure.ac and push
+5) Commit the changes to NEWS and meson.build and push
 
         It's especially important to mention the new version number in your
         commit log.
@@ -74,11 +66,11 @@ Here are the steps to follow to create a new libgxps release:
 8) Upload the tarball to ftp.gnome.org, by scp-ing it to
    master.gnome.org:
 
-        scp libgxps-X.Y.Z.tar.bz2 (username)@master.gnome.org:
+        scp libgxps-X.Y.Z.tar.xz (username)@master.gnome.org:
 
 9) ssh into master.gnome.org and call ftpadmin install command:
 
-        ftpadmin install libgxps-X.Y.Z.tar.bz2
+        ftpadmin install libgxps-X.Y.Z.tar.xz
 
 10) Send a message to announce the new release to gnome-announce-list@gnome.org
 
