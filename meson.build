@@ -38,8 +38,6 @@ gxps_mandir = join_paths(get_option('prefix'), get_option('mandir'))
 cc = meson.get_compiler('c')
 host_system = host_machine.system()
 
-add_project_arguments('-DHAVE_CONFIG_H', language: 'c')
-
 conf = configuration_data()
 
 # Compat variables for pkgconfig
