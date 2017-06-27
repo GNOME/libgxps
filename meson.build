@@ -12,7 +12,7 @@ gxps_major_version = version_array[0].to_int()
 gxps_minor_version = version_array[1].to_int()
 gxps_micro_version = version_array[2].to_int()
 
-apiversion = '1.0'
+apiversion = '0.1'
 
 # Libtool versioning.
 # Before making a release, the libtool version should be modified.
