@@ -108,7 +108,7 @@ if build_gir
   ]
   gnome.generate_gir(gxps,
                      sources: introspection_sources + headers + [ gxps_version_h ],
-                     namespace: 'Gxps',
+                     namespace: 'GXPS',
                      nsversion: apiversion,
                      identifier_prefix: 'Gxps',
                      symbol_prefix: 'gxps',
