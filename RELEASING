@@ -40,9 +40,9 @@ Here are the steps to follow to create a new libgxps release:
         Adjust current, revision and age as described in the
         comments in the top level meson.build.
 
-4) Run "ninja release"
+4) Run "ninja libgxps-doc release"
 
-        Running "ninja release" generates the new tarball on the form of:
+        Running "ninja libgxps-doc release" generates the new tarball on the form of:
 
         libgxps-X.Y.Z.tar.xz
 
