@@ -1,3 +1,23 @@
+libgxps 0.3.0 (8 August 2017)
+================================
+
+New features:
+
+    - Add initial support for resource dictionaries (#777731, Ignacio
+      Casal Quinteiro, Jason Crain)
+    - Support OpenXPS fixed representation schema (#768117, Jason
+      Crain)
+
+Bug fixes:
+
+    - Fix a crash when extracting a malformed file (#785479, Marek
+      Kasik)
+
+Build:
+
+    - Switch to meson build system (#783642, Ignacio Casal Quinteiro)
+
+
 libgxps 0.2.5 (25 February 2017)
 ================================
 
