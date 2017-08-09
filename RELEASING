@@ -40,7 +40,12 @@ Here are the steps to follow to create a new libgxps release:
         Adjust current, revision and age as described in the
         comments in the top level meson.build.
 
-4) Run "ninja libgxps-doc release"
+5) Commit the changes to NEWS and meson.build
+
+        It's especially important to mention the new version number in your
+        commit log.
+
+6) Run "ninja libgxps-doc release"
 
         Running "ninja libgxps-doc release" generates the new tarball on the form of:
 
@@ -49,28 +54,25 @@ Here are the steps to follow to create a new libgxps release:
         (But the tar file isn't actually ready yet, as we still have
         some more steps to follow).
 
-5) Commit the changes to NEWS and meson.build and push
+7) Push the commit
 
-        It's especially important to mention the new version number in your
-        commit log.
-
-6) Tag the release with the following command:
+8) Tag the release with the following command:
 
         git tag -s -m "libgxps X.Y.Z release" X.Y.Z
 
-7) Push the newly created tag out to the central tree with a command
+9) Push the newly created tag out to the central tree with a command
    something like:
 
         git push origin X.Y.Z
 
-8) Upload the tarball to ftp.gnome.org, by scp-ing it to
+10) Upload the tarball to ftp.gnome.org, by scp-ing it to
    master.gnome.org:
 
         scp libgxps-X.Y.Z.tar.xz (username)@master.gnome.org:
 
-9) ssh into master.gnome.org and call ftpadmin install command:
+11) ssh into master.gnome.org and call ftpadmin install command:
 
         ftpadmin install libgxps-X.Y.Z.tar.xz
 
-10) Send a message to announce the new release to gnome-announce-list@gnome.org
+12) Send a message to announce the new release to gnome-announce-list@gnome.org
 
