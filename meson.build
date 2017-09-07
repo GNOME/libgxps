@@ -153,7 +153,7 @@ cdata.set('HAVE_LIBJPEG', jpeg_dep.found())
 cdata.set('HAVE_LIBTIFF', tiff_dep.found())
 
 # Maths functions might be implemented in libm
-libm_dep = cc.find_library('m')
+libm_dep = cc.find_library('m', required: false)
 
 gnome = import('gnome')
 gir = find_program('g-ir-scanner', required: false)
