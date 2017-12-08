@@ -286,7 +286,7 @@ gxps_images_create_from_png (GXPSArchive *zip,
 	}
 
 	stride = cairo_format_stride_for_width (format, png_width);
-	if (stride < 0) {
+	if (stride < 0 || png_height >= INT_MAX / stride) {
 		fill_png_error (error, image_uri, NULL);
 		g_object_unref (stream);
 		png_destroy_read_struct (&png, &info, NULL);
