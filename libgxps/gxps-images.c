@@ -925,6 +925,8 @@ gxps_images_get_image (GXPSArchive *zip,
 	if (!image) {
 		gchar *mime_type;
 
+                g_clear_error(error);
+
 		mime_type = gxps_images_guess_content_type (zip, image_uri);
 		if (g_strcmp0 (mime_type, "image/png") == 0) {
 			image = gxps_images_create_from_png (zip, image_uri, error);
