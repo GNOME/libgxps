@@ -27,7 +27,7 @@
       <command>xpstopdf</command> reads the XPS file, <replaceable>FILE</replaceable>,
       and writes a PDF file, <replaceable>OUTPUT FILE</replaceable>. If
       <replaceable>OUTPUT FILE</replaceable> is not specified the output
-      filename will be derived from the <replaceable>OUTPUT FILE</replaceable>
+      filename will be derived from the <replaceable>FILE</replaceable>
       filename.
     </para>
   </refsect1>
