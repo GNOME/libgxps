@@ -266,13 +266,17 @@ _gxps_converter_print_get_output_size (GXPSPrintConverter *converter,
 
         gxps_page_get_size (page, &page_width, &page_height);
 
+        /* The page width is in points, Windows expects a dpi of 96 while
+         * cairo will handle the dpi in 72. We need to make the conversion
+         * ourselves so we have the right output size
+         */
         if (output_width) {
                 *output_width = converter->paper_width == 0 ?
-                        page_width : converter->paper_width;
+                        page_width * 72.0 / 96.0 : converter->paper_width;
         }
 
         if (output_height) {
                 *output_height = converter->paper_height == 0 ?
-                        page_height : converter->paper_height;
+                        page_height * 72.0 / 96.0 : converter->paper_height;
         }
 }
