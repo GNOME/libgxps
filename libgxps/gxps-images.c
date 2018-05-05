@@ -742,17 +742,12 @@ gxps_images_create_from_tiff (GXPSArchive *zip,
 	guchar     *data;
 	guchar     *p;
 
-	if (!gxps_archive_read_entry (zip, image_uri,
-				      &buffer.buffer,
-				      &buffer.buffer_len,
-				      error)) {
-		g_set_error (error,
-			     GXPS_ERROR,
-			     GXPS_ERROR_SOURCE_NOT_FOUND,
-			     "Image source %s not found in archive",
-			     image_uri);
-		return NULL;
-	}
+        if (!gxps_archive_read_entry (zip, image_uri,
+                                      &buffer.buffer,
+                                      &buffer.buffer_len,
+                                      error)) {
+                return NULL;
+        }
 
 	buffer.pos = 0;
 

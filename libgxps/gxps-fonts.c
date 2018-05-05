@@ -220,19 +220,12 @@ gxps_fonts_new_font_face (GXPSArchive *zip,
 	cairo_font_face_t *font_face;
 	guchar            *font_data;
 	gsize              font_data_len;
-	gboolean           res;
 
-	res = gxps_archive_read_entry (zip, font_uri,
-				       &font_data, &font_data_len,
-				       error);
-	if (!res) {
-		g_set_error (error,
-			     GXPS_ERROR,
-			     GXPS_ERROR_SOURCE_NOT_FOUND,
-			     "Font source %s not found in archive",
-			     font_uri);
-		return NULL;
-	}
+        if (!gxps_archive_read_entry (zip, font_uri,
+                                      &font_data, &font_data_len,
+                                      error)) {
+                return NULL;
+        }
 
 	ft_face.font_data = font_data;
 	ft_face.font_data_len = (gssize)font_data_len;

@@ -406,9 +406,13 @@ gxps_archive_read_entry (GXPSArchive *archive,
 	gboolean      retval;
 
 	stream = gxps_archive_open (archive, path);
-	if (!stream)
-		/* TODO: Error */
+	if (!stream) {
+                g_set_error (error,
+                             G_IO_ERROR,
+                             G_IO_ERROR_NOT_FOUND,
+                             "The entry '%s' was not found in archive", path);
 		return FALSE;
+        }
 
 	entry_size = archive_entry_size (GXPS_ARCHIVE_INPUT_STREAM (stream)->entry);
 	if (entry_size <= 0) {
@@ -423,7 +427,7 @@ gxps_archive_read_entry (GXPSArchive *archive,
 		*buffer = g_malloc (buffer_size);
 		do {
 			bytes = g_input_stream_read (stream, &buf, BUFFER_SIZE, NULL, error);
-			if (*error != NULL) {
+			if (bytes < 0) {
 				g_free (*buffer);
 				g_object_unref (stream);
 
@@ -441,7 +445,10 @@ gxps_archive_read_entry (GXPSArchive *archive,
 		g_object_unref (stream);
 
 		if (*bytes_read == 0) {
-			/* TODO: Error */
+                        g_set_error (error,
+                                     G_IO_ERROR,
+                                     G_IO_ERROR_INVALID_DATA,
+                                     "The entry '%s' is empty in archive", path);
 			g_free (*buffer);
 			return FALSE;
 		}
