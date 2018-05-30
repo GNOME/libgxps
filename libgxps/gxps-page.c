@@ -989,6 +989,7 @@ render_end_element (GMarkupParseContext  *context,
 
 		font_options = cairo_font_options_create ();
 		cairo_get_font_options (ctx->cr, font_options);
+		cairo_font_options_set_hint_metrics (font_options, CAIRO_HINT_METRICS_OFF);
 
 		cairo_matrix_init_identity (&font_matrix);
 		cairo_matrix_scale (&font_matrix, glyphs->em_size, glyphs->em_size);
