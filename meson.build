@@ -131,7 +131,7 @@ libm_dep = cc.find_library('m', required: false)
 
 gnome = import('gnome')
 gir = find_program('g-ir-scanner', required: false)
-build_gir = gir.found() and not meson.is_cross_build() and not get_option('disable-introspection')
+build_gir = gir.found() and not get_option('disable-introspection')
 
 configure_file(output: 'config.h', configuration: cdata)
 
