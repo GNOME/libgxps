@@ -107,21 +107,121 @@ archive_req = '2.8.0'
 glib_dep = dependency('glib-2.0', version: '>=' + glib_req)
 gobject_dep = dependency('gobject-2.0', version: '>=' + glib_req)
 gio_dep = dependency('gio-2.0', version: '>=' + glib_req)
-cairo_dep = dependency('cairo', version: '>=' + cairo_req)
+cairo_dep = dependency('cairo', version: '>=' + cairo_req, required: cc.get_id() != 'msvc')
 cairo_pdf_dep = dependency('cairo-pdf', version: '>=' + cairo_req, required: false)
 cairo_ps_dep = dependency('cairo-ps', version: '>=' + cairo_req, required: false)
 cairo_svg_dep = dependency('cairo-svg', version: '>=' + cairo_req, required: false)
-archive_dep = dependency('libarchive', version: '>=' + archive_req)
-freetype_dep = dependency('freetype2')
-png_dep = dependency('libpng', required: false)
-lcms2_dep = dependency('lcms2', required: get_option('with-liblcms2'))
-jpeg_dep = dependency('libjpeg', required: get_option('with-libjpeg'))
-tiff_dep = dependency('libtiff-4', required: get_option('with-libtiff'))
 
-cdata.set('HAVE_CAIRO_PDF', cairo_pdf_dep.found())
-cdata.set('HAVE_CAIRO_PS', cairo_ps_dep.found())
-cdata.set('HAVE_CAIRO_SVG', cairo_svg_dep.found())
-cdata.set('HAVE_LIBPNG', png_dep.found())
+cairo_pdf_found = cairo_pdf_dep.found()
+cairo_ps_found = cairo_ps_dep.found()
+cairo_svg_found = cairo_svg_dep.found()
+
+if cc.get_id() == 'msvc' and not cairo_dep.found()
+  if cc.has_header('cairo.h')
+    cairo_dep = cc.find_library('cairo')
+    if not cairo_pdf_dep.found() and cc.has_function('cairo_pdf_surface_create',
+                                                     prefix: '#include <cairo-pdf.h>',
+                                                     dependencies: cairo_dep)
+      cairo_pdf_dep = cairo_dep
+      cairo_pdf_found = true
+    endif
+    if not cairo_ps_dep.found() and cc.has_function('cairo_ps_surface_create',
+                                                     prefix: '#include <cairo-ps.h>',
+                                                     dependencies: cairo_dep)
+      cairo_ps_dep = cairo_dep
+      cairo_ps_found = true
+    endif
+    if not cairo_svg_dep.found() and cc.has_function('cairo_svg_surface_create',
+                                                     prefix: '#include <cairo-svg.h>',
+                                                     dependencies: cairo_dep)
+      cairo_svg_dep = cairo_dep
+      cairo_svg_found = true
+    endif
+  endif
+
+  assert (cairo_dep.found(), 'Cairo is required')
+endif
+archive_dep = dependency('libarchive', version: '>=' + archive_req)
+freetype_dep = dependency('freetype2', required: cc.get_id() != 'msvc')
+
+if cc.get_id() == 'msvc' and not freetype_dep.found()
+  if cc.has_header ('ft2build.h')
+    freetype_dep = cc.find_library('freetype')
+  endif
+
+  assert(freetype_dep.found(), 'FreeType is required')
+endif
+
+png_dep = dependency('libpng', required: false)
+
+png_found = png_dep.found()
+
+if cc.get_id() == 'msvc' and not png_dep.found() and cc.has_header('png.h')
+  # MSVC: First look for the DLL + import .lib build of libpng,
+  # which is normally libpngxx.lib, when libpng's pkg-config can't
+  # be found, which is quite normal on MSVC.
+  foreach png: [ 'libpng16', 'libpng15', 'libpng14', 'libpng12', 'libpng13', 'libpng10' ]
+    if not png_found
+      png_lib = cc.find_library(png, required: false)
+      if png_lib.found()
+        zlib_lib = cc.find_library('zlib1')
+        png_found = true
+      endif
+    endif
+  endforeach
+  if png_found
+    png_dep = [png_lib, zlib_lib]
+  endif
+endif
+
+lcms2_dep = dependency('lcms2', required: get_option('with-liblcms2') and cc.get_id() != 'msvc')
+
+if cc.get_id() == 'msvc' and not lcms2_dep.found()
+  if cc.has_header('lcms2.h')
+    lcms2_dep = cc.find_library('lcms2', required: get_option('with-liblcms2'))
+    if lcms2_dep.found()
+      # For MSVC builds, we need to check whether the lcms2 we have is a DLL build
+      # and we must apply -DCMS_DLL to the cflags if it is so, otherwise the code
+      # won't link
+      message('MSVC builds: The following line checks whether lcms2 is built as a DLL...')
+      if cc.has_function('cmsGetEncodedCMMversion',
+                         prefix: '''#define CMS_DLL
+                                    #include <lcms2.h>''',
+                         dependencies: lcms2_dep)
+        common_flags += '-DCMS_DLL'
+      endif
+    endif
+  endif
+  if get_option('with-liblcms2')
+    assert (lcms2_dep.found(), 'LCMS2 requested but LCMS2 cannot be found')
+  endif
+endif
+
+jpeg_dep = dependency('libjpeg', required: get_option('with-libjpeg') and cc.get_id() != 'msvc')
+
+if cc.get_id() == 'msvc' and not jpeg_dep.found()
+  if cc.has_header('jpeglib.h')
+    jpeg_dep = cc.find_library('jpeg', required: get_option('with-libjpeg'))
+  endif
+  if get_option('with-libjpeg')
+    assert (jpeg_dep.found(), 'JPEG support requested but libjpeg/libjpeg-turbo cannot be found')
+  endif
+endif
+
+tiff_dep = dependency('libtiff-4', required: get_option('with-libtiff') and cc.get_id() != 'msvc')
+
+if cc.get_id() == 'msvc' and not tiff_dep.found()
+  if cc.has_header('tiff.h')
+    tiff_dep = cc.find_library('libtiff_i', required: get_option('with-libtiff'))
+  endif
+  if get_option('with-libtiff')
+    assert (tiff_dep.found(), 'TIFF support requested but libtiff cannot be found')
+  endif
+endif
+cdata.set('HAVE_CAIRO_PDF', cairo_pdf_found)
+cdata.set('HAVE_CAIRO_PS', cairo_ps_found)
+cdata.set('HAVE_CAIRO_SVG', cairo_svg_found)
+cdata.set('HAVE_LIBPNG', png_found)
 cdata.set('HAVE_LIBLCMS2', lcms2_dep.found())
 cdata.set('HAVE_LIBJPEG', jpeg_dep.found())
 cdata.set('HAVE_LIBTIFF', tiff_dep.found())

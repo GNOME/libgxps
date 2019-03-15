@@ -20,7 +20,7 @@ gxps_tools = static_library('gxpstools',
 gxps_tools_dep = declare_dependency(link_with: gxps_tools,
                                     dependencies: gxps_tools_deps)
 
-if png_dep.found()
+if png_found
   xpstopng_sources = [
     'gxps-converter-main.c',
     'gxps-png-converter.c',

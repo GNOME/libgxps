@@ -14,7 +14,7 @@ if xsltproc.found()
     man_files += [ 'xpstopdf' ]
   endif
 
-  if png_dep.found()
+  if png_found
     man_files += [ 'xpstopng' ]
   endif
 
