@@ -210,14 +210,17 @@ static void
 gxps_converter_print_converter_end_document (GXPSConverter *converter)
 {
         GXPSPrintConverter *print_converter = GXPS_PRINT_CONVERTER (converter);
-        cairo_status_t      status;
 
-        cairo_surface_finish (converter->surface);
-        status = cairo_surface_status (converter->surface);
-        if (status)
-                g_printerr ("Cairo error: %s\n", cairo_status_to_string (status));
-        cairo_surface_destroy (converter->surface);
-        converter->surface = NULL;
+        if (converter->surface) {
+                cairo_status_t status;
+
+                cairo_surface_finish (converter->surface);
+                status = cairo_surface_status (converter->surface);
+                if (status)
+                        g_printerr ("Cairo error: %s\n", cairo_status_to_string (status));
+                cairo_surface_destroy (converter->surface);
+                converter->surface = NULL;
+        }
 
         g_free (print_converter->filename);
         print_converter->filename = NULL;
