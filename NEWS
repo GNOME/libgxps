@@ -1,3 +1,20 @@
+libgxps 0.3.2 (16 February 2021)
+================================
+
+New features:
+
+    - Add support to wdp images on Windows using WIC API (Vittorio Vaselli)
+
+Bug fixes:
+
+    - Fix a crash in tools when the surface is NULL on conversion end (#3, Qiuhao Li)
+
+Build:
+
+    - Improve dependency check on Windows (Chun-wei Fan)
+    - Don't assume that cross builds can't generate gir (maxice8)
+
+
 libgxps 0.3.1 (5 January 2019)
 ==============================
 

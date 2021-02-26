@@ -1,5 +1,5 @@
 project('libgxps', 'c',
-        version: '0.3.1',
+        version: '0.3.2',
         default_options: [
           'buildtype=debugoptimized'
         ],
@@ -23,7 +23,7 @@ apiversion = '0.1'
 #   change to C+1:0:0
 # - If the interface is the same as the previous version, change to C:R+1:A
 current = 4
-revision = 3
+revision = 4
 age = 2
 soversion = '@0@'.format(current - age)
 libversion = '@0@.@1@.@2@'.format(current - age, age, revision)
