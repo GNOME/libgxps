@@ -4,7 +4,7 @@ project('libgxps', 'c',
           'buildtype=debugoptimized'
         ],
         license: 'LGPL2+',
-        meson_version: '>= 0.43.0')
+        meson_version: '>= 0.50.0')
 
 gxps_version = meson.project_version()
 version_array = gxps_version.split('.')

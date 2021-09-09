@@ -98,12 +98,11 @@ pkgg = import('pkgconfig')
 cairo_dep_str = cairo_pc_found ? ', cairo >= ' + cairo_req : ''
 cairo_dep_libs = cairo_pc_found ? [] : cairo_dep
 
-pkgg.generate(libraries: gxps,
+pkgg.generate(libraries: [gxps, cairo_dep_libs],
               version: gxps_version,
               name: 'libgxps',
               description: 'XPS Documents library',
-              requires: 'gobject-2.0 >= ' + glib_req + ', gio-2.0 >= ' + glib_req + ', libarchive >= ' + archive_req + cairo_dep_str,
-              libraries: [gxps, cairo_dep_libs])
+              requires: 'gobject-2.0 >= ' + glib_req + ', gio-2.0 >= ' + glib_req + ', libarchive >= ' + archive_req + cairo_dep_str)
 
 if build_gir
   gir_extra_args = [
