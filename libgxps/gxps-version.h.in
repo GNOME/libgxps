@@ -16,6 +16,13 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#if !defined (__GXPS_H_INSIDE__) && !defined (GXPS_COMPILATION)
+#error "Only <libgxps/gxps.h> can be included directly."
+#endif
+
+#ifndef __GXPS_VERSION_H__
+#define __GXPS_VERSION_H__
+
 /**
  * SECTION:gxps-version
  * @Short_description: Variables and functions to check the GXPS version
@@ -25,13 +32,6 @@
  * for builds that have a configure script. Applications will not typically
  * use the features described here.
  */
-
-#if !defined (__GXPS_H_INSIDE__) && !defined (GXPS_COMPILATION)
-#error "Only <libgxps/gxps.h> can be included directly."
-#endif
-
-#ifndef __GXPS_VERSION_H__
-#define __GXPS_VERSION_H__
 
 /**
  * GXPS_MAJOR_VERSION:
