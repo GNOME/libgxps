@@ -426,6 +426,115 @@ _jpeg_error_exit (j_common_ptr error)
 
 	longjmp (src->setjmp_buffer, 1);
 }
+
+static unsigned
+read_uint16 (JOCTET  *data,
+             gboolean is_big_endian)
+{
+        return is_big_endian ?
+                (GETJOCTET (data[0]) << 8) | GETJOCTET (data[1]) :
+                (GETJOCTET (data[1]) << 8) | GETJOCTET (data[0]);
+}
+
+static unsigned
+read_uint32 (JOCTET  *data,
+             gboolean is_big_endian)
+{
+        return is_big_endian ?
+                (GETJOCTET (data[0]) << 24) | (GETJOCTET (data[1]) << 16) | (GETJOCTET (data[2]) << 8) | GETJOCTET (data[3]) :
+                (GETJOCTET (data[3]) << 24) | (GETJOCTET (data[2]) << 16) | (GETJOCTET (data[1]) << 8) | GETJOCTET (data[0]);
+}
+
+static gboolean
+_jpeg_read_exif_resolution (jpeg_saved_marker_ptr marker,
+                            int                  *res_x,
+                            int                  *res_y)
+{
+        gboolean is_big_endian;
+        guint offset;
+        JOCTET *ifd;
+        JOCTET *end;
+        guint ifd_length;
+        guint i;
+        guint res_type;
+        gdouble x_res = 0;
+        gdouble y_res = 0;
+
+        /* Exif marker must be the first one */
+        if (!(marker &&
+              marker->marker == JPEG_APP0 + 1 &&
+              marker->data_length >= 14 &&
+              marker->data[0] == 'E' &&
+              marker->data[1] == 'x' &&
+              marker->data[2] == 'i' &&
+              marker->data[3] == 'f' &&
+              marker->data[4] == '\0' &&
+              /* data[5] is a fill byte */
+              ((marker->data[6] == 'I' &&
+                marker->data[7] == 'I') ||
+               (marker->data[6] == 'M' &&
+                marker->data[7] == 'M'))))
+                return FALSE;
+
+        is_big_endian = marker->data[6] == 'M';
+        if (read_uint16 (marker->data + 8, is_big_endian) != 42)
+                return FALSE;
+
+        offset = read_uint32 (marker->data + 10, is_big_endian) + 6;
+        if (offset >= marker->data_length)
+                return FALSE;
+
+        ifd = marker->data + offset;
+        end = marker->data + marker->data_length;
+        if (end - ifd < 2)
+                return FALSE;
+
+        ifd_length = read_uint16 (ifd, is_big_endian);
+        ifd += 2;
+        for (i = 0; i < ifd_length && end - ifd >= 12; i++, ifd += 12) {
+                guint tag, type, count;
+                gint value_offset;
+
+                tag = read_uint16 (ifd, is_big_endian);
+                type = read_uint16 (ifd + 2, is_big_endian);
+                count = read_uint32 (ifd + 4, is_big_endian);
+                value_offset = read_uint32 (ifd + 8, is_big_endian) + 6;
+
+                switch (tag) {
+                case 0x11A:
+                        if (type == 5 && value_offset > offset && value_offset <= marker->data_length - 8)
+                                x_res = (gdouble)read_uint32 (marker->data + value_offset, is_big_endian) / read_uint32 (marker->data + value_offset + 4, is_big_endian);
+                        break;
+                case 0x11B:
+                        if (type == 5 && value_offset > offset && value_offset <= marker->data_length - 8)
+                                y_res = (gdouble)read_uint32 (marker->data + value_offset, is_big_endian) / read_uint32 (marker->data + value_offset + 4, is_big_endian);
+                        break;
+                case 0x128:
+                        if (type == 3 && count == 1)
+                                res_type = read_uint16 (ifd + 8, is_big_endian);
+                        break;
+                }
+        }
+
+        if (x_res <= 0 || y_res <= 0)
+                return FALSE;
+
+        switch (res_type) {
+        case 2:
+                *res_x = (int)x_res;
+                *res_y = (int)y_res;
+                break;
+        case 3:
+                *res_x = (int)(x_res * 254 / 100);
+                *res_y = (int)(y_res * 254 / 100);
+                break;
+        default:
+                *res_x = 0;
+                *res_y = 0;
+        }
+
+        return TRUE;
+}
 #endif /* HAVE_LIBJPEG */
 
 static GXPSImage *
@@ -444,6 +553,7 @@ gxps_images_create_from_jpeg (GXPSArchive *zip,
 	JSAMPARRAY                    lines;
 	gint                          jpeg_stride;
 	gint                          i;
+        int                           res_x, res_y;
 
 	stream = gxps_archive_open (zip, image_uri);
 	if (!stream) {
@@ -483,6 +593,8 @@ gxps_images_create_from_jpeg (GXPSArchive *zip,
 		g_object_unref (stream);
 		return NULL;
 	}
+
+        jpeg_save_markers (&cinfo, JPEG_APP0 + 1, 0xFFFF);
 
 	jpeg_read_header (&cinfo, TRUE);
 
@@ -559,7 +671,12 @@ gxps_images_create_from_jpeg (GXPSArchive *zip,
 		}
 	}
 
-	if (cinfo.density_unit == 1) { /* dots/inch */
+        if (_jpeg_read_exif_resolution (cinfo.marker_list, &res_x, &res_y)) {
+                if (res_x > 0)
+                        image->res_x = res_x;
+                if (res_y > 0)
+                        image->res_y = res_y;
+        } else if (cinfo.density_unit == 1) { /* dots/inch */
 		image->res_x = cinfo.X_density;
 		image->res_y = cinfo.Y_density;
 	} else if (cinfo.density_unit == 2) { /* dots/cm */
