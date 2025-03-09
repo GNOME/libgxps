@@ -72,6 +72,7 @@ struct _GXPSCorePropertiesPrivate {
 static void initable_iface_init (GInitableIface *initable_iface);
 
 G_DEFINE_TYPE_WITH_CODE (GXPSCoreProperties, gxps_core_properties, G_TYPE_OBJECT,
+                         G_ADD_PRIVATE (GXPSCoreProperties)
                          G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init))
 
 /* CoreProperties parser */
@@ -479,9 +480,7 @@ gxps_core_properties_finalize (GObject *object)
 static void
 gxps_core_properties_init (GXPSCoreProperties *core_props)
 {
-        core_props->priv = G_TYPE_INSTANCE_GET_PRIVATE (core_props,
-                                                        GXPS_TYPE_CORE_PROPERTIES,
-                                                        GXPSCorePropertiesPrivate);
+        core_props->priv = gxps_core_properties_get_instance_private (core_props);
 }
 
 static void
@@ -529,8 +528,6 @@ gxps_core_properties_class_init (GXPSCorePropertiesClass *klass)
                                                               NULL,
                                                               G_PARAM_WRITABLE |
                                                               G_PARAM_CONSTRUCT_ONLY));
-
-        g_type_class_add_private (klass, sizeof (GXPSCorePropertiesPrivate));
 }
 
 static gboolean
