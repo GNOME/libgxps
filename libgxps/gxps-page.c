@@ -66,6 +66,7 @@ static void render_end_element   (GMarkupParseContext  *context,
 static void initable_iface_init  (GInitableIface       *initable_iface);
 
 G_DEFINE_TYPE_WITH_CODE (GXPSPage, gxps_page, G_TYPE_OBJECT,
+		         G_ADD_PRIVATE (GXPSPage)
 			 G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init))
 
 GQuark
@@ -1662,9 +1663,8 @@ gxps_page_finalize (GObject *object)
 static void
 gxps_page_init (GXPSPage *page)
 {
-	page->priv = G_TYPE_INSTANCE_GET_PRIVATE (page,
-						  GXPS_TYPE_PAGE,
-						  GXPSPagePrivate);
+	page->priv = gxps_page_get_instance_private (page);
+
 	page->priv->has_anchors = TRUE;
 }
 
@@ -1713,8 +1713,6 @@ gxps_page_class_init (GXPSPageClass *klass)
 							      NULL,
 							      G_PARAM_WRITABLE |
 							      G_PARAM_CONSTRUCT_ONLY));
-
-	g_type_class_add_private (klass, sizeof (GXPSPagePrivate));
 }
 
 static gboolean
