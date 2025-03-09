@@ -64,7 +64,7 @@ struct _OutlineNode {
 	GList       *children;
 };
 
-G_DEFINE_TYPE (GXPSDocumentStructure, gxps_document_structure, G_TYPE_OBJECT)
+G_DEFINE_TYPE_WITH_PRIVATE (GXPSDocumentStructure, gxps_document_structure, G_TYPE_OBJECT)
 
 static void
 outline_node_free (OutlineNode *node)
@@ -145,8 +145,6 @@ gxps_document_structure_class_init (GXPSDocumentStructureClass *klass)
 							      NULL,
 							      G_PARAM_WRITABLE |
 							      G_PARAM_CONSTRUCT_ONLY));
-
-	g_type_class_add_private (klass, sizeof (GXPSDocumentStructurePrivate));
 }
 
 GXPSDocumentStructure *
