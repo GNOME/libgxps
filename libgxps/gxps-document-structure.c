@@ -95,9 +95,7 @@ gxps_document_structure_finalize (GObject *object)
 static void
 gxps_document_structure_init (GXPSDocumentStructure *structure)
 {
-	structure->priv = G_TYPE_INSTANCE_GET_PRIVATE (structure,
-						       GXPS_TYPE_DOCUMENT_STRUCTURE,
-						       GXPSDocumentStructurePrivate);
+	structure->priv = gxps_document_structure_get_instance_private (structure);
 }
 
 static void
