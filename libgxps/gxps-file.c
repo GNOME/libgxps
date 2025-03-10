@@ -60,6 +60,7 @@ struct _GXPSFilePrivate {
 static void initable_iface_init (GInitableIface *initable_iface);
 
 G_DEFINE_TYPE_WITH_CODE (GXPSFile, gxps_file, G_TYPE_OBJECT,
+			 G_ADD_PRIVATE (GXPSFile)
 			 G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init))
 
 GQuark
@@ -244,9 +245,7 @@ gxps_file_finalize (GObject *object)
 static void
 gxps_file_init (GXPSFile *xps)
 {
-	xps->priv = G_TYPE_INSTANCE_GET_PRIVATE (xps,
-						 GXPS_TYPE_FILE,
-						 GXPSFilePrivate);
+	xps->priv = gxps_file_get_instance_private (xps);
 }
 
 static void
@@ -283,8 +282,6 @@ gxps_file_class_init (GXPSFileClass *klass)
 							      G_TYPE_FILE,
 							      G_PARAM_WRITABLE |
 							      G_PARAM_CONSTRUCT_ONLY));
-
-	g_type_class_add_private (klass, sizeof (GXPSFilePrivate));
 }
 
 static gboolean
