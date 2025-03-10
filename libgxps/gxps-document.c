@@ -68,6 +68,7 @@ struct _GXPSDocumentPrivate {
 static void initable_iface_init (GInitableIface *initable_iface);
 
 G_DEFINE_TYPE_WITH_CODE (GXPSDocument, gxps_document, G_TYPE_OBJECT,
+			 G_ADD_PRIVATE (GXPSDocument)
 			 G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init))
 
 #define REL_DOCUMENT_STRUCTURE "http://schemas.microsoft.com/xps/2005/06/documentstructure"
@@ -339,9 +340,8 @@ gxps_document_finalize (GObject *object)
 static void
 gxps_document_init (GXPSDocument *doc)
 {
-	doc->priv = G_TYPE_INSTANCE_GET_PRIVATE (doc,
-						 GXPS_TYPE_DOCUMENT,
-						 GXPSDocumentPrivate);
+	doc->priv = gxps_document_get_instance_private (doc);
+
 	doc->priv->has_rels = TRUE;
 }
 
@@ -390,8 +390,6 @@ gxps_document_class_init (GXPSDocumentClass *klass)
 							      NULL,
 							      G_PARAM_WRITABLE |
 							      G_PARAM_CONSTRUCT_ONLY));
-
-	g_type_class_add_private (klass, sizeof (GXPSDocumentPrivate));
 }
 
 static gboolean
