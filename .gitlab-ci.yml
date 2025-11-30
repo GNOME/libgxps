@@ -1,0 +1,43 @@
+include:
+  - component: "gitlab.gnome.org/GNOME/citemplates/release-service@master"
+    inputs:
+      job-stage: "release"
+      dist-job-name: "build-fedora"
+
+stages:
+  - "build"
+  - "release"
+
+variables:
+  DEPENDENCIES:
+    meson
+    git
+    gtk-doc
+    gobject-introspection-devel
+    glib2-devel
+    gtk3-devel
+    cairo-devel
+    libarchive-devel
+    freetype-devel
+    libjpeg-devel
+    libtiff-devel
+    lcms2-devel
+  MESON_BUILD_DIR: "_build"
+
+build-fedora:
+  stage: "build"
+  image: fedora:latest
+  before_script:
+    - dnf -y update && dnf install -y $DEPENDENCIES
+  script:
+    - meson setup "${MESON_BUILD_DIR}"
+    - meson test -C "${MESON_BUILD_DIR}"
+    - meson install -C "${MESON_BUILD_DIR}"
+    - meson dist -C "${MESON_BUILD_DIR}"
+    - cp -r "${MESON_BUILD_DIR}/meson-dist/" "${CI_PROJECT_DIR}/public-dist/"
+  artifacts:
+    when: always
+    paths:
+      - ${MESON_BUILD_DIR}/meson-logs/*
+      - ${MESON_BUILD_DIR}/meson-dist/libgxps-*.tar.xz
+      - "public-dist"
