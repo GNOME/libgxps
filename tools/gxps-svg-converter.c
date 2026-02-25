@@ -52,6 +52,7 @@ gxps_svg_converter_begin_document (GXPSConverter *converter,
 
         _gxps_converter_print_get_output_size (print_converter, first_page, &width, &height);
         converter->surface = cairo_svg_surface_create (print_converter->filename, width, height);
+        cairo_svg_surface_set_document_unit (converter->surface, CAIRO_SVG_UNIT_PT);
         cairo_svg_surface_restrict_to_version (converter->surface, CAIRO_SVG_VERSION_1_2);
 }
 
