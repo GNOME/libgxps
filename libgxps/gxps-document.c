@@ -198,12 +198,29 @@ fixed_doc_end_element (GMarkupParseContext  *context,
 	}
 }
 
+static void
+fixed_doc_error (GMarkupParseContext *context,
+		 GError              *error,
+		 gpointer             user_data)
+{
+	FixedDocParserData *data = (FixedDocParserData *)user_data;
+
+	/* On parse abort the accumulated pages have not yet been transferred
+	 * to doc->priv->pages (that only happens when </FixedDocument> is
+	 * reached), so free the pending page and the accumulated list here. */
+	if (data->page)
+		page_free (data->page);
+	g_list_free_full (data->pages, (GDestroyNotify)page_free);
+	data->page = NULL;
+	data->pages = NULL;
+}
+
 static const GMarkupParser fixed_doc_parser = {
 	fixed_doc_start_element,
 	fixed_doc_end_element,
 	NULL,
 	NULL,
-	NULL
+	fixed_doc_error
 };
 
 static gboolean
