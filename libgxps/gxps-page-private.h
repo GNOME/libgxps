@@ -57,6 +57,7 @@ struct _GXPSRenderContext {
         GXPSPage        *page;
         cairo_t         *cr;
         GXPSBrushVisual *visual;
+        GArray          *cairo_stack;
 };
 
 GXPSImage *gxps_page_get_image          (GXPSPage            *page,
@@ -64,6 +65,12 @@ GXPSImage *gxps_page_get_image          (GXPSPage            *page,
                                          GError             **error);
 void       gxps_page_render_parser_push (GMarkupParseContext *context,
                                          GXPSRenderContext   *ctx);
+
+void             gxps_render_context_save                (GXPSRenderContext *ctx);
+void             gxps_render_context_restore             (GXPSRenderContext *ctx);
+void             gxps_render_context_push_group          (GXPSRenderContext *ctx);
+cairo_pattern_t *gxps_render_context_pop_group           (GXPSRenderContext *ctx);
+void             gxps_render_context_pop_group_to_source (GXPSRenderContext *ctx);
 
 G_END_DECLS
 

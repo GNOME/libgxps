@@ -905,7 +905,7 @@ path_geometry_end_element (GMarkupParseContext  *context,
 			cairo_new_path (path->ctx->cr);
 			cairo_rectangle (path->ctx->cr, x1, y1, x2 - x1, y2 - y1);
 			cairo_clip (path->ctx->cr);
-			cairo_push_group (path->ctx->cr);
+			gxps_render_context_push_group (path->ctx);
 			cairo_append_path (path->ctx->cr, cairo_path);
 			cairo_path_destroy (cairo_path);
 		}
@@ -926,7 +926,7 @@ path_geometry_end_element (GMarkupParseContext  *context,
 		}
 
 		if (path->opacity_mask) {
-			cairo_pop_group_to_source (path->ctx->cr);
+			gxps_render_context_pop_group_to_source (path->ctx);
 			cairo_mask (path->ctx->cr, path->opacity_mask);
 		}
 	}

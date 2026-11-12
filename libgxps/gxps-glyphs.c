@@ -624,7 +624,7 @@ glyphs_end_element (GMarkupParseContext  *context,
                 brush = g_markup_parse_context_pop (context);
                 if (!glyphs->opacity_mask) {
                         glyphs->opacity_mask = cairo_pattern_reference (brush->pattern);
-                        cairo_push_group (glyphs->ctx->cr);
+                        gxps_render_context_push_group (glyphs->ctx);
                 }
                 gxps_brush_free (brush);
         } else {

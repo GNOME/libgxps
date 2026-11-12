@@ -1067,10 +1067,10 @@ brush_start_element (GMarkupParseContext  *context,
                 width = gxps_transform_hypot (&matrix, viewport.width, 0);
                 height = gxps_transform_hypot (&matrix, 0, viewport.height);
 
-                cairo_save (brush->ctx->cr);
+                gxps_render_context_save (brush->ctx);
                 cairo_rectangle (brush->ctx->cr, 0, 0, width, height);
                 cairo_clip (brush->ctx->cr);
-                cairo_push_group (brush->ctx->cr);
+                gxps_render_context_push_group (brush->ctx);
                 cairo_translate (brush->ctx->cr, -viewbox.x, -viewbox.y);
                 cairo_scale (brush->ctx->cr, width / viewbox.width, height / viewbox.height);
                 visual = gxps_brush_visual_new (brush, &viewport, &viewbox);
@@ -1082,6 +1082,7 @@ brush_start_element (GMarkupParseContext  *context,
                 sub_ctx = g_slice_new0 (GXPSRenderContext);
                 sub_ctx->page = brush->ctx->page;
                 sub_ctx->cr = brush->ctx->cr;
+                sub_ctx->cairo_stack = brush->ctx->cairo_stack;
                 sub_ctx->visual = visual;
                 gxps_page_render_parser_push (context, sub_ctx);
         } else {
@@ -1145,11 +1146,11 @@ brush_end_element (GMarkupParseContext  *context,
                         cairo_pattern_set_matrix (brush_image->brush->pattern, &matrix);
 
                         if (brush->opacity != 1.0) {
-                                cairo_push_group (brush->ctx->cr);
+                                gxps_render_context_push_group (brush->ctx);
                                 cairo_set_source (brush->ctx->cr, brush_image->brush->pattern);
                                 cairo_pattern_destroy (brush_image->brush->pattern);
                                 cairo_paint_with_alpha (brush->ctx->cr, brush->opacity);
-                                brush_image->brush->pattern = cairo_pop_group (brush->ctx->cr);
+                                brush_image->brush->pattern = gxps_render_context_pop_group (brush->ctx);
                         }
 
                         if (cairo_pattern_status (brush_image->brush->pattern)) {
@@ -1173,9 +1174,9 @@ brush_end_element (GMarkupParseContext  *context,
                 g_slice_free (GXPSRenderContext, sub_ctx);
 
                 GXPS_DEBUG (g_message ("set_fill_pattern (visual)"));
-                visual->brush->pattern = cairo_pop_group (brush->ctx->cr);
+                visual->brush->pattern = gxps_render_context_pop_group (brush->ctx);
                 /* Undo the clip */
-                cairo_restore (brush->ctx->cr);
+                gxps_render_context_restore (brush->ctx);
                 cairo_pattern_set_extend (visual->brush->pattern, visual->extend);
                 cairo_pattern_get_matrix (visual->brush->pattern, &matrix);
                 cairo_matrix_multiply (&matrix, &visual->matrix, &matrix);

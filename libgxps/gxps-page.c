@@ -201,6 +201,66 @@ gxps_page_render_parser_push (GMarkupParseContext *context,
         g_markup_parse_context_push (context, &render_parser, ctx);
 }
 
+typedef enum {
+	GXPS_CAIRO_STATE_SAVE,
+	GXPS_CAIRO_STATE_GROUP
+} GXPSCairoState;
+
+static void
+gxps_cairo_state_stack_push (GXPSRenderContext *ctx,
+                            GXPSCairoState     state)
+{
+	g_array_append_val (ctx->cairo_stack, state);
+}
+
+static void
+gxps_cairo_state_stack_pop (GXPSRenderContext *ctx,
+                           GXPSCairoState     state)
+{
+	GArray *stack = ctx->cairo_stack;
+
+	g_assert (stack->len > 0);
+	g_assert (g_array_index (stack, GXPSCairoState, stack->len - 1) == state);
+
+	g_array_set_size (stack, stack->len - 1);
+}
+
+void
+gxps_render_context_save (GXPSRenderContext *ctx)
+{
+	cairo_save (ctx->cr);
+	gxps_cairo_state_stack_push (ctx, GXPS_CAIRO_STATE_SAVE);
+}
+
+void
+gxps_render_context_restore (GXPSRenderContext *ctx)
+{
+	gxps_cairo_state_stack_pop (ctx, GXPS_CAIRO_STATE_SAVE);
+	cairo_restore (ctx->cr);
+}
+
+void
+gxps_render_context_push_group (GXPSRenderContext *ctx)
+{
+	cairo_push_group (ctx->cr);
+	gxps_cairo_state_stack_push (ctx, GXPS_CAIRO_STATE_GROUP);
+}
+
+cairo_pattern_t *
+gxps_render_context_pop_group (GXPSRenderContext *ctx)
+{
+	gxps_cairo_state_stack_pop (ctx, GXPS_CAIRO_STATE_GROUP);
+
+	return cairo_pop_group (ctx->cr);
+}
+
+void
+gxps_render_context_pop_group_to_source (GXPSRenderContext *ctx)
+{
+	gxps_cairo_state_stack_pop (ctx, GXPS_CAIRO_STATE_GROUP);
+	cairo_pop_group_to_source (ctx->cr);
+}
+
 static gboolean
 gxps_dash_array_parse (const gchar *dash,
 		       gdouble    **dashes_out,
@@ -373,7 +433,7 @@ canvas_end_element (GMarkupParseContext  *context,
 		brush = g_markup_parse_context_pop (context);
 		if (!canvas->opacity_mask) {
 			canvas->opacity_mask = cairo_pattern_reference (brush->pattern);
-			cairo_push_group (canvas->ctx->cr);
+			gxps_render_context_push_group (canvas->ctx);
 		}
 		gxps_brush_free (brush);
 	} else if (strcmp (element_name, "Canvas.Resources") == 0) {
@@ -514,7 +574,7 @@ render_start_element (GMarkupParseContext  *context,
 		gint      i;
 
 		GXPS_DEBUG (g_message ("save"));
-		cairo_save (ctx->cr);
+		gxps_render_context_save (ctx);
 
 		path = gxps_path_new (ctx);
 
@@ -627,7 +687,7 @@ render_start_element (GMarkupParseContext  *context,
 		}
 
 		if (path->opacity != 1.0)
-			cairo_push_group (ctx->cr);
+			gxps_render_context_push_group (ctx);
 		gxps_path_parser_push (context, path);
 	} else if (strcmp (element_name, "Glyphs") == 0) {
 		GXPSGlyphs  *glyphs;
@@ -645,7 +705,7 @@ render_start_element (GMarkupParseContext  *context,
 		gint         i;
 
 		GXPS_DEBUG (g_message ("save"));
-		cairo_save (ctx->cr);
+		gxps_render_context_save (ctx);
 
 		for (i = 0; names[i] != NULL; i++) {
 			if (strcmp (names[i], "FontRenderingEmSize") == 0) {
@@ -782,14 +842,14 @@ render_start_element (GMarkupParseContext  *context,
 		}
 
 		if (glyphs->opacity != 1.0)
-			cairo_push_group (glyphs->ctx->cr);
+			gxps_render_context_push_group (glyphs->ctx);
 		gxps_glyphs_parser_push (context, glyphs);
 	} else if (strcmp (element_name, "Canvas") == 0) {
 		GXPSCanvas *canvas;
 		gint i;
 
 		GXPS_DEBUG (g_message ("save"));
-		cairo_save (ctx->cr);
+		gxps_render_context_save (ctx);
 
 		canvas = gxps_canvas_new (ctx);
 
@@ -834,7 +894,7 @@ render_start_element (GMarkupParseContext  *context,
 			}
 		}
 		if (canvas->opacity != 1.0)
-			cairo_push_group (canvas->ctx->cr);
+			gxps_render_context_push_group (canvas->ctx);
 		g_markup_parse_context_push (context, &canvas_parser, canvas);
 	} else if (strcmp (element_name, "FixedPage.Resources") == 0) {
 		GXPSResources *resources;
@@ -866,10 +926,10 @@ render_end_element (GMarkupParseContext  *context,
 			GXPS_DEBUG (g_message ("restore"));
 			/* Something may have been drawn in a PathGeometry */
 			if (path->opacity != 1.0) {
-				cairo_pop_group_to_source (ctx->cr);
+				gxps_render_context_pop_group_to_source (ctx);
 				cairo_paint_with_alpha (ctx->cr, path->opacity);
 			}
-			cairo_restore (ctx->cr);
+			gxps_render_context_restore (ctx);
 			gxps_path_free (path);
 			return;
 		}
@@ -879,7 +939,7 @@ render_end_element (GMarkupParseContext  *context,
 		if (path->clip_data) {
 			if (!gxps_path_parse (path->clip_data, ctx->cr, error)) {
 				if (path->opacity != 1.0)
-					cairo_pattern_destroy (cairo_pop_group (ctx->cr));
+					cairo_pattern_destroy (gxps_render_context_pop_group (ctx));
 				gxps_path_free (path);
 				return;
 			}
@@ -889,7 +949,7 @@ render_end_element (GMarkupParseContext  *context,
 
 		if (!gxps_path_parse (path->data, ctx->cr, error)) {
 			if (path->opacity != 1.0)
-				cairo_pattern_destroy (cairo_pop_group (ctx->cr));
+				cairo_pattern_destroy (gxps_render_context_pop_group (ctx));
 			gxps_path_free (path);
 			return;
 		}
@@ -917,7 +977,7 @@ render_end_element (GMarkupParseContext  *context,
 			cairo_new_path (ctx->cr);
 			cairo_rectangle (ctx->cr, x1, y1, x2 - x1, y2 - y1);
 			cairo_clip (ctx->cr);
-			cairo_push_group (ctx->cr);
+			gxps_render_context_push_group (ctx);
 			cairo_append_path (ctx->cr, cairo_path);
 			cairo_path_destroy (cairo_path);
 		}
@@ -939,18 +999,18 @@ render_end_element (GMarkupParseContext  *context,
 		}
 
 		if (path->opacity_mask) {
-			cairo_pop_group_to_source (ctx->cr);
+			gxps_render_context_pop_group_to_source (ctx);
 			cairo_mask (ctx->cr, path->opacity_mask);
 		}
 
 		if (path->opacity != 1.0) {
-			cairo_pop_group_to_source (ctx->cr);
+			gxps_render_context_pop_group_to_source (ctx);
 			cairo_paint_with_alpha (ctx->cr, path->opacity);
 		}
 		gxps_path_free (path);
 
 		GXPS_DEBUG (g_message ("restore"));
-		cairo_restore (ctx->cr);
+		gxps_render_context_restore (ctx);
 	} else if (strcmp (element_name, "Glyphs") == 0) {
 		GXPSGlyphs           *glyphs;
 		gchar                *utf8;
@@ -970,25 +1030,25 @@ render_end_element (GMarkupParseContext  *context,
 		font_face = gxps_fonts_get_font (ctx->page->priv->zip, glyphs->font_uri, error);
 		if (!font_face) {
 			if (glyphs->opacity_mask)
-				cairo_pattern_destroy (cairo_pop_group (ctx->cr));
+				cairo_pattern_destroy (gxps_render_context_pop_group (ctx));
 			if (glyphs->opacity != 1.0)
-				cairo_pattern_destroy (cairo_pop_group (ctx->cr));
+				cairo_pattern_destroy (gxps_render_context_pop_group (ctx));
 			gxps_glyphs_free (glyphs);
 
 			GXPS_DEBUG (g_message ("restore"));
-			cairo_restore (ctx->cr);
+			gxps_render_context_restore (ctx);
 			return;
 		}
 
 		if (glyphs->clip_data) {
 			if (!gxps_path_parse (glyphs->clip_data, ctx->cr, error)) {
 				if (glyphs->opacity_mask)
-					cairo_pattern_destroy (cairo_pop_group (ctx->cr));
+					cairo_pattern_destroy (gxps_render_context_pop_group (ctx));
 				if (glyphs->opacity != 1.0)
-					cairo_pattern_destroy (cairo_pop_group (ctx->cr));
+					cairo_pattern_destroy (gxps_render_context_pop_group (ctx));
 				gxps_glyphs_free (glyphs);
 				GXPS_DEBUG (g_message ("restore"));
-				cairo_restore (ctx->cr);
+				gxps_render_context_restore (ctx);
 				return;
 			}
 			GXPS_DEBUG (g_message ("clip"));
@@ -1031,13 +1091,13 @@ render_end_element (GMarkupParseContext  *context,
 						       error);
 		if (!success) {
 			if (glyphs->opacity_mask)
-				cairo_pattern_destroy (cairo_pop_group (ctx->cr));
+				cairo_pattern_destroy (gxps_render_context_pop_group (ctx));
 			if (glyphs->opacity != 1.0)
-				cairo_pattern_destroy (cairo_pop_group (ctx->cr));
+				cairo_pattern_destroy (gxps_render_context_pop_group (ctx));
 			gxps_glyphs_free (glyphs);
 			cairo_scaled_font_destroy (scaled_font);
 			GXPS_DEBUG (g_message ("restore"));
-			cairo_restore (ctx->cr);
+			gxps_render_context_restore (ctx);
 			return;
 		}
 
@@ -1058,11 +1118,11 @@ render_end_element (GMarkupParseContext  *context,
                 }
 
 		if (glyphs->opacity_mask) {
-			cairo_pop_group_to_source (ctx->cr);
+			gxps_render_context_pop_group_to_source (ctx);
 			cairo_mask (ctx->cr, glyphs->opacity_mask);
 		}
 		if (glyphs->opacity != 1.0) {
-			cairo_pop_group_to_source (ctx->cr);
+			gxps_render_context_pop_group_to_source (ctx);
 			cairo_paint_with_alpha (ctx->cr, glyphs->opacity);
 		}
 		g_free (glyph_list);
@@ -1070,21 +1130,21 @@ render_end_element (GMarkupParseContext  *context,
 		cairo_scaled_font_destroy (scaled_font);
 
 		GXPS_DEBUG (g_message ("restore"));
-		cairo_restore (ctx->cr);
+		gxps_render_context_restore (ctx);
 	} else if (strcmp (element_name, "Canvas") == 0) {
 		GXPSCanvas *canvas;
 
 		canvas = g_markup_parse_context_pop (context);
 
 		if (canvas->opacity_mask) {
-			cairo_pop_group_to_source (ctx->cr);
+			gxps_render_context_pop_group_to_source (ctx);
 			cairo_mask (ctx->cr, canvas->opacity_mask);
 		}
 		if (canvas->opacity != 1.0) {
-			cairo_pop_group_to_source (ctx->cr);
+			gxps_render_context_pop_group_to_source (ctx);
 			cairo_paint_with_alpha (ctx->cr, canvas->opacity);
 		}
-		cairo_restore (ctx->cr);
+		gxps_render_context_restore (ctx);
 		GXPS_DEBUG (g_message ("restore"));
 		if (canvas->pop_resource_dict) {
 			GXPSResources *resources;
@@ -1126,6 +1186,7 @@ gxps_page_parse_for_rendering (GXPSPage *page,
 
 	ctx.page = page;
 	ctx.cr = cr;
+	ctx.cairo_stack = g_array_new (FALSE, FALSE, sizeof (GXPSCairoState));
 
 	resources = gxps_archive_get_resources (page->priv->zip);
 	gxps_resources_push_dict (resources);
@@ -1136,6 +1197,7 @@ gxps_page_parse_for_rendering (GXPSPage *page,
 	g_markup_parse_context_free (context);
 
 	gxps_resources_pop_dict (resources);
+	g_array_unref (ctx.cairo_stack);
 
 	if (err == NULL) {
 		return TRUE;
