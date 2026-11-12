@@ -189,7 +189,7 @@ gxps_parse_stream (GMarkupParseContext  *context,
 	} while (bytes_read > 0);
 
 	if (retval)
-		g_markup_parse_context_end_parse (context, error);
+		retval = g_markup_parse_context_end_parse (context, error);
 	g_object_unref (cstream);
 
 	return retval;
