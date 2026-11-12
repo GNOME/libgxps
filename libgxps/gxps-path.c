@@ -224,8 +224,8 @@ path_data_parse_error (PathDataToken    *token,
                              GXPS_PAGE_ERROR,
                              GXPS_PAGE_ERROR_RENDER,
                              "Error parsing abreviated path: expected token %s, but %s found at %s",
-                             path_data_token_type_to_string (token->type),
                              path_data_token_type_to_string (expected),
+                             path_data_token_type_to_string (token->type),
                              token->iter);
 }
 
