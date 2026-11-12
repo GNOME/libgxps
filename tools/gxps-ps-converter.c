@@ -129,6 +129,12 @@ gxps_ps_converter_init_with_args (GXPSConverter *converter,
                 }
         }
 
+        if (paper != NULL && i == G_N_ELEMENTS (paper_sizes)) {
+                g_printerr ("Invalid paper size: %s\n", paper);
+
+                return FALSE;
+        }
+
         return TRUE;
 }
 
