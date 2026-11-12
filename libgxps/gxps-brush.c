@@ -904,6 +904,7 @@ brush_start_element (GMarkupParseContext  *context,
 
                 GXPS_DEBUG (g_message ("set_fill_pattern (linear)"));
                 brush->pattern = cairo_pattern_create_linear (x0, y0, x1, y1);
+                cairo_matrix_invert (&matrix);
                 cairo_pattern_set_matrix (brush->pattern, &matrix);
                 cairo_pattern_set_extend (brush->pattern, extend);
                 g_markup_parse_context_push (context, &brush_gradient_parser,
@@ -1009,6 +1010,7 @@ brush_start_element (GMarkupParseContext  *context,
 
                 GXPS_DEBUG (g_message ("set_fill_pattern (radial)"));
                 brush->pattern = cairo_pattern_create_radial (cx0, cy0, 0, cx1, cy1, r1);
+                cairo_matrix_invert (&matrix);
                 cairo_pattern_set_matrix (brush->pattern, &matrix);
                 cairo_pattern_set_extend (brush->pattern, extend);
                 g_markup_parse_context_push (context, &brush_gradient_parser,
