@@ -100,7 +100,7 @@ endif
 core_inc = include_directories('.')
 
 # Required dependencies
-glib_req = '2.36.0'
+glib_req = '2.64.0'
 cairo_req = '1.10.0'
 archive_req = '2.8.0'
 
