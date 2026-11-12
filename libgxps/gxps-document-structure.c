@@ -86,8 +86,7 @@ gxps_document_structure_finalize (GObject *object)
 
 	g_clear_object (&structure->priv->zip);
 	g_clear_pointer (&structure->priv->source, g_free);
-	g_list_free_full (structure->priv->outline, (GDestroyNotify)outline_node_free);
-	structure->priv->outline = NULL;
+	g_clear_list (&structure->priv->outline, (GDestroyNotify)outline_node_free);
 
 	G_OBJECT_CLASS (gxps_document_structure_parent_class)->finalize (object);
 }
