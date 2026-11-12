@@ -177,6 +177,7 @@ path_data_iter_next (PathDataToken *token,
                 start = token->iter;
                 gxps_parse_skip_number (&token->iter, token->end);
                 str = g_strndup (start, token->iter - start);
+                token->type = PD_TOKEN_NUMBER;
                 if (!gxps_value_get_double (str, &token->number)) {
                         g_set_error (error,
                                      GXPS_PAGE_ERROR,
@@ -189,7 +190,6 @@ path_data_iter_next (PathDataToken *token,
                         return FALSE;
                 }
                 g_free (str);
-                token->type = PD_TOKEN_NUMBER;
         } else if (c == ',') {
                 token->type = PD_TOKEN_COMMA;
                 token->iter++;
