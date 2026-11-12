@@ -59,7 +59,6 @@ gxps_resources_finalize (GObject *object)
 	GXPSResources *resources = GXPS_RESOURCES (object);
 
 	g_queue_free_full (resources->queue, (GDestroyNotify)g_hash_table_destroy);
-	g_object_unref (resources->zip);
 
 	G_OBJECT_CLASS (gxps_resources_parent_class)->finalize (object);
 }
@@ -74,7 +73,7 @@ gxps_resources_set_property (GObject      *object,
 
 	switch (prop_id) {
 	case PROP_ARCHIVE:
-		resources->zip = g_value_dup_object (value);
+		resources->zip = g_value_get_object (value);
 		break;
 	default:
 		G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
