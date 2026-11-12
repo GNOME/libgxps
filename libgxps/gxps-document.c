@@ -83,8 +83,7 @@ static void
 page_free (Page *page)
 {
 	g_free (page->source);
-	g_list_foreach (page->links, (GFunc)g_free, NULL);
-	g_list_free (page->links);
+	g_list_free_full (page->links, g_free);
 
 	g_slice_free (Page, page);
 }
