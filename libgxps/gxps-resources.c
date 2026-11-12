@@ -203,6 +203,7 @@ gxps_resource_dict_context_free (GXPSResourceDictContext *resource_dict)
 		return;
 
 	g_free (resource_dict->key);
+	g_free (resource_dict->source);
 	if (resource_dict->xml)
 		g_string_free (resource_dict->xml, TRUE);
 	g_object_unref (resource_dict->resources);
