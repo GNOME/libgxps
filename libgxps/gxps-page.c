@@ -1197,6 +1197,14 @@ gxps_page_parse_for_rendering (GXPSPage *page,
 	g_markup_parse_context_free (context);
 
 	gxps_resources_pop_dict (resources);
+
+	while (ctx.cairo_stack->len > 0) {
+		if (g_array_index (ctx.cairo_stack, GXPSCairoState, ctx.cairo_stack->len - 1) == GXPS_CAIRO_STATE_GROUP) {
+			cairo_pattern_destroy (gxps_render_context_pop_group (&ctx));
+		} else {
+			gxps_render_context_restore (&ctx);
+		}
+	}
 	g_array_unref (ctx.cairo_stack);
 
 	if (err == NULL) {
