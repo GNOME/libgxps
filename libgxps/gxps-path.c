@@ -558,7 +558,12 @@ gxps_path_parse (const gchar *data,
                         control_point_x = control_point_y = 0;
                         break;
                 default:
-                        g_assert_not_reached ();
+                        g_set_error (error,
+                                     GXPS_PAGE_ERROR,
+                                     GXPS_PAGE_ERROR_RENDER,
+                                     "Error parsing abreviated path: unknown command '%c'",
+                                     command);
+                        return FALSE;
                 }
         } while (token.type == PD_TOKEN_COMMAND);
 
