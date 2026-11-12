@@ -1137,9 +1137,13 @@ gxps_page_parse_for_rendering (GXPSPage *page,
 
 	gxps_resources_pop_dict (resources);
 
+	if (err == NULL) {
+		return TRUE;
+	}
+
 	if (g_error_matches (err, GXPS_PAGE_ERROR, GXPS_PAGE_ERROR_RENDER)) {
 		g_propagate_error (error, err);
-	} else if (err) {
+	} else {
 		g_set_error (error,
 			     GXPS_PAGE_ERROR,
 			     GXPS_PAGE_ERROR_RENDER,
@@ -1148,7 +1152,7 @@ gxps_page_parse_for_rendering (GXPSPage *page,
 		g_error_free (err);
 	}
 
-	return (*error != NULL) ? FALSE : TRUE;
+	return FALSE;
 }
 
 /* Links */
