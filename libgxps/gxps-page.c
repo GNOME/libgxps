@@ -392,6 +392,13 @@ canvas_error (GMarkupParseContext *context,
               gpointer             user_data)
 {
 	GXPSCanvas *canvas = (GXPSCanvas *)user_data;
+
+	if (canvas->pop_resource_dict) {
+		GXPSResources *resources;
+
+		resources = gxps_archive_get_resources (canvas->ctx->page->priv->zip);
+		gxps_resources_pop_dict (resources);
+	}
 	gxps_canvas_free (canvas);
 }
 
@@ -1103,6 +1110,7 @@ gxps_page_parse_for_rendering (GXPSPage *page,
 	GInputStream        *stream;
 	GMarkupParseContext *context;
 	GXPSRenderContext    ctx;
+	GXPSResources       *resources;
 	GError              *err = NULL;
 
 	stream = gxps_archive_open (page->priv->zip,
@@ -1119,11 +1127,15 @@ gxps_page_parse_for_rendering (GXPSPage *page,
 	ctx.page = page;
 	ctx.cr = cr;
 
+	resources = gxps_archive_get_resources (page->priv->zip);
+	gxps_resources_push_dict (resources);
+
 	context = g_markup_parse_context_new (&render_parser, 0, &ctx, NULL);
 	gxps_parse_stream (context, stream, &err);
 	g_object_unref (stream);
 	g_markup_parse_context_free (context);
 
+	gxps_resources_pop_dict (resources);
 
 	if (g_error_matches (err, GXPS_PAGE_ERROR, GXPS_PAGE_ERROR_RENDER)) {
 		g_propagate_error (error, err);
