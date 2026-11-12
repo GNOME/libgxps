@@ -390,6 +390,7 @@ _jpeg_fill_input_buffer (j_decompress_ptr cinfo)
 		/* Insert a fake EOI marker */
 		src->buffer[0] = (JOCTET) 0xFF;
 		src->buffer[1] = (JOCTET) JPEG_EOI;
+		num_bytes = 2;
 	}
 
 	src->pub.next_input_byte = src->buffer;
