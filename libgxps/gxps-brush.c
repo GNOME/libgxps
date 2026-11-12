@@ -441,6 +441,139 @@ gxps_brush_visual_free (GXPSBrushVisual *visual)
         g_slice_free (GXPSBrushVisual, visual);
 }
 
+typedef struct {
+        gdouble   offset;
+        guint     index;
+        GXPSColor color;
+} GXPSGradientStop;
+
+typedef struct {
+        GXPSBrush *brush;
+        GArray    *stops;
+} GXPSBrushGradient;
+
+static GXPSBrushGradient *
+gxps_brush_gradient_new (GXPSBrush *brush)
+{
+        GXPSBrushGradient *gradient;
+
+        gradient = g_new0 (GXPSBrushGradient, 1);
+        gradient->brush = brush;
+        gradient->stops = g_array_new (FALSE, FALSE, sizeof (GXPSGradientStop));
+
+        return gradient;
+}
+
+static void
+gxps_brush_gradient_free (GXPSBrushGradient *gradient)
+{
+        if (G_UNLIKELY (!gradient))
+                return;
+
+        g_array_free (gradient->stops, TRUE);
+        g_free (gradient);
+}
+
+static gint
+gradient_stop_compare (gconstpointer a,
+                       gconstpointer b)
+{
+        const GXPSGradientStop *stop_a = a;
+        const GXPSGradientStop *stop_b = b;
+
+        if (stop_a->offset < stop_b->offset) {
+                return -1;
+        }
+        if (stop_a->offset > stop_b->offset) {
+                return 1;
+        }
+
+        return (stop_a->index > stop_b->index) - (stop_a->index < stop_b->index);
+}
+
+static void
+gradient_add_color_stop (GXPSBrush       *brush,
+                         gdouble          offset,
+                         const GXPSColor *color)
+{
+        cairo_pattern_add_color_stop_rgba (brush->pattern, offset,
+                                           color->red,
+                                           color->green,
+                                           color->blue,
+                                           color->alpha * brush->opacity);
+}
+
+static void
+gradient_add_interpolated_color_stop (GXPSBrush              *brush,
+                                      const GXPSGradientStop *a,
+                                      const GXPSGradientStop *b,
+                                      gdouble                 offset)
+{
+        GXPSColor color;
+        gdouble   t;
+
+        t = (offset - a->offset) / (b->offset - a->offset);
+        color.alpha = a->color.alpha + t * (b->color.alpha - a->color.alpha);
+        color.red = a->color.red + t * (b->color.red - a->color.red);
+        color.green = a->color.green + t * (b->color.green - a->color.green);
+        color.blue = a->color.blue + t * (b->color.blue - a->color.blue);
+
+        gradient_add_color_stop (brush, offset, &color);
+}
+
+static void
+gxps_brush_gradient_apply_stops (GXPSBrushGradient *gradient)
+{
+        GXPSGradientStop *stops;
+        guint             n_stops;
+        guint             first, last;
+        guint             i;
+
+        n_stops = gradient->stops->len;
+        if (n_stops == 0) {
+                return;
+        }
+
+        g_array_sort (gradient->stops, gradient_stop_compare);
+        stops = (GXPSGradientStop *) gradient->stops->data;
+
+        first = 0;
+        while (first < n_stops && stops[first].offset < 0) {
+                first++;
+        }
+
+        last = n_stops;
+        while (last > first && stops[last - 1].offset > 1) {
+                last--;
+        }
+
+        if (first > 0) {
+                if (first < n_stops) {
+                        gradient_add_interpolated_color_stop (gradient->brush,
+                                                              &stops[first - 1],
+                                                              &stops[first],
+                                                              0);
+                } else {
+                        gradient_add_color_stop (gradient->brush, 0, &stops[n_stops - 1].color);
+                }
+        }
+
+        for (i = first; i < last; i++) {
+                gradient_add_color_stop (gradient->brush, stops[i].offset, &stops[i].color);
+        }
+
+        if (last < n_stops) {
+                if (last > 0) {
+                        gradient_add_interpolated_color_stop (gradient->brush,
+                                                              &stops[last - 1],
+                                                              &stops[last],
+                                                              1);
+                } else {
+                        gradient_add_color_stop (gradient->brush, 1, &stops[0].color);
+                }
+        }
+}
+
 static void
 brush_gradient_start_element (GMarkupParseContext  *context,
                               const gchar          *element_name,
@@ -449,20 +582,21 @@ brush_gradient_start_element (GMarkupParseContext  *context,
                               gpointer              user_data,
                               GError              **error)
 {
-        GXPSBrush *brush = (GXPSBrush *)user_data;
+        GXPSBrushGradient *gradient = (GXPSBrushGradient *)user_data;
+        GXPSBrush *brush = gradient->brush;
 
         if (strcmp (element_name, "LinearGradientBrush.GradientStops") == 0) {
         } else if (strcmp (element_name, "RadialGradientBrush.GradientStops") == 0) {
         } else if (strcmp (element_name, "GradientStop") == 0) {
-                gint      i;
-                GXPSColor color;
-                gboolean  has_color = FALSE;
-                gdouble   offset = -1;
+                gint             i;
+                GXPSGradientStop stop;
+                gboolean         has_color = FALSE;
+                gboolean         has_offset = FALSE;
 
                 for (i = 0; names[i] != NULL; i++) {
                         if (strcmp (names[i], "Color") == 0) {
                                 has_color = TRUE;
-                                if (!gxps_color_parse (values[i], brush->ctx->page->priv->zip, &color)) {
+                                if (!gxps_color_parse (values[i], brush->ctx->page->priv->zip, &stop.color)) {
                                         gxps_parse_error (context,
                                                           brush->ctx->page->priv->source,
                                                           G_MARKUP_ERROR_INVALID_CONTENT,
@@ -471,7 +605,8 @@ brush_gradient_start_element (GMarkupParseContext  *context,
                                         return;
                                 }
                         } else if (strcmp (names[i], "Offset") == 0) {
-                                if (!gxps_value_get_double (values[i], &offset)) {
+                                has_offset = TRUE;
+                                if (!gxps_value_get_double (values[i], &stop.offset)) {
                                         gxps_parse_error (context,
                                                           brush->ctx->page->priv->source,
                                                           G_MARKUP_ERROR_INVALID_CONTENT,
@@ -489,7 +624,7 @@ brush_gradient_start_element (GMarkupParseContext  *context,
                         }
                 }
 
-                if (!has_color || offset == -1) {
+                if (!has_color || !has_offset) {
                         gxps_parse_error (context,
                                           brush->ctx->page->priv->source,
                                           G_MARKUP_ERROR_MISSING_ATTRIBUTE,
@@ -499,19 +634,26 @@ brush_gradient_start_element (GMarkupParseContext  *context,
                         return;
                 }
 
-                cairo_pattern_add_color_stop_rgba (brush->pattern, offset,
-                                                   color.red,
-                                                   color.green,
-                                                   color.blue,
-                                                   color.alpha * brush->opacity);
+                stop.index = gradient->stops->len;
+                g_array_append_val (gradient->stops, stop);
         }
+}
+
+static void
+brush_gradient_error (GMarkupParseContext *context,
+                      GError              *error,
+                      gpointer             user_data)
+{
+        GXPSBrushGradient *gradient = (GXPSBrushGradient *)user_data;
+        gxps_brush_gradient_free (gradient);
 }
 
 static GMarkupParser brush_gradient_parser = {
         brush_gradient_start_element,
         NULL,
         NULL,
-        NULL
+        NULL,
+        brush_gradient_error
 };
 
 static gboolean
@@ -756,7 +898,8 @@ brush_start_element (GMarkupParseContext  *context,
                 brush->pattern = cairo_pattern_create_linear (x0, y0, x1, y1);
                 cairo_pattern_set_matrix (brush->pattern, &matrix);
                 cairo_pattern_set_extend (brush->pattern, extend);
-                g_markup_parse_context_push (context, &brush_gradient_parser, brush);
+                g_markup_parse_context_push (context, &brush_gradient_parser,
+                                             gxps_brush_gradient_new (brush));
         } else if (strcmp (element_name, "RadialGradientBrush") == 0) {
                 gint           i;
                 gdouble        cx0, cy0, r0, cx1, cy1, r1;
@@ -860,7 +1003,8 @@ brush_start_element (GMarkupParseContext  *context,
                 brush->pattern = cairo_pattern_create_radial (cx0, cy0, 0, cx1, cy1, r1);
                 cairo_pattern_set_matrix (brush->pattern, &matrix);
                 cairo_pattern_set_extend (brush->pattern, extend);
-                g_markup_parse_context_push (context, &brush_gradient_parser, brush);
+                g_markup_parse_context_push (context, &brush_gradient_parser,
+                                             gxps_brush_gradient_new (brush));
         } else if (strcmp (element_name, "VisualBrush") == 0) {
                 GXPSBrushVisual *visual;
                 GXPSRenderContext *sub_ctx;
@@ -957,10 +1101,13 @@ brush_end_element (GMarkupParseContext  *context,
         GXPSBrush *brush = (GXPSBrush *)user_data;
 
         if (strcmp (element_name, "SolidColorBrush") == 0) {
-        } else if (strcmp (element_name, "LinearGradientBrush") == 0) {
-                g_markup_parse_context_pop (context);
-        } else if (strcmp (element_name, "RadialGradientBrush") == 0) {
-                g_markup_parse_context_pop (context);
+        } else if (strcmp (element_name, "LinearGradientBrush") == 0 ||
+                   strcmp (element_name, "RadialGradientBrush") == 0) {
+                GXPSBrushGradient *gradient;
+
+                gradient = g_markup_parse_context_pop (context);
+                gxps_brush_gradient_apply_stops (gradient);
+                gxps_brush_gradient_free (gradient);
         } else if (strcmp (element_name, "ImageBrush") == 0) {
                 GXPSBrushImage  *brush_image;
                 GXPSImage       *image;
