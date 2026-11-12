@@ -31,6 +31,7 @@ struct _GXPSBrush {
         GXPSRenderContext *ctx;
         cairo_pattern_t   *pattern;
         gdouble            opacity;
+        GXPSRenderContext *visual_ctx;
 };
 
 GXPSBrush *gxps_brush_new               (GXPSRenderContext   *ctx);

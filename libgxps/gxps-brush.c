@@ -66,6 +66,22 @@ gxps_transform_hypot (const cairo_matrix_t *matrix, double dx, double dy)
 	return hypot (dx, dy);
 }
 
+static void
+gxps_brush_visual_free (GXPSBrushVisual *visual)
+{
+        if (G_UNLIKELY (!visual))
+                return;
+
+        g_free (visual);
+}
+
+static void
+gxps_brush_visual_render_context_free (GXPSRenderContext *ctx)
+{
+        gxps_brush_visual_free (ctx->visual);
+        g_free (ctx);
+}
+
 void
 gxps_brush_free (GXPSBrush *brush)
 {
@@ -73,6 +89,7 @@ gxps_brush_free (GXPSBrush *brush)
                 return;
 
         cairo_pattern_destroy (brush->pattern);
+        g_clear_pointer (&brush->visual_ctx, gxps_brush_visual_render_context_free);
         g_free (brush);
 }
 
@@ -430,15 +447,6 @@ gxps_brush_visual_new (GXPSBrush         *brush,
         visual->viewbox = *viewbox;
 
         return visual;
-}
-
-static void
-gxps_brush_visual_free (GXPSBrushVisual *visual)
-{
-        if (G_UNLIKELY (!visual))
-                return;
-
-        g_free (visual);
 }
 
 typedef struct {
@@ -1084,6 +1092,7 @@ brush_start_element (GMarkupParseContext  *context,
                 sub_ctx->cr = brush->ctx->cr;
                 sub_ctx->cairo_stack = brush->ctx->cairo_stack;
                 sub_ctx->visual = visual;
+                brush->visual_ctx = sub_ctx;
                 gxps_page_render_parser_push (context, sub_ctx);
         } else {
                 gxps_parse_error (context,
@@ -1171,7 +1180,7 @@ brush_end_element (GMarkupParseContext  *context,
 
                 sub_ctx = g_markup_parse_context_pop (context);
                 visual = sub_ctx->visual;
-                g_free (sub_ctx);
+                g_clear_pointer (&brush->visual_ctx, g_free);
 
                 GXPS_DEBUG (g_message ("set_fill_pattern (visual)"));
                 visual->brush->pattern = gxps_render_context_pop_group (brush->ctx);
