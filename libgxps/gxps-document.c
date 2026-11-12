@@ -187,7 +187,7 @@ fixed_doc_end_element (GMarkupParseContext  *context,
                         for (l = data->pages; l; l = g_list_next (l))
                                 data->doc->priv->pages[--data->n_pages] = (Page *)l->data;
                 }
-                g_list_free (data->pages);
+                g_clear_list (&data->pages, NULL);
 	} else if (strcmp (element_name, "LinkTarget") == 0) {
 		/* Do Nothing */
 	} else {
@@ -205,14 +205,13 @@ fixed_doc_error (GMarkupParseContext *context,
 {
 	FixedDocParserData *data = (FixedDocParserData *)user_data;
 
-	/* On parse abort the accumulated pages have not yet been transferred
-	 * to doc->priv->pages (that only happens when </FixedDocument> is
-	 * reached), so free the pending page and the accumulated list here. */
+	/* Pages still in data->pages have not been transferred to
+	 * doc->priv->pages, so free them and the pending page here.
+	 */
 	if (data->page)
 		page_free (data->page);
-	g_list_free_full (data->pages, (GDestroyNotify)page_free);
+	g_clear_list (&data->pages, (GDestroyNotify)page_free);
 	data->page = NULL;
-	data->pages = NULL;
 }
 
 static const GMarkupParser fixed_doc_parser = {
