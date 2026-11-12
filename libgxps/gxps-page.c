@@ -1619,6 +1619,7 @@ gxps_page_parse_anchors (GXPSPage *page,
 	GInputStream        *stream;
 	GXPSAnchorsContext   ctx;
 	GMarkupParseContext *context;
+	GError              *err = NULL;
 
 	stream = gxps_archive_open (page->priv->zip,
 				    page->priv->source);
@@ -1640,9 +1641,15 @@ gxps_page_parse_anchors (GXPSPage *page,
 					     (GDestroyNotify)anchor_area_free);
 
 	context = g_markup_parse_context_new (&anchors_parser, 0, &ctx, NULL);
-	gxps_parse_stream (context, stream, error);
+	gxps_parse_stream (context, stream, &err);
 	g_object_unref (stream);
 	g_markup_parse_context_free (context);
+
+	if (err != NULL) {
+		g_hash_table_destroy (ctx.anchors);
+		g_propagate_error (error, err);
+		return FALSE;
+	}
 
 	if (g_hash_table_size (ctx.anchors) > 0) {
 		page->priv->has_anchors = TRUE;
