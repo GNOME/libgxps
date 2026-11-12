@@ -94,6 +94,8 @@ typedef struct _FixedDocParserData {
 	Page         *page;
 	guint         n_pages;
 	GList        *pages;
+	gboolean      in_document;
+	gboolean      document_parsed;
 } FixedDocParserData;
 
 static void
@@ -106,6 +108,27 @@ fixed_doc_start_element (GMarkupParseContext  *context,
 {
 	FixedDocParserData *data = (FixedDocParserData *)user_data;
 	gint                i;
+
+	if (strcmp (element_name, "FixedDocument") == 0) {
+		if (data->in_document || data->document_parsed) {
+			gxps_parse_error (context,
+					  data->doc->priv->source,
+					  G_MARKUP_ERROR_UNKNOWN_ELEMENT,
+					  element_name, NULL, NULL, error);
+			return;
+		}
+
+		data->in_document = TRUE;
+		return;
+	}
+
+	if (!data->in_document) {
+		gxps_parse_error (context,
+				  data->doc->priv->source,
+				  G_MARKUP_ERROR_UNKNOWN_ELEMENT,
+				  element_name, NULL, NULL, error);
+		return;
+	}
 
 	if (strcmp (element_name, "PageContent") == 0) {
 		gchar  *source = NULL;
@@ -148,8 +171,6 @@ fixed_doc_start_element (GMarkupParseContext  *context,
 			}
 		}
 	} else if (strcmp (element_name, "PageContent.LinkTargets") == 0) {
-	} else if (strcmp (element_name, "FixedDocument") == 0) {
-		/* Nothing to do */
 	} else {
 		gxps_parse_error (context,
 				  data->doc->priv->source,
@@ -187,6 +208,8 @@ fixed_doc_end_element (GMarkupParseContext  *context,
                                 data->doc->priv->pages[--data->n_pages] = (Page *)l->data;
                 }
                 g_clear_list (&data->pages, NULL);
+		data->in_document = FALSE;
+		data->document_parsed = TRUE;
 	} else if (strcmp (element_name, "LinkTarget") == 0) {
 		/* Do Nothing */
 	} else {
