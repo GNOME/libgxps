@@ -181,7 +181,7 @@ path_data_iter_next (PathDataToken *token,
                         g_set_error (error,
                                      GXPS_PAGE_ERROR,
                                      GXPS_PAGE_ERROR_RENDER,
-                                     "Error parsing abreviated path: error converting token %s (%s) to double at %s",
+                                     "Error parsing abbreviated path: error converting token %s (%s) to double at %s",
                                      path_data_token_type_to_string (token->type),
                                      str, token->iter);
                         g_free (str);
@@ -216,14 +216,14 @@ path_data_parse_error (PathDataToken    *token,
                 g_set_error (error,
                              GXPS_PAGE_ERROR,
                              GXPS_PAGE_ERROR_RENDER,
-                             "Error parsing abreviated path: unexpected token %s at %s",
+                             "Error parsing abbreviated path: unexpected token %s at %s",
                              path_data_token_type_to_string (token->type),
                              token->iter);
         else
                 g_set_error (error,
                              GXPS_PAGE_ERROR,
                              GXPS_PAGE_ERROR_RENDER,
-                             "Error parsing abreviated path: expected token %s, but %s found at %s",
+                             "Error parsing abbreviated path: expected token %s, but %s found at %s",
                              path_data_token_type_to_string (expected),
                              path_data_token_type_to_string (token->type),
                              token->iter);
@@ -561,7 +561,7 @@ gxps_path_parse (const gchar *data,
                         g_set_error (error,
                                      GXPS_PAGE_ERROR,
                                      GXPS_PAGE_ERROR_RENDER,
-                                     "Error parsing abreviated path: unknown command '%c'",
+                                     "Error parsing abbreviated path: unknown command '%c'",
                                      command);
                         return FALSE;
                 }
