@@ -52,7 +52,7 @@ gxps_brush_new (GXPSRenderContext *ctx)
 {
         GXPSBrush *brush;
 
-        brush = g_slice_new0 (GXPSBrush);
+        brush = g_new0 (GXPSBrush, 1);
         brush->ctx = ctx;
         brush->opacity = 1.0;
 
@@ -73,7 +73,7 @@ gxps_brush_free (GXPSBrush *brush)
                 return;
 
         cairo_pattern_destroy (brush->pattern);
-        g_slice_free (GXPSBrush, brush);
+        g_free (brush);
 }
 
 static gboolean
@@ -325,7 +325,7 @@ gxps_brush_image_new (GXPSBrush         *brush,
 {
         GXPSBrushImage *image;
 
-        image = g_slice_new0 (GXPSBrushImage);
+        image = g_new0 (GXPSBrushImage, 1);
         image->brush = brush;
 
         cairo_matrix_init_identity (&image->matrix);
@@ -346,7 +346,7 @@ gxps_brush_image_free (GXPSBrushImage *image)
 
         g_free (image->image_uri);
 
-        g_slice_free (GXPSBrushImage, image);
+        g_free (image);
 }
 
 static void
@@ -418,7 +418,7 @@ gxps_brush_visual_new (GXPSBrush         *brush,
 {
         GXPSBrushVisual *visual;
 
-        visual = g_slice_new0 (GXPSBrushVisual);
+        visual = g_new0 (GXPSBrushVisual, 1);
         visual->brush = brush;
 
         /* Default */
@@ -438,7 +438,7 @@ gxps_brush_visual_free (GXPSBrushVisual *visual)
         if (G_UNLIKELY (!visual))
                 return;
 
-        g_slice_free (GXPSBrushVisual, visual);
+        g_free (visual);
 }
 
 typedef struct {
@@ -1079,7 +1079,7 @@ brush_start_element (GMarkupParseContext  *context,
                                    viewport.height / height, viewport.x, viewport.y);
                 cairo_matrix_multiply (&visual->matrix, &visual->matrix, &matrix);
                 cairo_matrix_invert (&visual->matrix);
-                sub_ctx = g_slice_new0 (GXPSRenderContext);
+                sub_ctx = g_new0 (GXPSRenderContext, 1);
                 sub_ctx->page = brush->ctx->page;
                 sub_ctx->cr = brush->ctx->cr;
                 sub_ctx->cairo_stack = brush->ctx->cairo_stack;
@@ -1171,7 +1171,7 @@ brush_end_element (GMarkupParseContext  *context,
 
                 sub_ctx = g_markup_parse_context_pop (context);
                 visual = sub_ctx->visual;
-                g_slice_free (GXPSRenderContext, sub_ctx);
+                g_free (sub_ctx);
 
                 GXPS_DEBUG (g_message ("set_fill_pattern (visual)"));
                 visual->brush->pattern = gxps_render_context_pop_group (brush->ctx);
