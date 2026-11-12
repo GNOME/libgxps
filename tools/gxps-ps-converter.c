@@ -129,8 +129,6 @@ gxps_ps_converter_init_with_args (GXPSConverter *converter,
                 }
         }
 
-        g_print ("DBG: paper size: %s %d, %d\n", paper, print_converter->paper_width, print_converter->paper_height);
-
         return TRUE;
 }
 
