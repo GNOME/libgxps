@@ -494,12 +494,21 @@ resources_end_element (GMarkupParseContext  *context,
 	}
 }
 
+static void
+resources_error (GMarkupParseContext *context,
+                 GError              *error,
+                 gpointer             user_data)
+{
+	GXPSResourceContext *rcontext = (GXPSResourceContext *)user_data;
+	gxps_resource_context_free (rcontext);
+}
+
 static GMarkupParser resources_parser = {
 	resources_start_element,
 	resources_end_element,
 	NULL,
 	NULL,
-	NULL
+	resources_error
 };
 
 void
