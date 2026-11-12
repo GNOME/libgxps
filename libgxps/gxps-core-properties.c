@@ -440,6 +440,7 @@ gxps_core_properties_parse (GXPSCoreProperties *core_props,
         GInputStream         *stream;
         GMarkupParseContext  *ctx;
         CorePropsParserData   parser_data;
+        gboolean              retval;
 
         stream = gxps_archive_open (core_props->priv->zip,
                                     core_props->priv->source);
@@ -457,12 +458,12 @@ gxps_core_properties_parse (GXPSCoreProperties *core_props,
         parser_data.buffer = NULL;
 
         ctx = g_markup_parse_context_new (&core_props_parser, 0, &parser_data, NULL);
-        gxps_parse_stream (ctx, stream, error);
+        retval = gxps_parse_stream (ctx, stream, error);
         g_object_unref (stream);
 
         g_markup_parse_context_free (ctx);
 
-        return (*error != NULL) ? FALSE : TRUE;
+        return retval;
 }
 
 static void

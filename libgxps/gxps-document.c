@@ -228,6 +228,7 @@ gxps_document_parse_fixed_doc (GXPSDocument *doc,
 	GInputStream        *stream;
 	GMarkupParseContext *ctx;
 	FixedDocParserData  *parser_data;
+	gboolean             retval;
 
 	stream = gxps_archive_open (doc->priv->zip,
 				    doc->priv->source);
@@ -244,13 +245,13 @@ gxps_document_parse_fixed_doc (GXPSDocument *doc,
 	parser_data->doc = doc;
 
 	ctx = g_markup_parse_context_new (&fixed_doc_parser, 0, parser_data, NULL);
-	gxps_parse_stream (ctx, stream, error);
+	retval = gxps_parse_stream (ctx, stream, error);
 	g_object_unref (stream);
 
 	g_free (parser_data);
 	g_markup_parse_context_free (ctx);
 
-	return (*error != NULL) ? FALSE : TRUE;
+	return retval;
 }
 
 static void

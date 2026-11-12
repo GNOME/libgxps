@@ -165,6 +165,7 @@ gxps_page_parse_fixed_page (GXPSPage *page,
 {
 	GInputStream        *stream;
 	GMarkupParseContext *ctx;
+	gboolean             retval;
 
 	stream = gxps_archive_open (page->priv->zip,
 				    page->priv->source);
@@ -179,11 +180,11 @@ gxps_page_parse_fixed_page (GXPSPage *page,
 	}
 
 	ctx = g_markup_parse_context_new (&fixed_page_parser, 0, page, NULL);
-	gxps_parse_stream (ctx, stream, error);
+	retval = gxps_parse_stream (ctx, stream, error);
 	g_object_unref (stream);
 	g_markup_parse_context_free (ctx);
 
-	return (*error != NULL) ? FALSE : TRUE;
+	return retval;
 }
 
 /* Page Render Parser */

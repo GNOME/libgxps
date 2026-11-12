@@ -145,6 +145,7 @@ gxps_file_parse_rels (GXPSFile *xps,
 {
 	GInputStream        *stream;
 	GMarkupParseContext *ctx;
+	gboolean             retval;
 
 	stream = gxps_archive_open (xps->priv->zip, "_rels/.rels");
 	if (!stream) {
@@ -156,11 +157,11 @@ gxps_file_parse_rels (GXPSFile *xps,
 	}
 
 	ctx = g_markup_parse_context_new (&rels_parser, 0, xps, NULL);
-	gxps_parse_stream (ctx, stream, error);
+	retval = gxps_parse_stream (ctx, stream, error);
 	g_object_unref (stream);
 	g_markup_parse_context_free (ctx);
 
-	return (*error != NULL) ? FALSE : TRUE;
+	return retval;
 }
 
 /* FixedRepresentation parser */
@@ -207,6 +208,7 @@ gxps_file_parse_fixed_repr (GXPSFile *xps,
 {
 	GInputStream        *stream;
 	GMarkupParseContext *ctx;
+	gboolean             retval;
 
 	stream = gxps_archive_open (xps->priv->zip,
 				    xps->priv->fixed_repr);
@@ -219,11 +221,11 @@ gxps_file_parse_fixed_repr (GXPSFile *xps,
 	}
 
 	ctx = g_markup_parse_context_new (&fixed_repr_parser, 0, xps, NULL);
-	gxps_parse_stream (ctx, stream, error);
+	retval = gxps_parse_stream (ctx, stream, error);
 	g_object_unref (stream);
 	g_markup_parse_context_free (ctx);
 
-	return (*error != NULL) ? FALSE : TRUE;
+	return retval;
 }
 
 static void
