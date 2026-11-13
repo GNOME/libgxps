@@ -76,7 +76,7 @@ G_DEFINE_TYPE_WITH_CODE (GXPSDocument, gxps_document, G_TYPE_OBJECT,
 static Page *
 page_new (void)
 {
-	return g_slice_new0 (Page);
+	return g_new0 (Page, 1);
 }
 
 static void
@@ -85,7 +85,7 @@ page_free (Page *page)
 	g_free (page->source);
 	g_list_free_full (page->links, g_free);
 
-	g_slice_free (Page, page);
+	g_free (page);
 }
 
 /* FixedDoc parser */
