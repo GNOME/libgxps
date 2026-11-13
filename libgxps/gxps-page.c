@@ -344,7 +344,7 @@ gxps_canvas_new (GXPSRenderContext *ctx)
 {
 	GXPSCanvas *canvas;
 
-	canvas = g_slice_new0 (GXPSCanvas);
+	canvas = g_new0 (GXPSCanvas, 1);
 	canvas->ctx = ctx;
 
 	/* Default values */
@@ -361,7 +361,7 @@ gxps_canvas_free (GXPSCanvas *canvas)
 		return;
 
 	cairo_pattern_destroy (canvas->opacity_mask);
-	g_slice_free (GXPSCanvas, canvas);
+	g_free (canvas);
 }
 
 static void
@@ -1315,7 +1315,7 @@ links_start_element (GMarkupParseContext  *context,
 			}
 		}
 
-		path_link = g_slice_new0 (GXPSPathLink);
+		path_link = g_new0 (GXPSPathLink, 1);
 		if (link_uri) {
 			path_link->data = data ? g_strdup (data) : NULL;
 			path_link->uri = gxps_resolve_relative_path (ctx->page->priv->source, link_uri);
@@ -1419,7 +1419,7 @@ links_end_element (GMarkupParseContext  *context,
 			g_free (path_link->uri);
 		}
 		g_free (path_link->data);
-		g_slice_free (GXPSPathLink, path_link);
+		g_free (path_link);
 		cairo_new_path (ctx->cr);
 		GXPS_DEBUG (g_message ("restore"));
 		cairo_restore (ctx->cr);
@@ -1556,7 +1556,7 @@ anchors_start_element (GMarkupParseContext  *context,
 			}
 		}
 
-		path_anchor = g_slice_new0 (GXPSPathAnchor);
+		path_anchor = g_new0 (GXPSPathAnchor, 1);
 		if (name) {
 			path_anchor->data = data ? g_strdup (data) : NULL;
 			path_anchor->name = g_strdup (name);
@@ -1650,7 +1650,7 @@ anchors_end_element (GMarkupParseContext  *context,
 			cairo_user_to_device (ctx->cr, &x1, &y1);
 			cairo_user_to_device (ctx->cr, &x2, &y2);
 
-			rect = g_slice_new (cairo_rectangle_t);
+			rect = g_new (cairo_rectangle_t, 1);
 			rect->x = x1;
 			rect->y = y1;
 			rect->width = x2 - x1;
@@ -1658,7 +1658,7 @@ anchors_end_element (GMarkupParseContext  *context,
 			g_hash_table_insert (ctx->anchors, path_anchor->name, rect);
 		}
 		g_free (path_anchor->data);
-		g_slice_free (GXPSPathAnchor, path_anchor);
+		g_free (path_anchor);
 		cairo_new_path (ctx->cr);
 		GXPS_DEBUG (g_message ("restore"));
 		cairo_restore (ctx->cr);
@@ -1683,7 +1683,7 @@ static const GMarkupParser anchors_parser = {
 static void
 anchor_area_free (cairo_rectangle_t *area)
 {
-	g_slice_free (cairo_rectangle_t, area);
+	g_free (area);
 }
 
 static gboolean
