@@ -74,7 +74,8 @@ gxps_converter_real_init_with_args (GXPSConverter *converter,
         g_option_context_set_help_enabled (context, TRUE);
         g_option_context_add_main_entries (context, options, NULL);
 
-        for (group = g_list_reverse (*option_groups); group; group = g_list_next (group))
+        *option_groups = g_list_reverse (*option_groups);
+        for (group = *option_groups; group; group = g_list_next (group))
                 g_option_context_add_group (context, (GOptionGroup *)group->data);
 
         if (!g_option_context_parse (context, argc, argv, &error)) {
