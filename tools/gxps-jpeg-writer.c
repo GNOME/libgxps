@@ -133,6 +133,7 @@ gxps_jpeg_writer_image_writer_finish (GXPSImageWriter *image_writer)
         GXPSJpegWriter *jpeg_writer = GXPS_JPEG_WRITER (image_writer);
 
         jpeg_finish_compress (&jpeg_writer->cinfo);
+        jpeg_destroy_compress (&jpeg_writer->cinfo);
 
         g_free (jpeg_writer->row_buffer);
         jpeg_writer->row_buffer = NULL;
