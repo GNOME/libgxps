@@ -1976,16 +1976,13 @@ gxps_page_get_anchor_destination (GXPSPage          *page,
 				  cairo_rectangle_t *area,
 				  GError           **error)
 {
-	cairo_rectangle_t *anchor_area;
+	cairo_rectangle_t *anchor_area = NULL;
 
         g_return_val_if_fail (GXPS_IS_PAGE (page), FALSE);
         g_return_val_if_fail (anchor != NULL, FALSE);
         g_return_val_if_fail (area != NULL, FALSE);
 
-	if (!page->priv->has_anchors)
-		return FALSE;
-
-	if (!page->priv->anchors) {
+	if (page->priv->has_anchors && page->priv->anchors == NULL) {
 		cairo_surface_t  *surface;
 		cairo_t          *cr;
 		cairo_rectangle_t extents;
@@ -2005,7 +2002,10 @@ gxps_page_get_anchor_destination (GXPSPage          *page,
 			return FALSE;
 	}
 
-	anchor_area = g_hash_table_lookup (page->priv->anchors, anchor);
+	if (page->priv->anchors != NULL) {
+		anchor_area = g_hash_table_lookup (page->priv->anchors, anchor);
+	}
+
 	if (!anchor_area) {
 		g_set_error (error,
 			     GXPS_PAGE_ERROR,
