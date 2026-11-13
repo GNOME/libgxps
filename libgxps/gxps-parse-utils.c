@@ -29,22 +29,18 @@
 #define BUFFER_SIZE 4096
 
 /* GXPSCharsetConverter. Based on GeditSmartCharsetConverter */
-typedef struct _GXPSCharsetConverter {
+#define GXPS_TYPE_CHARSET_CONVERTER (gxps_charset_converter_get_type ())
+
+G_DECLARE_FINAL_TYPE (GXPSCharsetConverter, gxps_charset_converter, GXPS, CHARSET_CONVERTER, GObject)
+
+struct _GXPSCharsetConverter {
 	GObject parent;
 
 	GCharsetConverter *conv;
 	gboolean           is_utf8;
-} GXPSCharsetConverter;
+};
 
-typedef struct _GXPSCharsetConverterClass {
-	GObjectClass parent_class;
-} GXPSCharsetConverterClass;
-
-static GType gxps_charset_converter_get_type   (void) G_GNUC_CONST;
-static void  gxps_charset_converter_iface_init (GConverterIface *iface);
-
-#define GXPS_TYPE_CHARSET_CONVERTER (gxps_charset_converter_get_type())
-#define GXPS_CHARSET_CONVERTER(obj) (G_TYPE_CHECK_INSTANCE_CAST (obj, GXPS_TYPE_CHARSET_CONVERTER, GXPSCharsetConverter))
+static void gxps_charset_converter_iface_init (GConverterIface *iface);
 
 G_DEFINE_TYPE_WITH_CODE (GXPSCharsetConverter, gxps_charset_converter, G_TYPE_OBJECT,
 			 G_IMPLEMENT_INTERFACE (G_TYPE_CONVERTER,
