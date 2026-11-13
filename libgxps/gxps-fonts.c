@@ -57,7 +57,7 @@ ft_font_face_new (guchar *font_data,
 {
 	FtFontFace *ff;
 
-	ff = g_slice_new (FtFontFace);
+	ff = g_new (FtFontFace, 1);
 
 	ff->font_data = font_data;
 	ff->font_data_len = font_data_len;
@@ -71,7 +71,7 @@ ft_font_face_free (FtFontFace *font_face)
 	if (!font_face)
 		return;
 
-	g_slice_free (FtFontFace, font_face);
+	g_free (font_face);
 }
 
 static guint
