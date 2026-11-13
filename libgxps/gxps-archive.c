@@ -129,7 +129,7 @@ gxps_zip_archive_create (GFile *filename)
 {
 	ZipArchive *zip;
 
-	zip = g_slice_new0 (ZipArchive);
+	zip = g_new0 (ZipArchive, 1);
 	zip->file = filename;
 	zip->archive = archive_read_new ();
 	archive_read_support_format_zip (zip->archive);
@@ -171,7 +171,7 @@ G_GNUC_BEGIN_IGNORE_DEPRECATIONS
 	 * support. */
 	archive_read_finish (zip->archive);
 G_GNUC_END_IGNORE_DEPRECATIONS
-	g_slice_free (ZipArchive, zip);
+	g_free (zip);
 }
 
 static void
