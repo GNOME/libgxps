@@ -76,7 +76,7 @@ outline_node_free (OutlineNode *node)
 	g_free (node->target);
 	g_list_free_full (node->children, (GDestroyNotify)outline_node_free);
 
-	g_slice_free (OutlineNode, node);
+	g_free (node);
 }
 
 static void
@@ -206,7 +206,7 @@ outline_start_element (GMarkupParseContext  *context,
 			return;
 		}
 
-		node = g_slice_new0 (OutlineNode);
+		node = g_new0 (OutlineNode, 1);
 		node->desc = g_strdup (desc);
 		node->level = level;
 		node->target = gxps_resolve_relative_path (ctx->structure->priv->source, target);
