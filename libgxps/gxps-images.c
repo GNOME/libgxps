@@ -300,7 +300,7 @@ gxps_images_create_from_png (GXPSArchive *zip,
 		return NULL;
 	}
 
-	image = g_slice_new0 (GXPSImage);
+	image = g_new0 (GXPSImage, 1);
 	image->res_x = png_get_x_pixels_per_meter (png, info) * METERS_PER_INCH;
 	if (image->res_x == 0)
 		image->res_x = 96;
@@ -602,7 +602,7 @@ gxps_images_create_from_jpeg (GXPSArchive *zip,
 	cinfo.do_fancy_upsampling = FALSE;
 	jpeg_start_decompress (&cinfo);
 
-	image = g_slice_new (GXPSImage);
+	image = g_new (GXPSImage, 1);
 	image->surface = cairo_image_surface_create (CAIRO_FORMAT_RGB24,
 						     cinfo.output_width,
 						     cinfo.output_height);
@@ -926,7 +926,7 @@ gxps_images_create_from_tiff (GXPSArchive *zip,
 		return NULL;
 	}
 
-	image = g_slice_new (GXPSImage);
+	image = g_new (GXPSImage, 1);
 	image->surface = cairo_image_surface_create (CAIRO_FORMAT_RGB24,
 						     width, height);
 	image->res_x = 96;
@@ -1028,7 +1028,7 @@ image_create_from_byte_array (BYTE    *bytes,
 
 	stride = cairo_format_stride_for_width (CAIRO_FORMAT_ARGB32, width);
 
-	image = g_slice_new0 (GXPSImage);
+	image = g_new0 (GXPSImage, 1);
 	image->res_x = 96;
 	image->res_y = 96;
 
@@ -1358,5 +1358,5 @@ gxps_image_free (GXPSImage *image)
 	if (G_LIKELY (image->surface))
 		cairo_surface_destroy (image->surface);
 
-	g_slice_free (GXPSImage, image);
+	g_free (image);
 }
