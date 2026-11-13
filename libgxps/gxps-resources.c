@@ -188,7 +188,7 @@ gxps_resource_dict_context_new (GXPSResources *resources,
 {
 	GXPSResourceDictContext *resource_dict;
 
-	resource_dict = g_slice_new0 (GXPSResourceDictContext);
+	resource_dict = g_new0 (GXPSResourceDictContext, 1);
 	resource_dict->resources = g_object_ref (resources);
 	resource_dict->source = g_strdup (source);
 
@@ -206,7 +206,7 @@ gxps_resource_dict_context_free (GXPSResourceDictContext *resource_dict)
 	if (resource_dict->xml)
 		g_string_free (resource_dict->xml, TRUE);
 	g_object_unref (resource_dict->resources);
-	g_slice_free (GXPSResourceDictContext, resource_dict);
+	g_free (resource_dict);
 }
 
 static void
@@ -348,7 +348,7 @@ gxps_resource_context_new (GXPSResources *resources,
 {
 	GXPSResourceContext *context;
 
-	context = g_slice_new0 (GXPSResourceContext);
+	context = g_new0 (GXPSResourceContext, 1);
 	context->resources = g_object_ref (resources);
 	context->source = g_strdup (source);
 
@@ -360,7 +360,7 @@ gxps_resource_context_free (GXPSResourceContext *context)
 {
 	g_object_unref (context->resources);
 	g_free (context->source);
-	g_slice_free (GXPSResourceContext, context);
+	g_free (context);
 }
 
 static void
