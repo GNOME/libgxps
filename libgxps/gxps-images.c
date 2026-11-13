@@ -591,6 +591,7 @@ gxps_images_create_from_jpeg (GXPSArchive *zip,
 			     GXPS_ERROR_IMAGE,
 			     "Error loading JPEG image %s",
 			     image_uri);
+		jpeg_destroy_decompress (&cinfo);
 		g_object_unref (stream);
 		return NULL;
 	}
