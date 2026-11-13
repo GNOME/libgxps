@@ -41,10 +41,6 @@ struct _GXPSArchive {
 	GXPSResources *resources;
 };
 
-struct _GXPSArchiveClass {
-	GObjectClass parent_class;
-};
-
 static void initable_iface_init (GInitableIface *initable_iface);
 
 G_DEFINE_TYPE_WITH_CODE (GXPSArchive, gxps_archive, G_TYPE_OBJECT,
@@ -336,23 +332,18 @@ gxps_archive_get_resources (GXPSArchive *archive)
 }
 
 /* GXPSArchiveInputStream */
-typedef struct _GXPSArchiveInputStream {
+#define GXPS_TYPE_ARCHIVE_INPUT_STREAM (gxps_archive_input_stream_get_type ())
+
+G_DECLARE_FINAL_TYPE (GXPSArchiveInputStream, gxps_archive_input_stream, GXPS, ARCHIVE_INPUT_STREAM, GInputStream)
+
+struct _GXPSArchiveInputStream {
 	GInputStream          parent;
 
 	ZipArchive           *zip;
         gboolean              is_interleaved;
         guint                 piece;
 	struct archive_entry *entry;
-} GXPSArchiveInputStream;
-
-typedef struct _GXPSArchiveInputStreamClass {
-	GInputStreamClass parent_class;
-} GXPSArchiveInputStreamClass;
-
-static GType gxps_archive_input_stream_get_type (void) G_GNUC_CONST;
-
-#define GXPS_TYPE_ARCHIVE_INPUT_STREAM (gxps_archive_input_stream_get_type())
-#define GXPS_ARCHIVE_INPUT_STREAM(obj) (G_TYPE_CHECK_INSTANCE_CAST (obj, GXPS_TYPE_ARCHIVE_INPUT_STREAM, GXPSArchiveInputStream))
+};
 
 G_DEFINE_TYPE (GXPSArchiveInputStream, gxps_archive_input_stream, G_TYPE_INPUT_STREAM)
 
