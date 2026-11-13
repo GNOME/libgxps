@@ -29,7 +29,7 @@ gxps_matrix_new (GXPSRenderContext *ctx)
 {
         GXPSMatrix *matrix;
 
-        matrix = g_slice_new0 (GXPSMatrix);
+        matrix = g_new0 (GXPSMatrix, 1);
         matrix->ctx = ctx;
         cairo_matrix_init_identity (&matrix->matrix);
 
@@ -42,7 +42,7 @@ gxps_matrix_free (GXPSMatrix *matrix)
         if (G_UNLIKELY (!matrix))
                 return;
 
-        g_slice_free (GXPSMatrix, matrix);
+        g_free (matrix);
 }
 
 gboolean
