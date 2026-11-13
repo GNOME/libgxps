@@ -48,7 +48,7 @@ gxps_path_new (GXPSRenderContext *ctx)
 {
         GXPSPath *path;
 
-        path = g_slice_new0 (GXPSPath);
+        path = g_new0 (GXPSPath, 1);
         path->ctx = ctx;
 
         /* Default values */
@@ -77,7 +77,7 @@ gxps_path_free (GXPSPath *path)
         cairo_pattern_destroy (path->opacity_mask);
         g_free (path->dash);
 
-        g_slice_free (GXPSPath, path);
+        g_free (path);
 }
 
 static const gchar *
