@@ -474,6 +474,19 @@ gxps_core_properties_finalize (GObject *object)
         g_clear_object (&core_props->priv->zip);
         g_clear_pointer (&core_props->priv->source, g_free);
         g_clear_error (&core_props->priv->init_error);
+        g_clear_pointer (&core_props->priv->category, g_free);
+        g_clear_pointer (&core_props->priv->content_status, g_free);
+        g_clear_pointer (&core_props->priv->content_type, g_free);
+        g_clear_pointer (&core_props->priv->creator, g_free);
+        g_clear_pointer (&core_props->priv->description, g_free);
+        g_clear_pointer (&core_props->priv->identifier, g_free);
+        g_clear_pointer (&core_props->priv->keywords, g_free);
+        g_clear_pointer (&core_props->priv->language, g_free);
+        g_clear_pointer (&core_props->priv->last_modified_by, g_free);
+        g_clear_pointer (&core_props->priv->revision, g_free);
+        g_clear_pointer (&core_props->priv->subject, g_free);
+        g_clear_pointer (&core_props->priv->title, g_free);
+        g_clear_pointer (&core_props->priv->version, g_free);
 
         G_OBJECT_CLASS (gxps_core_properties_parent_class)->finalize (object);
 }
