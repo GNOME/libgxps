@@ -28,17 +28,10 @@
 
 G_BEGIN_DECLS
 
-#define GXPS_TYPE_ARCHIVE           (gxps_archive_get_type ())
-#define GXPS_ARCHIVE(obj)           (G_TYPE_CHECK_INSTANCE_CAST (obj, GXPS_TYPE_ARCHIVE, GXPSArchive))
-#define GXPS_ARCHIVE_CLASS(cls)     (G_TYPE_CHECK_CLASS_CAST (cls, GXPS_TYPE_ARCHIVE, GXPSArchiveClass))
-#define GXPS_IS_ARCHIVE(obj)        (G_TYPE_CHECK_INSTANCE_TYPE (obj, GXPS_TYPE_ARCHIVE))
-#define GXPS_IS_ARCHIVE_CLASS(obj)  (G_TYPE_CHECK_CLASS_TYPE (obj, GXPS_TYPE_ARCHIVE))
-#define GXPS_ARCHIVE_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), GXPS_TYPE_ARCHIVE, GXPSArchiveClass))
+#define GXPS_TYPE_ARCHIVE (gxps_archive_get_type ())
 
-typedef struct _GXPSArchive      GXPSArchive;
-typedef struct _GXPSArchiveClass GXPSArchiveClass;
+G_DECLARE_FINAL_TYPE (GXPSArchive, gxps_archive, GXPS, ARCHIVE, GObject)
 
-GType             gxps_archive_get_type       (void) G_GNUC_CONST;
 GXPSArchive      *gxps_archive_new            (GFile            *filename,
 					       GError          **error);
 gboolean          gxps_archive_has_entry      (GXPSArchive      *archive,
