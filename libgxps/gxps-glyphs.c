@@ -54,7 +54,7 @@ gxps_glyphs_new (GXPSRenderContext *ctx,
 {
         GXPSGlyphs *glyphs;
 
-        glyphs = g_slice_new0 (GXPSGlyphs);
+        glyphs = g_new0 (GXPSGlyphs, 1);
         glyphs->ctx = ctx;
 
         /* Required values */
@@ -80,7 +80,7 @@ gxps_glyphs_free (GXPSGlyphs *glyphs)
         cairo_pattern_destroy (glyphs->fill_pattern);
         cairo_pattern_destroy (glyphs->opacity_mask);
 
-        g_slice_free (GXPSGlyphs, glyphs);
+        g_free (glyphs);
 }
 
 static const gchar *
