@@ -290,8 +290,6 @@ core_props_start_element (GMarkupParseContext  *context,
 {
         CorePropsParserData *data = (CorePropsParserData *)user_data;
 
-        data->buffer = g_string_new (NULL);
-
         if (strcmp (element_name, "category") == 0)
                 data->property = CP_CATEGORY;
         else if (strcmp (element_name, "contentStatus") == 0)
@@ -332,6 +330,10 @@ core_props_start_element (GMarkupParseContext  *context,
                                   data->core_props->priv->source,
                                   G_MARKUP_ERROR_UNKNOWN_ELEMENT,
                                   element_name, NULL, NULL, error);
+        }
+
+        if (data->property != CP_UNKNOWN) {
+                data->buffer = g_string_new (NULL);
         }
 }
 
