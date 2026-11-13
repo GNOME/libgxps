@@ -63,11 +63,7 @@ G_DEFINE_TYPE_WITH_CODE (GXPSFile, gxps_file, G_TYPE_OBJECT,
 			 G_ADD_PRIVATE (GXPSFile)
 			 G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init))
 
-GQuark
-gxps_file_error_quark (void)
-{
-	return g_quark_from_static_string ("gxps-file-error-quark");
-}
+G_DEFINE_QUARK (gxps-file-error-quark, gxps_file_error)
 
 #define REL_METATADA_CORE_PROPS  "http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties"
 #define REL_METATADA_THUMBNAIL   "http://schemas.openxmlformats.org/package/2006/relationships/metadata/thumbnail"

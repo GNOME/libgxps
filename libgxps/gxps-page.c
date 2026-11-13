@@ -69,11 +69,7 @@ G_DEFINE_TYPE_WITH_CODE (GXPSPage, gxps_page, G_TYPE_OBJECT,
 		         G_ADD_PRIVATE (GXPSPage)
 			 G_IMPLEMENT_INTERFACE (G_TYPE_INITABLE, initable_iface_init))
 
-GQuark
-gxps_page_error_quark (void)
-{
-	return g_quark_from_static_string ("gxps-page-error-quark");
-}
+G_DEFINE_QUARK (gxps-page-error-quark, gxps_page_error)
 
 /* Images */
 GXPSImage *

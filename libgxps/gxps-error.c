@@ -27,8 +27,4 @@
  * @Title: GXPSError
  */
 
-GQuark
-gxps_error_quark (void)
-{
-	return g_quark_from_static_string ("gxps-error-quark");
-}
+G_DEFINE_QUARK (gxps-error-quark, gxps_error)
