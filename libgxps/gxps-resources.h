@@ -24,13 +24,9 @@
 
 G_BEGIN_DECLS
 
-#define GXPS_TYPE_RESOURCES           (gxps_resources_get_type ())
-#define GXPS_RESOURCES(obj)           (G_TYPE_CHECK_INSTANCE_CAST (obj, GXPS_TYPE_RESOURCES, GXPSResources))
-#define GXPS_IS_RESOURCES(obj)        (G_TYPE_CHECK_INSTANCE_TYPE (obj, GXPS_TYPE_RESOURCES))
+#define GXPS_TYPE_RESOURCES (gxps_resources_get_type ())
 
-typedef struct _GXPSResources GXPSResources;
-
-GType          gxps_resources_get_type     (void) G_GNUC_CONST;
+G_DECLARE_FINAL_TYPE (GXPSResources, gxps_resources, GXPS, RESOURCES, GObject)
 
 void           gxps_resources_push_dict    (GXPSResources       *resources);
 
