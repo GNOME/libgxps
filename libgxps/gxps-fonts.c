@@ -295,7 +295,7 @@ gxps_fonts_get_font (GXPSArchive *zip,
 							     (GDestroyNotify)cairo_font_face_destroy);
 			g_object_set_data_full (G_OBJECT (zip), FONTS_CACHE_KEY,
 						fonts_cache,
-						(GDestroyNotify)g_hash_table_destroy);
+						(GDestroyNotify)g_hash_table_unref);
 		}
 
 		g_hash_table_insert (fonts_cache,

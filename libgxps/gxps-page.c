@@ -1720,7 +1720,7 @@ gxps_page_parse_anchors (GXPSPage *page,
 	g_markup_parse_context_free (context);
 
 	if (err != NULL) {
-		g_hash_table_destroy (ctx.anchors);
+		g_hash_table_unref (ctx.anchors);
 		g_propagate_error (error, err);
 		return FALSE;
 	}
@@ -1730,7 +1730,7 @@ gxps_page_parse_anchors (GXPSPage *page,
 		page->priv->anchors = ctx.anchors;
 	} else {
 		page->priv->has_anchors = FALSE;
-		g_hash_table_destroy (ctx.anchors);
+		g_hash_table_unref (ctx.anchors);
 	}
 
 	return TRUE;
@@ -1746,8 +1746,8 @@ gxps_page_finalize (GObject *object)
 	g_clear_error (&page->priv->init_error);
 	g_clear_pointer (&page->priv->lang, g_free);
 	g_clear_pointer (&page->priv->name, g_free);
-	g_clear_pointer (&page->priv->image_cache, g_hash_table_destroy);
-	g_clear_pointer (&page->priv->anchors, g_hash_table_destroy);
+	g_clear_pointer (&page->priv->image_cache, g_hash_table_unref);
+	g_clear_pointer (&page->priv->anchors, g_hash_table_unref);
 	page->priv->has_anchors = FALSE;
 
 	G_OBJECT_CLASS (gxps_page_parent_class)->finalize (object);

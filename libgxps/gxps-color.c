@@ -240,7 +240,7 @@ gxps_color_new_for_icc (GXPSArchive *zip,
                                                    (GDestroyNotify)cmsCloseProfile);
                 g_object_set_data_full (G_OBJECT (zip), ICC_PROFILE_CACHE_KEY,
                                         icc_cache,
-                                        (GDestroyNotify)g_hash_table_destroy);
+                                        (GDestroyNotify)g_hash_table_unref);
         }
 
         g_hash_table_insert (icc_cache, g_strdup (icc_profile_uri), profile);

@@ -58,7 +58,7 @@ gxps_resources_finalize (GObject *object)
 {
 	GXPSResources *resources = GXPS_RESOURCES (object);
 
-	g_queue_free_full (resources->queue, (GDestroyNotify)g_hash_table_destroy);
+	g_queue_free_full (resources->queue, (GDestroyNotify)g_hash_table_unref);
 
 	G_OBJECT_CLASS (gxps_resources_parent_class)->finalize (object);
 }
@@ -129,7 +129,7 @@ gxps_resources_pop_dict (GXPSResources *resources)
 	g_return_if_fail (GXPS_IS_RESOURCES (resources));
 
 	ht = g_queue_pop_head (resources->queue);
-	g_hash_table_destroy (ht);
+	g_hash_table_unref (ht);
 }
 
 const gchar *
