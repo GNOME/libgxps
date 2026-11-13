@@ -285,7 +285,8 @@ gxps_file_class_init (GXPSFileClass *klass)
 		                     "The file file",
 		                     G_TYPE_FILE,
 		                     G_PARAM_WRITABLE |
-		                     G_PARAM_CONSTRUCT_ONLY);
+		                     G_PARAM_CONSTRUCT_ONLY |
+		                     G_PARAM_STATIC_STRINGS);
 
 	g_object_class_install_properties (object_class, LAST_PROP, props);
 }
