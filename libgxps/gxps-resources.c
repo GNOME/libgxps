@@ -23,10 +23,6 @@
 
 #include <string.h>
 
-#define GXPS_RESOURCES_CLASS(cls)     (G_TYPE_CHECK_CLASS_CAST (cls, GXPS_TYPE_RESOURCES, GXPSResourcesClass))
-#define GXPS_IS_RESOURCES_CLASS(obj)  (G_TYPE_CHECK_CLASS_TYPE (obj, GXPS_TYPE_RESOURCES))
-#define GXPS_RESOURCES_GET_CLASS(obj) (G_TYPE_INSTANCE_GET_CLASS ((obj), GXPS_TYPE_RESOURCES, GXPSResourcesClass))
-
 struct _GXPSResources
 {
 	GObject parent_instance;
@@ -35,13 +31,6 @@ struct _GXPSResources
 
 	GQueue *queue;
 };
-
-struct _GXPSResourcesClass
-{
-	GObjectClass parent;
-};
-
-typedef struct _GXPSResourcesClass GXPSResourcesClass;
 
 enum {
 	PROP_0,
