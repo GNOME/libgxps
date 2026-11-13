@@ -522,7 +522,8 @@ gxps_core_properties_class_init (GXPSCorePropertiesClass *klass)
                                      "The archive",
                                      GXPS_TYPE_ARCHIVE,
                                      G_PARAM_WRITABLE |
-                                     G_PARAM_CONSTRUCT_ONLY);
+                                     G_PARAM_CONSTRUCT_ONLY |
+                                     G_PARAM_STATIC_STRINGS);
 
         props[PROP_SOURCE] =
                 g_param_spec_string ("source",
@@ -530,7 +531,8 @@ gxps_core_properties_class_init (GXPSCorePropertiesClass *klass)
                                      "The Core Properties Source File",
                                      NULL,
                                      G_PARAM_WRITABLE |
-                                     G_PARAM_CONSTRUCT_ONLY);
+                                     G_PARAM_CONSTRUCT_ONLY |
+                                     G_PARAM_STATIC_STRINGS);
 
         g_object_class_install_properties (object_class, LAST_PROP, props);
 }
