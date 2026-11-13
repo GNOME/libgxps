@@ -42,8 +42,11 @@
 enum {
 	PROP_0,
 	PROP_ARCHIVE,
-	PROP_SOURCE
+	PROP_SOURCE,
+	LAST_PROP
 };
+
+static GParamSpec *props[LAST_PROP];
 
 typedef struct _Page {
 	gchar *source;
@@ -413,22 +416,23 @@ gxps_document_class_init (GXPSDocumentClass *klass)
 	object_class->set_property = gxps_document_set_property;
 	object_class->finalize = gxps_document_finalize;
 
-	g_object_class_install_property (object_class,
-					 PROP_ARCHIVE,
-					 g_param_spec_object ("archive",
-							      "Archive",
-							      "The document archive",
-							      GXPS_TYPE_ARCHIVE,
-							      G_PARAM_WRITABLE |
-							      G_PARAM_CONSTRUCT_ONLY));
-	g_object_class_install_property (object_class,
-					 PROP_SOURCE,
-					 g_param_spec_string ("source",
-							      "Source",
-							      "The Document Source File",
-							      NULL,
-							      G_PARAM_WRITABLE |
-							      G_PARAM_CONSTRUCT_ONLY));
+	props[PROP_ARCHIVE] =
+		g_param_spec_object ("archive",
+		                     "Archive",
+		                     "The document archive",
+		                     GXPS_TYPE_ARCHIVE,
+		                     G_PARAM_WRITABLE |
+		                     G_PARAM_CONSTRUCT_ONLY);
+
+	props[PROP_SOURCE] =
+		g_param_spec_string ("source",
+		                     "Source",
+		                     "The Document Source File",
+		                     NULL,
+		                     G_PARAM_WRITABLE |
+		                     G_PARAM_CONSTRUCT_ONLY);
+
+	g_object_class_install_properties (object_class, LAST_PROP, props);
 }
 
 static gboolean

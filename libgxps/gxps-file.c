@@ -41,8 +41,11 @@
 
 enum {
 	PROP_0,
-	PROP_FILE
+	PROP_FILE,
+	LAST_PROP
 };
+
+static GParamSpec *props[LAST_PROP];
 
 struct _GXPSFilePrivate {
 	GFile       *file;
@@ -272,14 +275,15 @@ gxps_file_class_init (GXPSFileClass *klass)
 	object_class->set_property = gxps_file_set_property;
 	object_class->finalize = gxps_file_finalize;
 
-	g_object_class_install_property (object_class,
-					 PROP_FILE,
-					 g_param_spec_object ("file",
-							      "File",
-							      "The file file",
-							      G_TYPE_FILE,
-							      G_PARAM_WRITABLE |
-							      G_PARAM_CONSTRUCT_ONLY));
+	props[PROP_FILE] =
+		g_param_spec_object ("file",
+		                     "File",
+		                     "The file file",
+		                     G_TYPE_FILE,
+		                     G_PARAM_WRITABLE |
+		                     G_PARAM_CONSTRUCT_ONLY);
+
+	g_object_class_install_properties (object_class, LAST_PROP, props);
 }
 
 static gboolean
