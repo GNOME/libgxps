@@ -27,8 +27,11 @@
 
 enum {
 	PROP_0,
-	PROP_FILE
+	PROP_FILE,
+	LAST_PROP
 };
+
+static GParamSpec *props[LAST_PROP];
 
 struct _GXPSArchive {
 	GObject parent;
@@ -239,14 +242,15 @@ gxps_archive_class_init (GXPSArchiveClass *klass)
 	object_class->set_property = gxps_archive_set_property;
 	object_class->finalize = gxps_archive_finalize;
 
-	g_object_class_install_property (object_class,
-					 PROP_FILE,
-					 g_param_spec_object ("file",
-							      "File",
-							      "The archive file",
-							      G_TYPE_FILE,
-							      G_PARAM_WRITABLE |
-							      G_PARAM_CONSTRUCT_ONLY));
+	props[PROP_FILE] =
+		g_param_spec_object ("file",
+		                     "File",
+		                     "The archive file",
+		                     G_TYPE_FILE,
+		                     G_PARAM_WRITABLE |
+		                     G_PARAM_CONSTRUCT_ONLY);
+
+	g_object_class_install_properties (object_class, LAST_PROP, props);
 }
 
 static gboolean

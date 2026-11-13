@@ -41,8 +41,11 @@
 enum {
         PROP_0,
         PROP_ARCHIVE,
-        PROP_SOURCE
+        PROP_SOURCE,
+        LAST_PROP
 };
+
+static GParamSpec *props[LAST_PROP];
 
 struct _GXPSCorePropertiesPrivate {
         GXPSArchive *zip;
@@ -513,22 +516,23 @@ gxps_core_properties_class_init (GXPSCorePropertiesClass *klass)
         object_class->set_property = gxps_core_properties_set_property;
         object_class->finalize = gxps_core_properties_finalize;
 
-        g_object_class_install_property (object_class,
-                                         PROP_ARCHIVE,
-                                         g_param_spec_object ("archive",
-                                                              "Archive",
-                                                              "The archive",
-                                                              GXPS_TYPE_ARCHIVE,
-                                                              G_PARAM_WRITABLE |
-                                                              G_PARAM_CONSTRUCT_ONLY));
-        g_object_class_install_property (object_class,
-                                         PROP_SOURCE,
-                                         g_param_spec_string ("source",
-                                                              "Source",
-                                                              "The Core Properties Source File",
-                                                              NULL,
-                                                              G_PARAM_WRITABLE |
-                                                              G_PARAM_CONSTRUCT_ONLY));
+        props[PROP_ARCHIVE] =
+                g_param_spec_object ("archive",
+                                     "Archive",
+                                     "The archive",
+                                     GXPS_TYPE_ARCHIVE,
+                                     G_PARAM_WRITABLE |
+                                     G_PARAM_CONSTRUCT_ONLY);
+
+        props[PROP_SOURCE] =
+                g_param_spec_string ("source",
+                                     "Source",
+                                     "The Core Properties Source File",
+                                     NULL,
+                                     G_PARAM_WRITABLE |
+                                     G_PARAM_CONSTRUCT_ONLY);
+
+        g_object_class_install_properties (object_class, LAST_PROP, props);
 }
 
 static gboolean
