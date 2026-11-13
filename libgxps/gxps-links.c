@@ -75,7 +75,7 @@ gxps_link_copy (GXPSLink *link)
 
         g_return_val_if_fail (link != NULL, NULL);
 
-	link_copy = g_slice_new (GXPSLink);
+	link_copy = g_new (GXPSLink, 1);
 	*link_copy = *link;
 
 	if (link->target)
@@ -97,7 +97,7 @@ gxps_link_free (GXPSLink *link)
 		return;
 
 	gxps_link_target_free (link->target);
-	g_slice_free (GXPSLink, link);
+	g_free (link);
 }
 
 /**
@@ -150,7 +150,7 @@ gxps_link_target_copy (GXPSLinkTarget *target)
 
         g_return_val_if_fail (target != NULL, NULL);
 
-	target_copy = g_slice_new (GXPSLinkTarget);
+	target_copy = g_new (GXPSLinkTarget, 1);
 
 	target_copy->is_internal = target->is_internal;
 	target_copy->uri = g_strdup (target->uri);
@@ -173,7 +173,7 @@ gxps_link_target_free (GXPSLinkTarget *target)
 
 	g_free (target->uri);
 	g_free (target->anchor);
-	g_slice_free (GXPSLinkTarget, target);
+	g_free (target);
 }
 
 /**
@@ -235,7 +235,7 @@ _gxps_link_target_new (GXPSArchive *zip,
 	GXPSLinkTarget *target;
 	gchar          *sep;
 
-	target = g_slice_new (GXPSLinkTarget);
+	target = g_new (GXPSLinkTarget, 1);
 
 	sep = g_strrstr (uri, "#");
 	if (sep) {
@@ -258,7 +258,7 @@ _gxps_link_new (GXPSArchive       *zip,
 {
 	GXPSLink *link;
 
-	link = g_slice_new (GXPSLink);
+	link = g_new (GXPSLink, 1);
 	link->area = *area;
 	link->target = _gxps_link_target_new (zip, uri);
 
